@@ -1,4 +1,5 @@
-import type { Observation, Position, Ship, World } from "../types";
+import type { Observation, Ship, World } from "../types";
+import { manhattan } from "./geometry";
 
 export function observe(world: World, ship: Ship): Observation {
     const { ships, ...map } = world;   // map = world minus ships
@@ -11,6 +12,3 @@ export function observe(world: World, ship: Ship): Observation {
 }
 
 
-function manhattan(a: Position, b: Position): number {
-    return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
-}

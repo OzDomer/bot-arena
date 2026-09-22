@@ -12,8 +12,6 @@ const ctx = canvas.getContext('2d');
 if (!ctx) throw new Error('no 2d context');
 
 
-
-
 const ships: Ship[] = [
   { id: 1, hp: 10, attackDamage: 2, visionRange: 3, attackRange: 1, position: { x: 5, y: 5 } },
   { id: 2, hp: 10, attackDamage: 2, visionRange: 3, attackRange: 1, position: { x: 9, y: 9 } },
@@ -27,14 +25,22 @@ const brains: Record<Ship['id'], Brain> = {
   3: new ChaserFSM(),
 };
 
+const history: World[] = [world];
+
+
 const final = runMatch(world, brains, w => {
-  if (w.turn % 10 === 0) {
-    console.table(w.ships.map(s => ({ id: s.id, hp: s.hp, x: s.position.x, y: s.position.y })))
-  }
+  history.push(w)
 })
 console.log('done at turn', final.turn, 'alive:', final.ships.filter(s => s.hp > 0).map(s => s.id));
 
 canvas.width = world.width * TILE
 canvas.height = world.height * TILE
 
-drawWorld(ctx, world)
+let i = 0;
+const timer = setInterval(() => {
+  drawWorld(ctx, history[i]);
+  i++;
+  if (i >= history.length) clearInterval(timer);
+}, 150);
+
+

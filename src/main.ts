@@ -5,8 +5,9 @@ import { ChaserFSM } from './bots/ChaserFSM';
 import { TILE } from './render/render';
 import { Player } from './render/Player';
 import { CowardFSM } from './bots/CowardFSM';
-import { randomPositions } from './sim/spawn';
+import { makeShips, randomPositions } from './sim/spawn';
 import { makeRng } from './util/random';
+import { runTournament } from './sim/tournament';
 
 
 const canvas = document.querySelector<HTMLCanvasElement>('#gameCanvas')
@@ -25,7 +26,7 @@ console.log(`Match seed: ${seed}`);
 const rng = makeRng(seed);
 
 const spawns = randomPositions(3, 10, 10, rng);
-const ships: Ship[] = spawns.map((position, i) => ({ id: i + 1, hp: 10, maxHp: 10, attackDamage: 2, visionRange: 3, attackRange: 1, position }));
+const ships = makeShips(spawns)
 const world: World = { turn: 0, turnCap: 200, width: 10, height: 10, ships };
 const brains: Record<Ship['id'], Brain> = {
   1: new CowardFSM(rng),
@@ -44,6 +45,14 @@ console.log('done at turn', final.turn, 'alive:', final.ships.filter(s => s.hp >
 canvas.width = world.width * TILE
 canvas.height = world.height * TILE
 
+const entrants =
+[
+  { name: 'coward', make: rng => new CowardFSM(rng) },
+  { name: 'chaser', make: rng => new ChaserFSM(rng) },
+  { name: 'chaser', make: rng => new ChaserFSM(rng) },
+]
+
+runTournament(entrants, 100, seed)
 
 const player = new Player(ctx, history, turnCounter);
 document.getElementById('play')!.onclick = () => player.play();

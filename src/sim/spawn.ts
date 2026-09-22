@@ -1,4 +1,4 @@
-import type { Position, World } from "../types";
+import type { Position, Ship, World } from "../types";
 import { type Rng } from "../util/random";
 
 export function randomPositions(count: number, width: World['width'], height: World['height'], rng: Rng): Position[] {
@@ -10,4 +10,8 @@ export function randomPositions(count: number, width: World['width'], height: Wo
         if (!taken) positions.push({ x, y });
     }
     return positions
+}
+
+export function makeShips(positions: Position[]): Ship[] {
+   return positions.map((position, i) => ({ id: i + 1, hp: 10, maxHp: 10, attackDamage: 2, visionRange: 3, attackRange: 1, position }))
 }

@@ -1,5 +1,5 @@
-import type { Action, Ship, World } from "../types";
-import { manhattan } from "./geometry";
+import { DELTAS, type Action, type Ship, type World } from "../types";
+import { clamp, manhattan } from "./geometry";
 
 export function step(world: World, actions: Record<Ship['id'], Action>): World {
     // --- phase 1: attacks (resolved on current positions, simultaneous) ---
@@ -17,11 +17,13 @@ export function step(world: World, actions: Record<Ship['id'], Action>): World {
     const afterAttacks: Ship[] = world.ships.map(ship => ({
         ...ship,
         hp: Math.max(0, ship.hp - (damage[ship.id] ?? 0)),
-        /* ship.hp minus whatever's in damage for it, floored at 0 */
     }));
-
-    // --- phase 2: moves --- (later)
-    // --- phase 3: turn ---  (later)
-
-    return { ...world, ships: afterAttacks, turn: world.turn + 1 };
+    const afterMoves: Ship[] = afterAttacks.map(ship => {
+        if (ship.hp <= 0) return ship;
+        const { dx, dy } = DELTAS[actions[ship.id]?.move ?? 'STAY'];
+        const x = clamp(ship.position.x + dx, 0, world.width - 1)
+        const y = clamp(ship.position.y + dy, 0, world.height - 1)
+        return { ...ship, position: { x, y } };
+    });
+    return { ...world, ships: afterMoves, turn: world.turn + 1 };
 }

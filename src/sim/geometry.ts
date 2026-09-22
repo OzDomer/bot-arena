@@ -1,7 +1,7 @@
 import { DELTAS, type Direction, type Position, type VisibleShip } from "../types";
 
-export function manhattan(a: Position, b: Position): number {
-    return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+export function chebyshev(a: Position, b: Position): number {
+    return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
 }
 
 export function clamp(value: number, min: number, max: number): number {
@@ -20,5 +20,5 @@ export function directionAway(from: Position, threat: Position): Direction {
 }
 
 export function closestTo(from: Position, ships: VisibleShip[]): VisibleShip | undefined {
-    return [...ships].sort((a, b) => manhattan(from, a.position) - manhattan(from, b.position))[0];
+    return [...ships].sort((a, b) => chebyshev(from, a.position) - chebyshev(from, b.position))[0];
 }

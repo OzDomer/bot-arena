@@ -1,5 +1,5 @@
 import { DELTAS, type Action, type Brain, type Direction, type Observation, type Ship } from "../types";
-import { closestTo, directionAway, directionToward, manhattan } from "../sim/geometry";
+import { closestTo, directionAway, directionToward, chebyshev } from "../sim/geometry";
 import { pickRandom } from "../util/random";
 
 const DIRECTIONS = Object.keys(DELTAS) as Direction[]
@@ -40,12 +40,12 @@ export class CowardFSM implements Brain {
 
         if (this.state === 'chase' && locked) {
             const move = directionToward(obs.self.position, locked.position);
-            const inRange = manhattan(obs.self.position, locked.position) <= obs.self.attackRange;
+            const inRange = chebyshev(obs.self.position, locked.position) <= obs.self.attackRange;
             return { move, attack: inRange ? locked.id : undefined };
         }
 
         const move = pickRandom(DIRECTIONS);
-        const inRangeTarget = aliveShips.find(ship => manhattan(obs.self.position, ship.position) <= obs.self.attackRange);
+        const inRangeTarget = aliveShips.find(ship => chebyshev(obs.self.position, ship.position) <= obs.self.attackRange);
         return { move, attack: inRangeTarget?.id };
 
     }

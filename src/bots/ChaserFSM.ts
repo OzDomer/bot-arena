@@ -1,5 +1,5 @@
 import { DELTAS, type Action, type Brain, type Direction, type Observation, type Ship } from "../types";
-import { directionToward, manhattan } from "../sim/geometry";
+import { directionToward, chebyshev } from "../sim/geometry";
 import { pickRandom } from "../util/random";
 
 const DIRECTIONS = Object.keys(DELTAS) as Direction[]
@@ -19,7 +19,7 @@ export class ChaserFSM implements Brain {
         }
         const aliveShips = obs.visibleShips.filter(ship => ship.hp > 0)
         if (this.state === 'wander' && aliveShips.length > 0) {
-            const byDistance = aliveShips.sort((a, b) => manhattan(obs.self.position, a.position) - manhattan(obs.self.position, b.position));
+            const byDistance = aliveShips.sort((a, b) => chebyshev(obs.self.position, a.position) - chebyshev(obs.self.position, b.position));
             this.targetId = byDistance[0].id;
             this.state = 'chase';
         }
@@ -27,11 +27,11 @@ export class ChaserFSM implements Brain {
 
         if (this.state === 'chase' && locked) {
             const move = directionToward(obs.self.position, locked.position);
-            const inRange = manhattan(obs.self.position, locked.position) <= obs.self.attackRange;
+            const inRange = chebyshev(obs.self.position, locked.position) <= obs.self.attackRange;
             return { move, attack: inRange ? locked.id : undefined };
         }
         const move = pickRandom(DIRECTIONS);
-        const inRangeTarget = obs.visibleShips.find(ship => manhattan(obs.self.position, ship.position) <= obs.self.attackRange);
+        const inRangeTarget = obs.visibleShips.find(ship => chebyshev(obs.self.position, ship.position) <= obs.self.attackRange);
         return { move, attack: inRangeTarget?.id };
 
     }

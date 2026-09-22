@@ -1,0 +1,43 @@
+import type { World } from "../types";
+
+export const TILE = 40;
+
+export function drawGrid(ctx: CanvasRenderingContext2D, world: World) {
+
+    for (let x = 0; x <= world.width; x++) {
+        ctx.beginPath();
+        ctx.moveTo(x * TILE, 0);
+        ctx.lineTo(x * TILE, world.height * TILE);
+        ctx.stroke();
+    }
+
+    for (let y = 0; y <= world.height; y++) {
+        ctx.beginPath();
+        ctx.moveTo(0 * TILE, y * TILE);
+        ctx.lineTo(world.width * TILE, y * TILE);
+        ctx.stroke();
+    }
+}
+
+const COLORS = ['#e63946', '#457b9d', '#2a9d8f', '#f4a261', '#8338ec'];
+const DEAD = '#999';
+
+export function drawShips(ctx: CanvasRenderingContext2D, world: World) {
+    for (const ship of world.ships) {
+        const px = ship.position.x * TILE;   // pixel x of the tile's top-left
+        const py = ship.position.y * TILE;
+
+        ctx.fillStyle = ship.hp <= 0 ? DEAD : COLORS[ship.id % COLORS.length];
+        ctx.fillRect(px + 4, py + 4, TILE - 8, TILE - 8);   // 4px inset
+
+        ctx.fillStyle = '#000';
+        ctx.font = '14px monospace';
+        ctx.fillText(`${ship.hp}`, px + 6, py + 16);
+    }
+}
+
+export function drawWorld(ctx: CanvasRenderingContext2D, world: World) {
+    ctx.clearRect(0, 0, world.width * TILE, world.height * TILE);
+    drawGrid(ctx, world);
+    drawShips(ctx, world);
+}

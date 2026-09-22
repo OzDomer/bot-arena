@@ -2,6 +2,17 @@ import type { World, Ship, Brain } from './types';
 import { RandomBot } from './bots/RandomBot';
 import { runMatch } from './sim/match';
 import { ChaserFSM } from './bots/ChaserFSM';
+import { drawWorld, TILE } from './render/render';
+
+
+const canvas = document.querySelector<HTMLCanvasElement>('#gameCanvas');
+if (!canvas) throw new Error('no canvas');
+
+const ctx = canvas.getContext('2d');
+if (!ctx) throw new Error('no 2d context');
+
+
+
 
 const ships: Ship[] = [
   { id: 1, hp: 10, attackDamage: 2, visionRange: 3, attackRange: 1, position: { x: 5, y: 5 } },
@@ -22,3 +33,8 @@ const final = runMatch(world, brains, w => {
   }
 })
 console.log('done at turn', final.turn, 'alive:', final.ships.filter(s => s.hp > 0).map(s => s.id));
+
+canvas.width = world.width * TILE
+canvas.height = world.height * TILE
+
+drawWorld(ctx, world)

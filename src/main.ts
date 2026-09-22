@@ -1,20 +1,24 @@
-import type { World, Ship, Action } from './types';
-import { observe } from './sim/observe';
-import { step } from './sim/step';
+import type { World, Ship, Brain } from './types';
+import { RandomBot } from './bots/RandomBot';
+import { runMatch } from './sim/match';
+import { ChaserFSM } from './bots/ChaserFSM';
 
 const ships: Ship[] = [
   { id: 1, hp: 10, attackDamage: 2, visionRange: 3, attackRange: 1, position: { x: 5, y: 5 } },
-  { id: 2, hp: 10, attackDamage: 2, visionRange: 3, attackRange: 1, position: { x: 6, y: 5 } }, // 3 away
-  { id: 3, hp: 10, attackDamage: 2, visionRange: 3, attackRange: 1, position: { x: 0, y: 0 } }, // far
+  { id: 2, hp: 10, attackDamage: 2, visionRange: 3, attackRange: 1, position: { x: 9, y: 9 } },
+  { id: 3, hp: 10, attackDamage: 2, visionRange: 3, attackRange: 1, position: { x: 0, y: 0 } },
 ];
 
 const world: World = { turn: 0, turnCap: 200, width: 10, height: 10, ships };
-
-console.log(observe(world, ships[0]));
-
-const actions: Record<Ship['id'], Action> = {
-  1: { move: 'E', attack: 2 },
-  2: { move: 'STAY', attack: 1 },
+const brains: Record<Ship['id'], Brain> = {
+  1: new RandomBot(),
+  2: new ChaserFSM(),
+  3: new ChaserFSM(),
 };
 
-console.log(step(world, actions));
+const final = runMatch(world, brains, w => {
+  if (w.turn % 10 === 0) {
+    console.table(w.ships.map(s => ({ id: s.id, hp: s.hp, x: s.position.x, y: s.position.y })))
+  }
+})
+console.log('done at turn', final.turn, 'alive:', final.ships.filter(s => s.hp > 0).map(s => s.id));

@@ -6,6 +6,7 @@ import { TILE } from './render/render';
 import { Player } from './render/Player';
 import { CowardFSM } from './bots/CowardFSM';
 import { randomPositions } from './sim/spawn';
+import { makeRng } from './util/random';
 
 
 const canvas = document.querySelector<HTMLCanvasElement>('#gameCanvas')
@@ -17,14 +18,19 @@ if (!turnCounter) throw new Error('turnCounter')
 const ctx = canvas.getContext('2d')
 if (!ctx) throw new Error('no 2d context')
 
+const seed = Date.now();
+// const seed = 11111;
 
-const spawns = randomPositions(3, 10, 10);
+console.log(`Match seed: ${seed}`);
+const rng = makeRng(seed);
+
+const spawns = randomPositions(3, 10, 10, rng);
 const ships: Ship[] = spawns.map((position, i) => ({ id: i + 1, hp: 10, maxHp: 10, attackDamage: 2, visionRange: 3, attackRange: 1, position }));
 const world: World = { turn: 0, turnCap: 200, width: 10, height: 10, ships };
 const brains: Record<Ship['id'], Brain> = {
-  1: new CowardFSM(),
-  2: new ChaserFSM(),
-  3: new ChaserFSM(),
+  1: new CowardFSM(rng),
+  2: new ChaserFSM(rng),
+  3: new ChaserFSM(rng),
 };
 
 const history: World[] = [world];

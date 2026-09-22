@@ -1,13 +1,13 @@
-import { DELTAS, type Action, type Brain, type Direction, type Observation, type Ship } from "../types";
+import { DIRECTIONS, type Action, type Direction, type Observation, type Ship } from "../types";
 import { closestTo, directionAway, directionToward, chebyshev } from "../sim/geometry";
 import { pickRandom } from "../util/random";
+import { RandomizedBot } from "./RandomizedBot";
 
-const DIRECTIONS = Object.keys(DELTAS) as Direction[]
 
 
 type State = 'wander' | 'chase' | 'flee';
 
-export class CowardFSM implements Brain {
+export class CowardFSM extends RandomizedBot {
     private state: State = 'wander';
     private targetId: Ship['id'] | undefined
     private lastFlee: Direction | undefined
@@ -27,7 +27,7 @@ export class CowardFSM implements Brain {
             if (threat) {
                 this.lastFlee = directionAway(obs.self.position, threat.position);
             } else if (!this.lastFlee) {
-                this.lastFlee = pickRandom(DIRECTIONS);
+                this.lastFlee = pickRandom(DIRECTIONS, this.rng);
             }
             return { move: this.lastFlee };
         }
@@ -44,7 +44,7 @@ export class CowardFSM implements Brain {
             return { move, attack: inRange ? locked.id : undefined };
         }
 
-        const move = pickRandom(DIRECTIONS);
+        const move = pickRandom(DIRECTIONS, this.rng);
         const inRangeTarget = aliveShips.find(ship => chebyshev(obs.self.position, ship.position) <= obs.self.attackRange);
         return { move, attack: inRangeTarget?.id };
 

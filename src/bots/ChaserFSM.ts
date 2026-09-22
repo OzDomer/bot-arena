@@ -1,13 +1,12 @@
-import { DELTAS, type Action, type Brain, type Direction, type Observation, type Ship } from "../types";
+import { DIRECTIONS, type Action, type Brain, type Direction, type Observation, type Ship } from "../types";
 import { directionToward, chebyshev } from "../sim/geometry";
 import { pickRandom } from "../util/random";
-
-const DIRECTIONS = Object.keys(DELTAS) as Direction[]
+import { RandomizedBot } from "./RandomizedBot";
 
 
 type State = 'wander' | 'chase';
 
-export class ChaserFSM implements Brain {
+export class ChaserFSM extends RandomizedBot {
     private state: State = 'wander';
     private targetId: Ship['id'] | undefined;
 
@@ -30,7 +29,7 @@ export class ChaserFSM implements Brain {
             const inRange = chebyshev(obs.self.position, locked.position) <= obs.self.attackRange;
             return { move, attack: inRange ? locked.id : undefined };
         }
-        const move = pickRandom(DIRECTIONS);
+        const move = pickRandom(DIRECTIONS, this.rng);
         const inRangeTarget = obs.visibleShips.find(ship => chebyshev(obs.self.position, ship.position) <= obs.self.attackRange);
         return { move, attack: inRangeTarget?.id };
 

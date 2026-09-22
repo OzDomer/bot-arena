@@ -1,12 +1,13 @@
 import { chebyshev } from "../sim/geometry";
-import { type Action, type Brain, type Observation, type Direction, DELTAS } from "../types";
+import { type Action, type Observation, DIRECTIONS } from "../types";
 import { pickRandom } from "../util/random";
+import { RandomizedBot } from "./RandomizedBot";
 
-const DIRECTIONS = Object.keys(DELTAS) as Direction[]
-export class RandomBot implements Brain {
+export class RandomBot extends RandomizedBot {
+
     decide(obs: Observation): Action {
-        const move = pickRandom(DIRECTIONS);
-        const target = obs.visibleShips.find(ship => chebyshev(obs.self.position, ship.position) <= obs.self.attackRange);
+        const move = pickRandom(DIRECTIONS, this.rng);
+        const target = obs.visibleShips.find(ship => ship.hp > 0 && chebyshev(obs.self.position, ship.position) <= obs.self.attackRange);
         return { move, attack: target?.id };
     }
 }

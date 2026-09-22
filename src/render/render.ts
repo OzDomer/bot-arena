@@ -32,12 +32,13 @@ export function drawShips(ctx: CanvasRenderingContext2D, world: World) {
 
         ctx.fillStyle = '#000';
         ctx.font = '14px monospace';
-        ctx.fillText(`${ship.hp}`, px + 6, py + 16);
+        ctx.fillText(`${ship.hp} ${ship.id}` , px + 6, py + 16);
     }
 }
 
 export function drawWorld(ctx: CanvasRenderingContext2D, world: World) {
     ctx.clearRect(0, 0, world.width * TILE, world.height * TILE);
+    ctx.fillText(`${world.turn}`, 11, 11)
     drawGrid(ctx, world);
     drawShips(ctx, world);
 }

@@ -5,6 +5,7 @@ export type Position = {
 
 export type Ship = {
     id: number,
+    maxHp: number,
     hp: number,
     attackDamage: number,
     visionRange: number,

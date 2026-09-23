@@ -1,4 +1,4 @@
-import type { Rng } from "./util/random";
+import type { Rng } from "./util/random"
 
 export type Position = {
     x: number,
@@ -17,11 +17,10 @@ export type Ship = {
 }
 
 export type World = {
+    rules: Rules
     turn: number,
-    turnCap: number,
-    width: number,
-    height: number,
-    ships: Ship[]
+    ships: Ship[],
+    storm: { center: Position }
 
 }
 
@@ -50,11 +49,11 @@ export type Facing = Exclude<Direction, 'STAY'>
 
 export type Direction = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW' | 'STAY'
 
-export type Delta = { dx: -1 | 0 | 1; dy: -1 | 0 | 1 };
+export type Delta = { dx: -1 | 0 | 1; dy: -1 | 0 | 1 }
 
-export const DIRECTIONS = Object.keys(DELTAS) as Direction[];
+export const DIRECTIONS = Object.keys(DELTAS) as Direction[]
 
-export const FACING = DIRECTIONS.filter(d => d !== 'STAY') as Facing[];
+export const FACING = DIRECTIONS.filter(d => d !== 'STAY') as Facing[]
 
 
 
@@ -81,4 +80,21 @@ export type Entrant = {
     make: (rng: Rng) => Brain
 }
 
-export const ARC_MULT: Record<Arc, number> = { front: 1, side: 1, rear: 2 };
+
+export type Rules = {
+    width: number;
+    height: number;
+    turnCap: number;
+    ship: { hp: number; attackDamage: number; visionRange: number; attackRange: number };
+    arcMult: Record<Arc, number>;
+    storm: { startTurn: number; shrinkEvery: number; baseDamage: number };
+}
+
+export const DEFAULT_RULES: Rules = {
+    width: 10,
+    height: 10,
+    turnCap: 200,
+    ship: { hp: 10, attackDamage: 2, visionRange: 3, attackRange: 1 },
+    arcMult: { front: 1, side: 1, rear: 2 },
+    storm: { startTurn: 20, shrinkEvery: 10, baseDamage: 1 },
+};

@@ -3,7 +3,7 @@ import { observe } from "./observe";
 import { step } from "./step";
 
 export function runMatch(world: World, brains: Record<Ship['id'], Brain>, onTurn?: (world: World) => void): World {
-    while (world.turn < world.turnCap) {
+    while (world.turn < world.rules.turnCap) {
         const actions: Record<Ship['id'], Action> = {};
 
         for (const ship of world.ships) {

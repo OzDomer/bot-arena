@@ -4,17 +4,17 @@ export const TILE = 40;
 
 export function drawGrid(ctx: CanvasRenderingContext2D, world: World) {
 
-    for (let x = 0; x <= world.width; x++) {
+    for (let x = 0; x <= world.rules.width; x++) {
         ctx.beginPath();
         ctx.moveTo(x * TILE, 0);
-        ctx.lineTo(x * TILE, world.height * TILE);
+        ctx.lineTo(x * TILE, world.rules.height * TILE);
         ctx.stroke();
     }
 
-    for (let y = 0; y <= world.height; y++) {
+    for (let y = 0; y <= world.rules.height; y++) {
         ctx.beginPath();
         ctx.moveTo(0 * TILE, y * TILE);
-        ctx.lineTo(world.width * TILE, y * TILE);
+        ctx.lineTo(world.rules.width * TILE, y * TILE);
         ctx.stroke();
     }
 }
@@ -48,7 +48,7 @@ export function drawShips(ctx: CanvasRenderingContext2D, world: World) {
 }
 
 export function drawWorld(ctx: CanvasRenderingContext2D, world: World) {
-    ctx.clearRect(0, 0, world.width * TILE, world.height * TILE);
+    ctx.clearRect(0, 0, world.rules.width * TILE, world.rules.height * TILE);
     ctx.fillText(`${world.turn}`, 11, 11)
     drawGrid(ctx, world);
     drawShips(ctx, world);

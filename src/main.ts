@@ -45,8 +45,8 @@ const final = runMatch(world, brains, w => {
 })
 console.log('done at turn', final.turn, 'alive:', final.ships.filter(s => s.hp > 0).map(s => s.id));
 
-canvas.width = world.width * TILE
-canvas.height = world.height * TILE
+canvas.width = world.rules.width * TILE
+canvas.height = world.rules.height * TILE
 
 
 

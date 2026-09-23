@@ -1,4 +1,5 @@
-import type { Ship, World } from "../types";
+import { mapCenter } from "../sim/geometry";
+import { DEFAULT_RULES, type Rules, type Ship, type World } from "../types";
 
 export function ship(over: Partial<Ship> & { id: number }): Ship {
     return {
@@ -7,6 +8,6 @@ export function ship(over: Partial<Ship> & { id: number }): Ship {
     };
 }
 
-export function world(ships: Ship[]): World {
-    return { turn: 0, turnCap: 200, width: 10, height: 10, ships };
+export function world(ships: Ship[], rules: Rules = DEFAULT_RULES): World {
+    return { turn: 0, rules, ships, storm: { center: mapCenter(rules) } };
 }

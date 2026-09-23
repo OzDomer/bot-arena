@@ -1,4 +1,4 @@
-import { DELTAS, type Arc, type Direction, type Facing, type Position, type Ship, type VisibleShip } from "../types";
+import { DELTAS, type Arc, type Direction, type Facing, type Position, type Rules, type Ship, type VisibleShip } from "../types";
 
 export function chebyshev(a: Position, b: Position): number {
     return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
@@ -33,4 +33,8 @@ export function attackArc(target: Ship, attackerPos: Position): Arc {
     if (toAttacker.dx === facing.dx && toAttacker.dy === facing.dy) return 'front'
     if (toAttacker.dx === -facing.dx && toAttacker.dy === -facing.dy) return 'rear'
     return 'side'
+}
+
+export function mapCenter(rules: Rules): Position {
+    return { x: Math.floor(rules.width / 2), y: Math.floor(rules.height / 2) };
 }

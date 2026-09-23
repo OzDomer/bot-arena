@@ -1,4 +1,4 @@
-import { ARC_MULT, DELTAS, type Action, type Facing, type Position, type Ship, type World } from "../types";
+import { DELTAS, type Action, type Facing, type Position, type Ship, type World } from "../types";
 import { clamp, chebyshev, key, attackArc } from "./geometry";
 
 export function step(world: World, actions: Record<Ship['id'], Action>): World {
@@ -11,7 +11,7 @@ export function step(world: World, actions: Record<Ship['id'], Action>): World {
         if (action?.attack === undefined) continue
         const target = world.ships.find(ship => ship.id === action.attack)
         if (!target || target.hp <= 0 || chebyshev(attacker.position, target.position) > attacker.attackRange) continue
-        const mult = ARC_MULT[attackArc(target, attacker.position)];
+        const mult = world.rules.arcMult[attackArc(target, attacker.position)];
         damage[target.id] = (damage[target.id] ?? 0) + attacker.attackDamage * mult
     }
 
@@ -34,8 +34,8 @@ export function step(world: World, actions: Record<Ship['id'], Action>): World {
         if (ship.hp <= 0 || move === 'STAY') continue
         const { dx, dy } = DELTAS[move];
         const dest = {
-            x: clamp(ship.position.x + dx, 0, world.width - 1),
-            y: clamp(ship.position.y + dy, 0, world.height - 1)
+            x: clamp(ship.position.x + dx, 0, world.rules.width - 1),
+            y: clamp(ship.position.y + dy, 0, world.rules.height - 1)
         }
         if (occupied.has(key(dest))) {
             moved.set(ship.id, { position: ship.position, facing: move })   // bounce: turned, didn't move

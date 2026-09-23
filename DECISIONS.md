@@ -27,7 +27,7 @@ Each entry: what we decided, why, and what it would take to revisit.
 1. ~~Storm~~ (done — center-fixed; randomize center later)
 2. Tournament stats — per-seat wins, survival turns, damage dealt/taken, kills; rotate slots; headless Node entry. The fitness signal.
 3. Storm-aware ChaserFSM/CowardFSM v2 (v1 frozen as baselines)
-4. Narrow Observation (map = width/height/turn; storm = center/radius/phase, no damage)
+4. ~~ Observation~~ (map = width/height/turn; storm = center/radius/phase, no damage)
 5. Heal resource
 6. Evolution (tiny NN brains), then RL
 6. Port `step()` to Rust — to learn Rust, not for speed

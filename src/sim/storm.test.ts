@@ -4,23 +4,23 @@ import { DEFAULT_RULES } from '../types';
 
 describe('stormAt', () => {
     it('has not started before startTurn', () => {
-        expect(stormAt(0, DEFAULT_RULES)).toEqual({ radius: 10, damage: 0 })
+        expect(stormAt(0, DEFAULT_RULES)).toEqual({ radius: 10, damage: 0, phase: 0 })
     })
 
     it('shrinks by one and deals base damage at startTurn', () => {
-        expect(stormAt(20, DEFAULT_RULES)).toEqual({ radius: 9, damage: 1 });
+        expect(stormAt(20, DEFAULT_RULES)).toEqual({ radius: 9, damage: 1, phase: 1 });
     })
 
     it('still phase 1 at turn 29', () => {
-        expect(stormAt(29, DEFAULT_RULES)).toEqual({ radius: 9, damage: 1 });
+        expect(stormAt(29, DEFAULT_RULES)).toEqual({ radius: 9, damage: 1, phase: 1 });
     })
 
     it('phase 2 at turn 30', () => {
-        expect(stormAt(30, DEFAULT_RULES)).toEqual({ radius: 8, damage: 2 });
+        expect(stormAt(30, DEFAULT_RULES)).toEqual({ radius: 8, damage: 2, phase: 2});
     })
 
     it('radius floors at -1 late game', () => {
-        expect(stormAt(199, DEFAULT_RULES)).toEqual({ radius: -1, damage: 18 });
+        expect(stormAt(199, DEFAULT_RULES)).toEqual({ radius: -1, damage: 18, phase: 18});
     })
 })
 

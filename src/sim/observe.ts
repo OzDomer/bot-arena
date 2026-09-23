@@ -3,13 +3,14 @@ import { chebyshev } from "./geometry";
 import { stormAt } from "./storm";
 
 export function observe(world: World, ship: Ship): Observation {
-    const { ships, ...map } = world;   // map = world minus ships
+    const map = { width: world.rules.width, height: world.rules.height, turn: world.turn }
 
-    const visibleShips = ships
+    const visibleShips = world.ships
         .filter(other => other.id !== ship.id && chebyshev(ship.position, other.position) <= ship.visionRange)
         .map(other => ({ id: other.id, position: { ...other.position }, hp: other.hp, facing: other.facing }))
 
-    const storm = { center: { ...world.storm.center }, ...stormAt(world.turn, world.rules) }
+    const { radius, phase } = stormAt(world.turn, world.rules)
+    const storm = { center: { ...world.storm.center }, radius, phase }
     return { self: { ...ship, position: { ...ship.position } }, visibleShips, map, storm }
 }
 

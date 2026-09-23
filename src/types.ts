@@ -67,8 +67,8 @@ export type VisibleShip = Pick<Ship, 'id' | 'position' | 'hp' | 'facing'>;
 export type Observation = {
     self: Ship,
     visibleShips: VisibleShip[],
-    map: Omit<World, 'ships'>,
-    storm: { center: Position; radius: number; damage: number }
+    map: { width: number; height: number; turn: number }
+    storm: { center: Position; radius: number; phase: number }
 
 }
 

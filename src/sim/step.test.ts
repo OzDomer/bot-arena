@@ -118,4 +118,65 @@ describe('step', () => {
         expect(next.turn).toBe(1)
         expect(w.turn).toBe(0)
     })
+
+    it('no storm damage before start turn', () => {
+        const w = world([
+            ship({ id: 1, position: { x: 9, y: 9 }, facing: 'W' })]
+        )
+        const next = step(w, { 1: { move: 'STAY' } })
+        expect(next.ships[0].hp).toBe(10)
+
+    })
+
+    it('no storm damage at turn 20 in a safe tile', () => {
+        const w = world([
+            ship({ id: 1, position: { x: 5, y: 5 }, facing: 'W' })], 20
+        )
+        const next = step(w, { 1: { move: 'STAY' } })
+        expect(next.ships[0].hp).toBe(10)
+
+    })
+    it('corner takes phase 3 damage at turn 40', () => {
+        const w = world([
+            ship({ id: 1, position: { x: 0, y: 0 }, facing: 'W' })], 40
+        )
+        const next = step(w, { 1: { move: 'STAY' } })
+        expect(next.ships[0].hp).toBe(7)
+
+    })
+    it('corner still safe at turn 39', () => {
+        const w = world([
+            ship({ id: 1, position: { x: 0, y: 0 }, facing: 'W' })], 39
+        )
+        const next = step(w, { 1: { move: 'STAY' } })
+        expect(next.ships[0].hp).toBe(10)
+
+    })
+    it('wreck stays at 0 outside of storm', () => {
+        const w = world([
+            ship({ id: 1, position: { x: 0, y: 0 }, facing: 'W', hp: 0 })], 199
+        )
+        const next = step(w, { 1: { move: 'STAY' } })
+        expect(next.ships[0]).toStrictEqual(w.ships[0])
+    })
+
+    it('storm and an attack damage tick in the same turn', () => {
+        const w = world([
+            ship({ id: 1, position: { x: 0, y: 0 }, facing: 'E' }),
+            ship({ id: 2, position: { x: 1, y: 0 }, facing: 'W' })], 50)
+
+        const next = step(w, { 1: { move: 'STAY', attack: 2 }, 2: { move: 'STAY' } })
+
+        expect(next.ships[1].hp).toBe(4)
+    })
+
+    it('no safe space in the last phase of the storm', () => {
+        const w = world([
+            ship({ id: 1, position: { x: 5, y: 5 }, facing: 'W' })], 199)
+
+        const next = step(w, { 1: { move: 'STAY', attack: 2 }, 2: { move: 'STAY' } })
+
+        expect(next.ships[0].hp).toBe(0)
+
+    })
 })

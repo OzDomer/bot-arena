@@ -8,12 +8,13 @@ export function stormAt(turn: number, rules: Rules) {
 
     const phase = Math.floor((turn - startTurn) / shrinkEvery) + 1;
     return {
-        radius: Math.max(0, startRadius - phase),
+        radius: Math.max(-1 , startRadius - phase),
         damage: baseDamage * phase,
     };
 }
 
 export function isSafe(pos: Position, center: Position, radius: number): boolean {
+    if (radius < 0) return false
     const dx = pos.x - center.x, dy = pos.y - center.y;
     return dx * dx + dy * dy <= radius * radius;
 }

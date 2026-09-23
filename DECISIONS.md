@@ -16,7 +16,7 @@ Each entry: what we decided, why, and what it would take to revisit.
 - **Dead ships stay** as wrecks and block tiles.
 - **One ship per tile.** Wrecks and stayers claim first; movers resolve in id order (lower id wins — known bias, fix by rotating slots in tournaments).
 - **Facing = last move direction.** No rotate action. A bounced move still turns the ship. Rear hits ×2, side/front ×1.
-- **Storm:** circle from a center chosen per match, radius shrinks one tile per phase after `startTurn`, damage `baseDamage × phase`, applied after moves, whole map is storm once radius hits 0. Bots see the full storm.
+- **Storm:** circle from a center chosen per match, radius shrinks one tile per phase after `startTurn`, damage `baseDamage × phase`, applied after moves, once radius goes negative (floors at −1). Bots see the full storm.
 - **Last one standing wins.** 0 alive = draw, >1 at turn cap = timeout.
 
 ## Rejected

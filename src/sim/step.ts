@@ -1,5 +1,6 @@
 import { DELTAS, type Action, type Facing, type Position, type Ship, type World } from "../types";
 import { clamp, chebyshev, key, attackArc } from "./geometry";
+import { isSafe, stormAt } from "./storm";
 
 export function step(world: World, actions: Record<Ship['id'], Action>): World {
     // --- phase 1: attacks (resolved on current positions, simultaneous) ---
@@ -49,6 +50,14 @@ export function step(world: World, actions: Record<Ship['id'], Action>): World {
         const m = moved.get(ship.id);
         return m ? { ...ship, ...m } : ship;
     })
+    // --- phase 3: storm (after moves, on final positions) ---
+    const storm = stormAt(world.turn, world.rules)
 
-    return { ...world, ships: afterMoves, turn: world.turn + 1 }
+    const afterStorm = afterMoves.map(ship => {
+        if (ship.hp <= 0 || isSafe(ship.position, world.storm.center, storm.radius)) return ship          // wrecks and safe ships untouched
+        return { ...ship, hp: Math.max(0, ship.hp - storm.damage) }
+    })
+
+    return { ...world, ships: afterStorm, turn: world.turn + 1 }
+
 }

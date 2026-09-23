@@ -8,6 +8,6 @@ export function ship(over: Partial<Ship> & { id: number }): Ship {
     };
 }
 
-export function world(ships: Ship[], rules: Rules = DEFAULT_RULES): World {
-    return { turn: 0, rules, ships, storm: { center: mapCenter(rules) } };
+export function world(ships: Ship[], turn: number = 0, rules: Rules = DEFAULT_RULES): World {
+    return { turn, rules, ships, storm: { center: mapCenter(rules) } }
 }

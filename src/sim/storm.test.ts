@@ -19,8 +19,8 @@ describe('stormAt', () => {
         expect(stormAt(30, DEFAULT_RULES)).toEqual({ radius: 8, damage: 2 });
     })
 
-    it('radius floors at 0 late game', () => {
-        expect(stormAt(199, DEFAULT_RULES)).toEqual({ radius: 0, damage: 18 });
+    it('radius floors at -1 late game', () => {
+        expect(stormAt(199, DEFAULT_RULES)).toEqual({ radius: -1, damage: 18 });
     })
 })
 
@@ -33,5 +33,9 @@ describe('isSafe', () => {
     })
     it('edge of the circle is safe', () => {
         expect(isSafe({ x: 8, y: 5 }, { x: 5, y: 5 }, 3)).toBe(true);
+    })
+
+    it('nothing is safe once radius is negative', () => {
+        expect(isSafe({ x: 5, y: 5 }, { x: 5, y: 5 }, -1)).toBe(false);
     })
 })

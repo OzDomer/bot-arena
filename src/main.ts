@@ -28,13 +28,13 @@ console.log(`Match seed: ${seed}`);
 const rng = makeRng(seed);
 const entrants: Entrant[] =
   [
-    { name: 'random', make: rng => new BOTS.random(rng) },
+    { name: 'coward', make: rng => new BOTS.coward(rng) },
+    { name: 'chaser', make: rng => new BOTS.chaser(rng) },
+    { name: 'coward', make: rng => new BOTS.coward(rng) },
     { name: 'chaser', make: rng => new BOTS.chaser(rng) },
     { name: 'chaser', make: rng => new BOTS.chaser(rng) },
-    { name: 'chaser', make: rng => new BOTS.chaser(rng) },
-    { name: 'chaser', make: rng => new BOTS.chaser(rng) },
-    { name: 'random', make: rng => new BOTS.random(rng) },
-    { name: 'random', make: rng => new BOTS.random(rng) }
+    { name: 'coward', make: rng => new BOTS.coward(rng) },
+    { name: 'coward', make: rng => new BOTS.coward(rng) }
   ]
 
 const { world, brains } = makeMatch(entrants, rng)

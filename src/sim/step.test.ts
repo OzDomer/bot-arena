@@ -13,6 +13,7 @@ describe('step', () => {
         expect(next.ships[0].hp).toBe(8);
         expect(next.ships[1].hp).toBe(8);
     })
+
     it('doubles damage from the rear', () => {
         const w = world([
             ship({ id: 1, position: { x: 5, y: 5 }, facing: 'W' }),
@@ -22,6 +23,47 @@ describe('step', () => {
         expect(next.ships[0].hp).toBe(10);
         expect(next.ships[1].hp).toBe(6);
     })
+
+    it('front damage correct', () => {
+        const w = world([
+            ship({ id: 1, position: { x: 5, y: 5 }, facing: 'E' }),
+            ship({ id: 2, position: { x: 6, y: 5 }, facing: 'W' }),
+        ])
+        const next = step(w, { 1: { move: 'STAY', attack: 2 }, 2: { move: 'STAY' } });
+        expect(next.ships[0].hp).toBe(10);
+        expect(next.ships[1].hp).toBe(8);
+    })
+
+    it('side damage correct', () => {
+        const w = world([
+            ship({ id: 1, position: { x: 5, y: 5 }, facing: 'E' }),
+            ship({ id: 2, position: { x: 6, y: 5 }, facing: 'S' }),
+        ])
+        const next = step(w, { 1: { move: 'STAY', attack: 2 }, 2: { move: 'STAY' } });
+        expect(next.ships[0].hp).toBe(10);
+        expect(next.ships[1].hp).toBe(8);
+    })
+
+    it('stay preserves facing', () => {
+        const w = world([
+            ship({ id: 1, position: { x: 5, y: 5 }, facing: 'E' }),
+        ])
+        const next = step(w, { 1: { move: 'STAY' } });
+        expect(next.ships[0].facing).toBe('E');
+
+    })
+
+    it('attack uses pre move facing', () => {
+        const w = world([
+            ship({ id: 1, position: { x: 5, y: 5 }, facing: 'E' }),
+            ship({ id: 2, position: { x: 6, y: 5 }, facing: 'E' }),
+        ])
+        const next = step(w, { 1: { move: 'STAY', attack: 2 }, 2: { move: 'W' } });
+        expect(next.ships[0].hp).toBe(10)
+        expect(next.ships[1].hp).toBe(6)
+        expect(next.ships[1].facing).toBe('W')
+    })
+
     it('out of range attack does nothing', () => {
         const w = world([
             ship({ id: 1, position: { x: 5, y: 7 }, facing: 'W' }),
@@ -31,6 +73,7 @@ describe('step', () => {
         expect(next.ships[0].hp).toBe(10);
         expect(next.ships[1].hp).toBe(10);
     })
+
     it('dead ship cant attack', () => {
         const w = world([
             ship({ id: 1, position: { x: 5, y: 5 }, facing: 'W', hp: 0 }),
@@ -40,6 +83,7 @@ describe('step', () => {
         expect(next.ships[0].hp).toBe(0);
         expect(next.ships[1].hp).toBe(10);
     })
+
     it('movement clamps at the edge', () => {
         const w = world([
             ship({ id: 1, position: { x: 0, y: 5 }, facing: 'W' }),
@@ -47,6 +91,7 @@ describe('step', () => {
         const next = step(w, { 1: { move: 'W' } })
         expect(next.ships[0].position).toEqual({ x: 0, y: 5 });
     })
+
     it('wreck blocks a tile', () => {
         const w = world([
             ship({ id: 1, position: { x: 5, y: 5 }, facing: 'W', hp: 0 }),
@@ -56,6 +101,7 @@ describe('step', () => {
         expect(next.ships[1].position).toEqual({ x: 6, y: 5 })
         expect(next.ships[1].facing).toBe('W')
     })
+
     it('lower id gets tile', () => {
         const w = world([
             ship({ id: 1, position: { x: 5, y: 5 }, facing: 'W' }),
@@ -65,6 +111,7 @@ describe('step', () => {
         expect(next.ships[0].position).toEqual({ x: 6, y: 4 })
         expect(next.ships[1].position).toEqual({ x: 6, y: 5 })
     })
+
     it('increments turn without mutating input', () => {
         const w = world([])
         const next = step(w, {})

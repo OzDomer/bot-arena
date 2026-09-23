@@ -67,7 +67,9 @@ export type VisibleShip = Pick<Ship, 'id' | 'position' | 'hp' | 'facing'>;
 export type Observation = {
     self: Ship,
     visibleShips: VisibleShip[],
-    map: Omit<World, 'ships'>
+    map: Omit<World, 'ships'>,
+    storm: { center: Position; radius: number; damage: number }
+
 }
 
 // input is Observation, output is Action. Each player is handed Observation data and must return Action data

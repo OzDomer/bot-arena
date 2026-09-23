@@ -37,4 +37,17 @@ describe('observe', () => {
         obs.self.position.x = 99;
         expect(w.ships[0].position.x).toBe(5);
     })
+
+    it('exposes the storm state for the current turn', () => {
+        const w = world([ship({ id: 1, position: { x: 5, y: 5 } })], 40)
+        const obs = observe(w, w.ships[0])
+        expect(obs.storm).toEqual({ center: { x: 5, y: 5 }, radius: 7, damage: 3 })
+    })
+
+    it('storm center does not expose the world to mutation', () => {
+        const w = world([ship({ id: 1, position: { x: 5, y: 5 } })])
+        const obs = observe(w, w.ships[0])
+        obs.storm.center.x = 8
+        expect(w.storm.center).toEqual({ x: 5, y: 5 })
+    })
 })

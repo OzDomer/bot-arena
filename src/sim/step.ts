@@ -1,5 +1,5 @@
-import { DELTAS, type Action, type Ship, type World } from "../types";
-import { clamp, chebyshev } from "./geometry";
+import { DELTAS, type Action, type Position, type Ship, type World } from "../types";
+import { clamp, chebyshev, key } from "./geometry";
 
 export function step(world: World, actions: Record<Ship['id'], Action>): World {
     // --- phase 1: attacks (resolved on current positions, simultaneous) ---
@@ -18,12 +18,32 @@ export function step(world: World, actions: Record<Ship['id'], Action>): World {
         ...ship,
         hp: Math.max(0, ship.hp - (damage[ship.id] ?? 0)),
     }));
-    const afterMoves: Ship[] = afterAttacks.map(ship => {
-        if (ship.hp <= 0) return ship;
-        const { dx, dy } = DELTAS[actions[ship.id]?.move ?? 'STAY'];
-        const x = clamp(ship.position.x + dx, 0, world.width - 1)
-        const y = clamp(ship.position.y + dy, 0, world.height - 1)
-        return { ...ship, position: { x, y } };
-    });
+    // --- phase 2: moves (two passes, wrecks and stayers claim first) ---
+    const occupied = new Set<string>();
+
+    for (const ship of afterAttacks) {
+        const move = actions[ship.id]?.move ?? 'STAY'
+        if (ship.hp <= 0 || move === 'STAY') occupied.add(key(ship.position))
+    }
+
+    const moved = new Map<Ship['id'], Position>();   // id → final position for ships that actually moved
+
+    for (const ship of afterAttacks) {
+        const move = actions[ship.id]?.move ?? 'STAY'
+        if (ship.hp <= 0 || move === 'STAY') continue
+        const { dx, dy } = DELTAS[move];
+        const target = {
+            x: clamp(ship.position.x + dx, 0, world.width - 1),
+            y: clamp(ship.position.y + dy, 0, world.height - 1)
+        };
+        if (occupied.has(key(target))) { occupied.add(key(ship.position)); continue; }
+        occupied.add(key(target));
+        moved.set(ship.id, target);
+    }
+
+    const afterMoves: Ship[] = afterAttacks.map(ship => ({
+        ...ship,
+        position: moved.get(ship.id) ?? ship.position,
+    }));
     return { ...world, ships: afterMoves, turn: world.turn + 1 };
 }

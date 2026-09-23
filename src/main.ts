@@ -29,7 +29,12 @@ const rng = makeRng(seed);
 const entrants: Entrant[] =
   [
     { name: 'random', make: rng => new BOTS.random(rng) },
-    { name: 'chaser', make: rng => new BOTS.random(rng) },
+    { name: 'chaser', make: rng => new BOTS.chaser(rng) },
+    { name: 'chaser', make: rng => new BOTS.chaser(rng) },
+    { name: 'chaser', make: rng => new BOTS.chaser(rng) },
+    { name: 'chaser', make: rng => new BOTS.chaser(rng) },
+    { name: 'random', make: rng => new BOTS.random(rng) },
+    { name: 'random', make: rng => new BOTS.random(rng) }
   ]
 
 const { world, brains } = makeMatch(entrants, rng)

@@ -22,3 +22,7 @@ export function directionAway(from: Position, threat: Position): Direction {
 export function closestTo(from: Position, ships: VisibleShip[]): VisibleShip | undefined {
     return [...ships].sort((a, b) => chebyshev(from, a.position) - chebyshev(from, b.position))[0];
 }
+
+export function key(p: Position): string {
+    return `${p.x},${p.y}`;
+}

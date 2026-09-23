@@ -1,4 +1,4 @@
-# bot-arena
+# bot arena
 
 A project where you can pit bots against each other in a last-man-standing match on a fog-of-war grid. The rules evolve over versions (storm, resources), and so do the bots — hand-written FSMs now, evolved and ML brains later.
 
@@ -27,8 +27,7 @@ Open http://localhost:5173/ (the default) to see a match played on the grid. Ope
 - **Chebyshev distance** — square-shaped range, matching 8-direction movement.
 - **Attacks before moves** — attacks resolve on positions at the start of the turn, so a player can't attack and run in the same tick.
 - **Simultaneous damage** — all damage is tallied and applied at once, so no one gets a turn-order advantage and can eliminate an opponent before they retaliate.
-- **Dead ships stay** — doesn't affect much right now; later, ships won't share tiles and wrecks will act as obstacles.
-- **Stacking allowed** — ease of code for now; will change.
+- **Dead ships stay** —  ships don't share tiles and wrecks act as obstacles.
 - **Last one standing** wins.
 
 ## Bots

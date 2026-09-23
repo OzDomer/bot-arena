@@ -63,7 +63,7 @@ export type Action = {
     attack?: Ship["id"]
 }
 
-export type VisibleShip = Pick<Ship, 'id' | 'position' | 'hp'>;
+export type VisibleShip = Pick<Ship, 'id' | 'position' | 'hp' | 'facing'>;
 
 export type Observation = {
     self: Ship,
@@ -80,3 +80,5 @@ export type Entrant = {
     name: string
     make: (rng: Rng) => Brain
 }
+
+export const ARC_MULT: Record<Arc, number> = { front: 1, side: 1, rear: 2 };

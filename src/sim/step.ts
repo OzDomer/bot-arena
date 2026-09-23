@@ -1,5 +1,5 @@
-import { DELTAS, type Action, type Facing, type Position, type Ship, type World } from "../types";
-import { clamp, chebyshev, key } from "./geometry";
+import { ARC_MULT, DELTAS, type Action, type Facing, type Position, type Ship, type World } from "../types";
+import { clamp, chebyshev, key, attackArc } from "./geometry";
 
 export function step(world: World, actions: Record<Ship['id'], Action>): World {
     // --- phase 1: attacks (resolved on current positions, simultaneous) ---
@@ -9,9 +9,10 @@ export function step(world: World, actions: Record<Ship['id'], Action>): World {
         if (attacker.hp <= 0) continue
         const action = actions[attacker.id]
         if (action?.attack === undefined) continue
-        const dest = world.ships.find(ship => ship.id === action.attack);
-        if (!dest || dest.hp <= 0 || chebyshev(attacker.position, dest.position) > attacker.attackRange) continue;
-        damage[dest.id] = (damage[dest.id] ?? 0) + attacker.attackDamage
+        const target = world.ships.find(ship => ship.id === action.attack)
+        if (!target || target.hp <= 0 || chebyshev(attacker.position, target.position) > attacker.attackRange) continue
+        const mult = ARC_MULT[attackArc(target, attacker.position)];
+        damage[target.id] = (damage[target.id] ?? 0) + attacker.attackDamage * mult
     }
 
     const afterAttacks: Ship[] = world.ships.map(ship => ({

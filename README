@@ -38,11 +38,15 @@ Open http://localhost:5173/ (the default) to see a match played on the grid. Ope
 
 ## What the tournament taught me
 
-The coward can't win the majority of matches unless it gets lucky spawns: once a chaser locks on, the coward stops shooting but the chaser keeps closing the gap and shooting. The way it's written, it's in an unwinnable spot.
+Each entry is one change to the rules or bots, what the tally said, and what I concluded from it.
 
-Chaser vs random ends in a tie every time. Both have the same stats, both shoot whenever anyone's in range, and damage is simultaneous — so they eliminate each other on the same turn. Right now there is no way to win a "fair fight"; one side has to start the fight at a disadvantage, which currently means it fought someone else first.
+**No facing, no storm.** Chaser vs random ends in a tie every time. Both have the same stats, both shoot whenever anyone's in range, and damage is simultaneous — so they eliminate each other on the same turn. There's no way to win a "fair fight"; one side has to start the fight at a disadvantage, which means it fought someone else first. → Added facing with a rear ×2 multiplier.
 
-adding collision and doing a 8 player tournament with the result being the random bots wins majority of the time 68 to 21 means right now with the map rules (no storm and no buffs that encourage )fighting is the least optimal way to win  
+**Collision, 8-player free-for-all.** Random beats chaser 68 to 21. With no storm and nothing to encourage fighting, seeking out combat is the least optimal way to win — the bot that avoids everyone outlives the bots that trade damage.
+
+**Coward bot.** The coward can't win most matches unless it gets lucky spawns: once a chaser locks on, the coward stops shooting but the chaser keeps closing the gap and shooting. As written, it's in an unwinnable spot. And two cowards fleeing each other never resolve — 35% of matches timed out. → Justified the storm.
+
+**Storm (center-fixed).** Timeouts 35% → 0 in 100 matches, ~9% draws. Tally by name was chaser 48 / coward 43, but the lineup had 3 chasers and 4 cowards, so per seat the chaser still wins (~16 vs ~11). What changed is that the coward's hoarded HP now converts into wins instead of timeouts: the chaser wins the fights, the coward wins the wait. Combat still clears most of the field before the storm does. → Next: per-seat stats before any more balance changes.
 
 ## Roadmap
 

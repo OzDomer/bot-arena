@@ -24,11 +24,12 @@ Each entry: what we decided, why, and what it would take to revisit.
 - Damage RNG (luck, not skill). Move-XOR-attack (kills the RTS feel). Bracing (rewards camping). Bot "retry" on blocked move (breaks the GM model; bots can see the tile is taken).
 
 ## Roadmap
-1. Storm (in progress)
-2. Narrow Observation per the architecture entry
-3. Heal resource + CowardFSMv2 (old bots frozen as baselines)
-4. Tournament stats — per-bot survival, damage, kills; rotate slots; the fitness signal
-5. Evolution (tiny NN brains, small visible runs), then RL
+1. ~~Storm~~ (done — center-fixed; randomize center later)
+2. Tournament stats — per-seat wins, survival turns, damage dealt/taken, kills; rotate slots; headless Node entry. The fitness signal.
+3. Storm-aware ChaserFSM/CowardFSM v2 (v1 frozen as baselines)
+4. Narrow Observation (map = width/height/turn; storm = center/radius/phase, no damage)
+5. Heal resource
+6. Evolution (tiny NN brains), then RL
 6. Port `step()` to Rust — to learn Rust, not for speed
 7. RTS: momentum physics, continuous positions, islands, disembarking; re-evolve
 
@@ -36,3 +37,4 @@ Each entry: what we decided, why, and what it would take to revisit.
 - Identical-stat shooters always draw 1v1 → needed asymmetry → facing.
 - Free-for-all: random beat chaser ~3:1 before facing; aggression is punished when there's no reason to fight.
 - Chaser vs coward: 35% timeouts (two cowards fleeing each other forever) → justifies the storm.
+- Storm (v1, center-fixed): timeouts 35% → 0 in 100 matches, draws ~9%. Tally by name was chaser 48 / coward 43, but the lineup was 3 chasers vs 4 cowards — per seat chaser still wins ~16 vs ~11. The storm converts the coward's hoarded HP into wins instead of timeouts. combat still clears most of the field before the storm does.

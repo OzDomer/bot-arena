@@ -22,12 +22,14 @@ if (!ctx) throw new Error('no 2d context')
 const seed = Date.now();
 // const seed = 11111;
 
+const BOTS = { random: RandomBot, chaser: ChaserFSM, coward: CowardFSM };
+
 console.log(`Match seed: ${seed}`);
 const rng = makeRng(seed);
 const entrants: Entrant[] =
   [
-    { name: 'random', make: rng => new RandomBot(rng) },
-    { name: 'chaser', make: rng => new ChaserFSM(rng) },
+    { name: 'random', make: rng => new BOTS.random(rng) },
+    { name: 'chaser', make: rng => new BOTS.random(rng) },
   ]
 
 const { world, brains } = makeMatch(entrants, rng)

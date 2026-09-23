@@ -73,7 +73,7 @@ export type Observation = {
 
 // input is Observation, output is Action. Each player is handed Observation data and must return Action data
 export interface Brain {
-    decide(obs: Observation): Action;
+    decide(obs: Readonly<Observation>): Action;
 }
 
 export type Entrant = {

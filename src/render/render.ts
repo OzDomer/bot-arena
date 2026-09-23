@@ -1,3 +1,4 @@
+import { stormAt } from "../sim/storm";
 import { DELTAS, type World } from "../types";
 
 export const TILE = 40;
@@ -46,10 +47,27 @@ export function drawShips(ctx: CanvasRenderingContext2D, world: World) {
         }
     }
 }
+export function drawStorm(ctx: CanvasRenderingContext2D, world: World) {
+    const { radius } = stormAt(world.turn, world.rules)
+    const w = world.rules.width * TILE
+    const h = world.rules.height * TILE
+
+    ctx.fillStyle = 'rgba(80, 80, 200, 0.35)'
+    ctx.beginPath()
+    ctx.rect(0, 0, w, h)                       // whole map…
+    if (radius >= 0) {
+        const cx = (world.storm.center.x + 0.5) * TILE
+        const cy = (world.storm.center.y + 0.5) * TILE
+        ctx.arc(cx, cy, radius * TILE, 0, Math.PI * 2)   // …minus the safe circle
+    }
+    ctx.fill('evenodd')
+}
 
 export function drawWorld(ctx: CanvasRenderingContext2D, world: World) {
     ctx.clearRect(0, 0, world.rules.width * TILE, world.rules.height * TILE);
     ctx.fillText(`${world.turn}`, 11, 11)
-    drawGrid(ctx, world);
-    drawShips(ctx, world);
+    drawGrid(ctx, world)
+    drawStorm(ctx, world)
+    drawShips(ctx, world)
 }
+

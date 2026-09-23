@@ -1,17 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { step } from './step';
-import type { Ship, World } from '../types';
+import { describe, it, expect } from 'vitest'
+import { step } from './step'
+import { ship, world } from '../test/fixtures'
 
-function ship(over: Partial<Ship> & { id: number }): Ship {
-    return {
-        hp: 10, maxHp: 10, attackDamage: 2, visionRange: 3, attackRange: 1,
-        position: { x: 0, y: 0 }, facing: 'N', ...over
-    };
-}
-
-function world(ships: Ship[]): World {
-    return { turn: 0, turnCap: 200, width: 10, height: 10, ships };
-}
 
 describe('step', () => {
     it('resolves attacks simultaneously', () => {

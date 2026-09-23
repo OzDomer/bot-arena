@@ -1,5 +1,4 @@
 import type { Entrant, } from "../types"
-import { makeRng } from "../util/random"
 import { runMatch } from "./match"
 import { makeMatch } from "./setup"
 
@@ -8,8 +7,7 @@ export function runTournament(entrants: Entrant[], matches: number, seed: number
     const tally: Record<string, number> = {}
 
     for (let m = 0; m < matches; m++) {
-        const rng = makeRng(seed + m)
-        const { world, brains } = makeMatch(entrants, rng)
+        const { world, brains } = makeMatch(entrants, seed + m)
         const final = runMatch(world, brains)
         const alive = final.ships.filter(s => s.hp > 0).map(s => s.id)
         let result: string

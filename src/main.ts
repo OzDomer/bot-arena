@@ -5,7 +5,6 @@ import { ChaserFSM } from './bots/ChaserFSM';
 import { TILE } from './render/render';
 import { Player } from './render/Player';
 import { CowardFSM } from './bots/CowardFSM';
-import { makeRng } from './util/random';
 import { runTournament } from './sim/tournament';
 import { makeMatch } from './sim/setup';
 
@@ -25,7 +24,6 @@ const seed = Date.now();
 const BOTS = { random: RandomBot, chaser: ChaserFSM, coward: CowardFSM };
 
 console.log(`Match seed: ${seed}`);
-const rng = makeRng(seed);
 const entrants: Entrant[] =
   [
     { name: 'coward', make: rng => new BOTS.coward(rng) },
@@ -37,7 +35,7 @@ const entrants: Entrant[] =
     { name: 'coward', make: rng => new BOTS.coward(rng) }
   ]
 
-const { world, brains } = makeMatch(entrants, rng)
+const { world, brains } = makeMatch(entrants, seed)
 
 const history: World[] = [world];
 

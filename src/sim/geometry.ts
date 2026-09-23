@@ -1,4 +1,4 @@
-import { DELTAS, type Direction, type Position, type VisibleShip } from "../types";
+import { DELTAS, type Arc, type Direction, type Facing, type Position, type Ship, type VisibleShip } from "../types";
 
 export function chebyshev(a: Position, b: Position): number {
     return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
@@ -25,4 +25,12 @@ export function closestTo(from: Position, ships: VisibleShip[]): VisibleShip | u
 
 export function key(p: Position): string {
     return `${p.x},${p.y}`;
+}
+
+export function attackArc(target: Ship, attackerPos: Position): Arc {
+    const toAttacker = { dx: Math.sign(attackerPos.x - target.position.x), dy: Math.sign(attackerPos.y - target.position.y) }
+    const facing = DELTAS[target.facing]
+    if (toAttacker.dx === facing.dx && toAttacker.dy === facing.dy) return 'front'
+    if (toAttacker.dx === -facing.dx && toAttacker.dy === -facing.dy) return 'rear'
+    return 'side'
 }

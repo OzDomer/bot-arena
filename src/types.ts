@@ -12,7 +12,8 @@ export type Ship = {
     attackDamage: number,
     visionRange: number,
     attackRange: number,
-    position: Position
+    position: Position,
+    facing: Facing
 }
 
 export type World = {
@@ -30,12 +31,6 @@ export type World = {
 // If a ship walks off the wrong edge, this is the first place to look.
 // Distances are Chebyshev: diagonal neighbors are distance 1, matching 8-direction movement.
 
-export type Direction = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW' | 'STAY';
-
-export type Delta = { dx: -1 | 0 | 1; dy: -1 | 0 | 1 };
-
-
-
 export const DELTAS: Record<Direction, Delta> = {
     N: { dx: 0, dy: -1 },
     NE: { dx: 1, dy: -1 },
@@ -48,7 +43,20 @@ export const DELTAS: Record<Direction, Delta> = {
     STAY: { dx: 0, dy: 0 },
 }
 
+
+export type Arc = 'front' | 'side' | 'rear'
+
+export type Facing = Exclude<Direction, 'STAY'>
+
+export type Direction = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW' | 'STAY'
+
+export type Delta = { dx: -1 | 0 | 1; dy: -1 | 0 | 1 };
+
 export const DIRECTIONS = Object.keys(DELTAS) as Direction[];
+
+export const FACING = DIRECTIONS.filter(d => d !== 'STAY') as Facing[];
+
+
 
 export type Action = {
     move: Direction,

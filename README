@@ -42,6 +42,8 @@ The coward can't win the majority of matches unless it gets lucky spawns: once a
 
 Chaser vs random ends in a tie every time. Both have the same stats, both shoot whenever anyone's in range, and damage is simultaneous — so they eliminate each other on the same turn. Right now there is no way to win a "fair fight"; one side has to start the fight at a disadvantage, which currently means it fought someone else first.
 
+adding collision and doing a 8 player tournament with the result being the random bots wins majority of the time 68 to 21 means right now with the map rules (no storm and no buffs that encourage )fighting is the least optimal way to win  
+
 ## Roadmap
 
 - **Storm** — a closing zone to encourage fighting.

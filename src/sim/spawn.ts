@@ -1,5 +1,5 @@
-import type { Position, Ship, World } from "../types";
-import { type Rng } from "../util/random";
+import { FACING , type Position, type Ship, type World } from "../types";
+import { pickRandom, type Rng } from "../util/random";
 
 export function randomPositions(count: number, width: World['width'], height: World['height'], rng: Rng): Position[] {
     const positions: Position[] = []
@@ -12,6 +12,6 @@ export function randomPositions(count: number, width: World['width'], height: Wo
     return positions
 }
 
-export function makeShips(positions: Position[]): Ship[] {
-   return positions.map((position, i) => ({ id: i + 1, hp: 10, maxHp: 10, attackDamage: 2, visionRange: 3, attackRange: 1, position }))
+export function makeShips(positions: Position[], rng: Rng): Ship[] {
+    return positions.map((position, i) => ({ id: i + 1, hp: 10, maxHp: 10, attackDamage: 2, visionRange: 3, attackRange: 1, position, facing: pickRandom(FACING, rng) }))
 }

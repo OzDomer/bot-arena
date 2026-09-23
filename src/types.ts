@@ -1,3 +1,5 @@
+import type { Rng } from "./util/random";
+
 export type Position = {
     x: number,
     y: number
@@ -64,4 +66,9 @@ export type Observation = {
 // input is Observation, output is Action. Each player is handed Observation data and must return Action data
 export interface Brain {
     decide(obs: Observation): Action;
+}
+
+export type Entrant = {
+    name: string
+    make: (rng: Rng) => Brain
 }

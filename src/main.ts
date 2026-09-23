@@ -1,13 +1,13 @@
-import type { World, Ship, Brain } from './types';
+import type { World, Entrant } from './types';
 import { RandomBot } from './bots/RandomBot';
 import { runMatch } from './sim/match';
 import { ChaserFSM } from './bots/ChaserFSM';
 import { TILE } from './render/render';
 import { Player } from './render/Player';
 import { CowardFSM } from './bots/CowardFSM';
-import { makeShips, randomPositions } from './sim/spawn';
 import { makeRng } from './util/random';
 import { runTournament } from './sim/tournament';
+import { makeMatch } from './sim/setup';
 
 
 const canvas = document.querySelector<HTMLCanvasElement>('#gameCanvas')
@@ -24,15 +24,13 @@ const seed = Date.now();
 
 console.log(`Match seed: ${seed}`);
 const rng = makeRng(seed);
+const entrants: Entrant[] =
+  [
+    { name: 'random', make: rng => new RandomBot(rng) },
+    { name: 'chaser', make: rng => new ChaserFSM(rng) },
+  ]
 
-const spawns = randomPositions(3, 10, 10, rng);
-const ships = makeShips(spawns)
-const world: World = { turn: 0, turnCap: 200, width: 10, height: 10, ships };
-const brains: Record<Ship['id'], Brain> = {
-  1: new CowardFSM(rng),
-  2: new ChaserFSM(rng),
-  3: new ChaserFSM(rng),
-};
+const { world, brains } = makeMatch(entrants, rng)
 
 const history: World[] = [world];
 
@@ -45,14 +43,9 @@ console.log('done at turn', final.turn, 'alive:', final.ships.filter(s => s.hp >
 canvas.width = world.width * TILE
 canvas.height = world.height * TILE
 
-const entrants =
-[
-  { name: 'coward', make: rng => new CowardFSM(rng) },
-  { name: 'chaser', make: rng => new ChaserFSM(rng) },
-  { name: 'chaser', make: rng => new ChaserFSM(rng) },
-]
 
-runTournament(entrants, 100, seed)
+
+console.table(runTournament(entrants, 100, seed))
 
 const player = new Player(ctx, history, turnCounter);
 document.getElementById('play')!.onclick = () => player.play();

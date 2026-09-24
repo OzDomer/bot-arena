@@ -33,11 +33,14 @@ Each entry: what we decided, why, and what it would take to revisit.
 3. ~~Narrow Observation~~
 4. ~~Collision fix~~ (solid ships, cascading bounces)
 5. ~~`deriveSeed(seed, purpose, index)`~~ — replace `seed + offset` derivation
-6. Opponent pool: ~~storm-aware Chaser v2~~, Camper, Kiter (Coward v1 frozen as baseline)
-7. Heal resource
-8. Evolution (tiny NN brains), then RL
-9. Port `step()` to Rust — to learn Rust, not for speed
-10. RTS: momentum physics, continuous positions, islands, ramming, disembarking; re-evolve
+6. ~~Storm-aware Chaser v2~~
+7. Rules presets (`default`, `faststorm`, `bigmap`) + CLI arg; derive storm timing from map size. Experiments: does the storm matter when it arrives earlier; does a bigger map stop spawn-forced fights. Metrics declared up front: draw rate, avg survival turns, spread of win rates across bot types, kills per match.
+8. Opponent pool: Camper, Kiter (under the winning ruleset)
+9. Pairwise round-robin → decide if evolution is justified
+10. Heal resource
+11. Evolution (tiny NN brains), then RL
+12. Port `step()` to Rust — to learn Rust, not for speed
+13. RTS: momentum physics, continuous positions, islands, ramming, disembarking; re-evolve
 
 ## Tournament findings
 - Identical-stat shooters always draw 1v1 → needed asymmetry → facing.
@@ -48,4 +51,4 @@ Each entry: what we decided, why, and what it would take to revisit.
 - Collision bug (ships could share a tile after a bounce) fixed. Same seed, 1000 matches: chaser survival +20%, draws −21%, win rates within noise. Coward conclusion unchanged.
 - At 10k matches one of four identical cowards won 11.25% vs ~10.0% for the others — ~4σ. Cause: the seat shuffle and the spawn RNG were built from the same seed, so seat order and spawn positions were the same random sequence. Giving the shuffle its own stream put all four at 10.3–10.6%. Lesson: "one RNG stream per purpose" isn't just for reproducibility, it's for not correlating things that must be independent.
 - Fully independent streams: chaser 17.2% per seat (16.8–17.5), coward 10.4% (10.2–10.8), draws 6.7% (reset after deriveSeed).
-- v1 vs v2 in the same lineup, 10k: v2 14.1% per seat, v1 13.0%. Real (~4σ) but small. Survival turns identical — the gain is from converging on the center where the survivors are, not from avoiding storm damage. With startTurn 20 / shrinkEvery 10 on a 10×10, the storm can't touch anyone before turn 50 and combat has settled most matches by then.
+- Chaser v2 (heads to center when outside radius−1). Replacing v1: 18.5% per seat vs 17.2%. v1 and v2 in the same lineup, 10k: v2 14.1%, v1 13.0% — real (~4σ) but small. Survival turns identical, so the gain is from converging on the survivors, not from dodging damage. Margin 0 vs 1: no measurable difference. Under default rules the storm can't touch anyone before turn 50; combat has settled most matches by then. → Rules experiments next.

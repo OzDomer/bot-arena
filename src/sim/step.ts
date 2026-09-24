@@ -1,25 +1,22 @@
 import { DELTAS, type Action, type Facing, type Position, type Ship, type World } from "../types";
-import { clamp, chebyshev, key, attackArc } from "./geometry";
+import { resolveAttacks } from "./combat";
+import { clamp, key } from "./geometry";
 import { isSafe, stormAt } from "./storm";
 
 export function step(world: World, actions: Record<Ship['id'], Action>): World {
     // --- phase 1: attacks (resolved on current positions, simultaneous) ---
-    const damage: Record<Ship['id'], number> = {};
+    const hits = resolveAttacks(world, actions)          // list of { attacker, target, amount }
 
-    for (const attacker of world.ships) {
-        if (attacker.hp <= 0) continue
-        const action = actions[attacker.id]
-        if (action?.attack === undefined) continue
-        const target = world.ships.find(ship => ship.id === action.attack)
-        if (!target || target.hp <= 0 || chebyshev(attacker.position, target.position) > attacker.attackRange) continue
-        const mult = world.rules.arcMult[attackArc(target, attacker.position)];
-        damage[target.id] = (damage[target.id] ?? 0) + attacker.attackDamage * mult
+    const damage: Record<Ship['id'], number> = {}        // target id → total damage this tick
+    for (const hit of hits) {
+        damage[hit.target] = (damage[hit.target] ?? 0) + hit.amount   // add this hit to the target's running total
     }
 
     const afterAttacks: Ship[] = world.ships.map(ship => ({
         ...ship,
-        hp: Math.max(0, ship.hp - (damage[ship.id] ?? 0)),
-    }));
+        hp: Math.max(0, ship.hp - (damage[ship.id] ?? 0)),           // untouched from before
+    }))
+
     // --- phase 2: moves (two passes, wrecks and stayers claim first) ---
     const occupied = new Set<string>();
 

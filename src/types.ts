@@ -62,6 +62,8 @@ export type Action = {
     attack?: Ship["id"]
 }
 
+export type Hit = { attacker: Ship['id']; target: Ship['id']; amount: number }
+
 export type VisibleShip = Pick<Ship, 'id' | 'position' | 'hp' | 'facing'>;
 
 export type Observation = {

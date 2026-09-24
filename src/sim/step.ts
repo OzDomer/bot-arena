@@ -35,21 +35,21 @@ export function step(world: World, actions: Record<Ship['id'], Action>): World {
     // swaps: two movers heading into each other's tiles both bounce
     for (const [a, da] of dest) for (const [b, db] of dest) {
         if (a < b && key(da) === key(origin.get(b)!) && key(db) === key(origin.get(a)!)) { blocked.add(a); blocked.add(b) }
-
-        // cascade: a bounced ship re-occupies its origin, which may block someone who already claimed it
-        let changed = true
-        while (changed) {
-            changed = false
-            const occupied = new Set<string>()
-            for (const ship of afterAttacks) if (blocked.has(ship.id)) occupied.add(key(ship.position))
-            for (const ship of afterAttacks) {
-                if (blocked.has(ship.id)) continue
-                const d = dest.get(ship.id)!
-                if (occupied.has(key(d))) { blocked.add(ship.id); changed = true }
-                else occupied.add(key(d))
-            }
+    }
+    // cascade: a bounced ship re-occupies its origin, which may block someone who already claimed it
+    let changed = true
+    while (changed) {
+        changed = false
+        const occupied = new Set<string>()
+        for (const ship of afterAttacks) if (blocked.has(ship.id)) occupied.add(key(ship.position))
+        for (const ship of afterAttacks) {
+            if (blocked.has(ship.id)) continue
+            const d = dest.get(ship.id)!
+            if (occupied.has(key(d))) { blocked.add(ship.id); changed = true }
+            else occupied.add(key(d))
         }
     }
+
 
     const afterMoves = afterAttacks.map(ship => {
         const move = actions[ship.id]?.move ?? 'STAY'

@@ -50,7 +50,10 @@ canvas.height = world.rules.height * TILE
 
 
 
-console.table(runTournament(entrants, 100, seed))
+const result = (runTournament(entrants, 100, seed))
+console.table(result.tally)
+console.table(result.totals)
+
 
 const player = new Player(ctx, history, turnCounter);
 document.getElementById('play')!.onclick = () => player.play();

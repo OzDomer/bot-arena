@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { makeRng, shuffle } from "./random"
+import { deriveSeed, makeRng, shuffle } from "./random"
 
 describe('shuffle', () => {
     it('deterministic shuffle works', () => {
@@ -20,3 +20,17 @@ describe('shuffle', () => {
         expect(input).toEqual([1, 2, 3, 4, 5])
     })
 })
+
+describe('deriveSeed', () => {
+    it('same input same output', () => {
+        expect(deriveSeed(1111, 'testing', 1)).toBe(deriveSeed(1111, 'testing', 1))
+    })
+
+    it('different purpose different output', () => {
+        expect(deriveSeed(1111, 'testing', 1)).not.toBe(deriveSeed(1111, 'test', 1))
+    })
+    it('different index different output', () => {
+        expect(deriveSeed(1111, 'testing', 1)).not.toBe(deriveSeed(1111, 'testing', 2))
+    })
+})
+

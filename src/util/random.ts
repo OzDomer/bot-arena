@@ -24,3 +24,15 @@ export function shuffle<T>(arr: T[], rng: Rng): T[] {
     }
     return out
 }
+
+export function deriveSeed(seed: number, purpose: string, index = 0): number {
+    let h = seed >>> 0
+    for (let i = 0; i < purpose.length; i++) {
+        h = Math.imul(h ^ purpose.charCodeAt(i), 0x9E3779B1)
+    }
+    h = Math.imul(h ^ (index + 1), 0x85EBCA6B)
+    h ^= h >>> 15
+    h = Math.imul(h, 0xC2B2AE35)
+    h ^= h >>> 13
+    return h >>> 0
+}

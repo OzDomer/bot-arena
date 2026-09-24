@@ -1,5 +1,5 @@
 import type { Entrant, } from "../types"
-import { makeRng, shuffle } from "../util/random"
+import { deriveSeed, makeRng, shuffle } from "../util/random"
 import { runMatch } from "./match"
 import { makeMatch } from "./setup"
 import { addStats, emptyStats, MatchStats, type SeatStats } from "./stats"
@@ -11,8 +11,9 @@ export function runTournament(entrants: Entrant[], matches: number, seed: number
     const totals: SeatStats[] = Array.from({ length: entrants.length }, emptyStats)
 
     for (let m = 0; m < matches; m++) {
-        const seating = shuffle(entrants.map((_, i) => i), makeRng(seed + m))
-        const { world, brains } = makeMatch(seating.map(i => entrants[i]), seed + m)
+        const matchSeed = deriveSeed(seed, 'match', m)
+        const seating = shuffle(entrants.map((_, i) => i), makeRng(deriveSeed(matchSeed, 'seat')))
+        const { world, brains } = makeMatch(seating.map(i => entrants[i]), matchSeed)
         const ms = new MatchStats(world)
         const final = runMatch(world, brains, (w, hits) => ms.onTurn(w, hits))
         const perMatch = ms.finish(final)

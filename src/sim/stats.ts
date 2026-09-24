@@ -1,4 +1,3 @@
-import { ship } from "../test/fixtures"
 import type { Hit, Ship, World } from "../types"
 
 export type SeatStats = {

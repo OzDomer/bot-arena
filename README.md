@@ -12,6 +12,8 @@ npm install
 npm run dev
 ```
 
+```bash
+npm run tournament -- <matches> <seed>
 
 
 Open http://localhost:5173/ (the default) to see a match played on the grid. Open the console to see the tournament tally.

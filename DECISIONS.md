@@ -32,7 +32,7 @@ Each entry: what we decided, why, and what it would take to revisit.
 2. ~~Tournament stats~~ (per-seat, random seating, headless `npm run tournament`)
 3. ~~Narrow Observation~~
 4. ~~Collision fix~~ (solid ships, cascading bounces)
-5. `deriveSeed(seed, purpose, index)` — replace `seed + offset` derivation
+5. ~~`deriveSeed(seed, purpose, index)`~~ — replace `seed + offset` derivation
 6. Opponent pool: storm-aware Chaser v2, Camper, Kiter (Coward v1 frozen as baseline)
 7. Heal resource
 8. Evolution (tiny NN brains), then RL
@@ -47,4 +47,4 @@ Each entry: what we decided, why, and what it would take to revisit.
 - Per-seat stats, 1000 matches, random seating: chaser ~15.7% wins per seat, coward ~10.9%. Average survival is the same for both (~19 turns), but the coward deals half the damage and gets a third of the kills. Fleeing at 45% HP with range-1 attacks just turns its rear to an adjacent enemy. Its ~11% wins are the matches where spawn and wander randomness leave it standing last, not a strategy paying off.
 - Collision bug (ships could share a tile after a bounce) fixed. Same seed, 1000 matches: chaser survival +20%, draws −21%, win rates within noise. Coward conclusion unchanged.
 - At 10k matches one of four identical cowards won 11.25% vs ~10.0% for the others — ~4σ. Cause: the seat shuffle and the spawn RNG were built from the same seed, so seat order and spawn positions were the same random sequence. Giving the shuffle its own stream put all four at 10.3–10.6%. Lesson: "one RNG stream per purpose" isn't just for reproducibility, it's for not correlating things that must be independent.
-- Current baseline (10k, seed 1790266907455): chaser 17.1% per seat, coward 10.4%, draws 6.8%.
+- Fully independent streams: chaser 17.2% per seat (16.8–17.5), coward 10.4% (10.2–10.8), draws 6.7% (reset after deriveSeed).

@@ -7,12 +7,14 @@ Each entry: what we decided, why, and what it would take to revisit.
 - **Brain interface.** `decide(Readonly<Observation>) → Action`. The one slot every bot type plugs into. Bots get copies, never world references. `Readonly<>` is documentation; the copies in `observe` are the guarantee.
 - **Worlds are immutable after creation.** Unmoved ships share position objects across frames; that's fine only because nothing writes into them. Never mutate a world.
 - **Rules object.** All tunables in `Rules`; `World.rules` points at it. Per-match randomized setup (storm center) lives on `World`; anything derivable from turn + rules is a function, not state.
-- **Seeded RNG, one stream per purpose** — world, seat shuffle, and each bot — all derived from the match seed. Changing one bot's randomness can't perturb another's, and independent things stay independent (see findings: a shared stream correlated seating with spawns). Current derivation is `seed + offset`, which is fragile; replace with `deriveSeed(seed, purpose, index)` before evolution.
+- **Seeded RNG, one stream per purpose** — world, seat shuffle, and each bot — all derived from the match seed via `deriveSeed(seed, purpose, index)`. Changing one bot's randomness can't perturb another's, and independent things stay independent (see findings: a shared stream correlated seating with spawns).
 - **Observation is what a player sees, not the world.** `map` exposes only width, height and turn — not `Rules`. Storm damage is deliberately hidden; a bot (hand-written or learned) has to infer that the storm hurts and how badly. Revisit: if evolved brains can't learn it, expose damage and note why.
 - **`Hit` is ship-on-ship only** (`attacker`, `target`, `amount`). Widen to a `source` union when storm or pickups need attribution.
 - **`step` returns only the world.** `runMatch` recomputes `resolveAttacks` for the stats callback; the duplication is pure and cheap. Revisit when `step` needs to emit an event log (RL rewards, storm attribution).
 - **Stats are raw sums.** `damageDealt` is uncapped (no overkill split, which would need a turn-order rule); averages are computed at print time. Kill credit is shared by every attacker who hit on the death tick; a storm finish still credits the attackers. Revisit with `resolveStorm`.
 - **Sample size.** 1k matches → identical bots spread ±2pp; 10k → ±0.6pp. Balance claims need 10k. Headless: 10k matches ≈ 4 s in Node (~2,500 matches/s, ~500k `step()`/s).
+- **Rules presets.** `PRESETS` in `sim/presets.ts` is a `Record<PresetName, Rules>`, each spreading `DEFAULT_RULES` and overriding only what changes. CLI takes the name as argv[4]; `runTournament` threads it to `makeMatch`. Presets are data, not functions — no derivation of storm timing from map size (rejected, see findings: startTurn barely matters, so there's nothing worth deriving). Presets are the experiment record: don't overwrite one with another.
+- **Kills/match > deaths/match.** Shared kill credit on the death tick inflates the count (7.7 on a 7-ship map with max 6 deaths). Fine as a relative measure across rulesets; don't read the absolute number. Fix when comparing bots, not rules.
 
 ## Rules (v1)
 - **Chebyshev distance** for vision and attack — matches 8-direction movement. (Manhattan caused diagonal chasers to swap tiles forever.)
@@ -23,9 +25,16 @@ Each entry: what we decided, why, and what it would take to revisit.
 - **Facing = last move direction.** No rotate action. A bounced move still turns the ship. Rear hits ×2, side/front ×1.
 - **Storm:** circle, center fixed at map center for now (randomize per match later), radius shrinks one tile per phase after `startTurn`, damage `baseDamage × phase`, applied after moves, whole map is storm once radius goes negative (floors at −1). Bots see the storm as a player would: center, radius and phase, never the damage number.
 - **Last one standing wins.** 0 alive = draw, >1 at turn cap = timeout.
+> v1 = 10×10, storm start 20 / shrink 10. Superseded by v2 (20×20, shrink 5) after the rules experiments below. All findings before "Rules experiments" were measured under v1.
+
+## Rules (v2)
+- 20×20, `shrinkEvery` 5, everything else as v1. Chosen for strategy differentiation (V2−v1 gap 9.3pp vs 1.1pp on v1) and lower draw rate (4.7% vs 7.5%), with one knob changed from v1 instead of two. Storm closes fully before the turn cap; no timeouts.
+- Invoked as preset `bigmap`. `DEFAULT_RULES` stays v1 because `step.test.ts` positions assume 10×10; flip it (and pin the fixtures to a `RULES_V1`) when v2 is settled enough to be worth the churn.
+
 
 ## Rejected
 - Damage RNG (luck, not skill). Move-XOR-attack (kills the RTS feel). Bracing (rewards camping). Bot "retry" on blocked move (breaks the GM model; bots can see the tile is taken). Coward v2 with storm awareness (its problem is the flee trigger, not the storm — replaced by the Kiter). Capping `damageDealt` at remaining HP (needs an arbitrary overkill split).
+- Deriving storm timing from map size (`startTurn` barely matters on 20×20; nothing worth deriving — presets stay plain data).
 
 ## Roadmap
 1. ~~Storm~~ (center-fixed; randomize center later)
@@ -34,8 +43,8 @@ Each entry: what we decided, why, and what it would take to revisit.
 4. ~~Collision fix~~ (solid ships, cascading bounces)
 5. ~~`deriveSeed(seed, purpose, index)`~~ — replace `seed + offset` derivation
 6. ~~Storm-aware Chaser v2~~
-7. Rules presets (`default`, `faststorm`, `bigmap`) + CLI arg; derive storm timing from map size. Experiments: does the storm matter when it arrives earlier; does a bigger map stop spawn-forced fights. Metrics declared up front: draw rate, avg survival turns, spread of win rates across bot types, kills per match.
-8. Opponent pool: Camper, Kiter (under the winning ruleset)
+7. ~~Rules presets + CLI arg~~ → v2 = 20×20, shrink 5 (preset `bigmap`). Storm-timing derivation rejected. Experiments in findings.
+8. Opponent pool: Camper, Kiter — under v2
 9. Pairwise round-robin → decide if evolution is justified
 10. Heal resource
 11. Evolution (tiny NN brains), then RL
@@ -52,3 +61,20 @@ Each entry: what we decided, why, and what it would take to revisit.
 - At 10k matches one of four identical cowards won 11.25% vs ~10.0% for the others — ~4σ. Cause: the seat shuffle and the spawn RNG were built from the same seed, so seat order and spawn positions were the same random sequence. Giving the shuffle its own stream put all four at 10.3–10.6%. Lesson: "one RNG stream per purpose" isn't just for reproducibility, it's for not correlating things that must be independent.
 - Fully independent streams: chaser 17.2% per seat (16.8–17.5), coward 10.4% (10.2–10.8), draws 6.7% (reset after deriveSeed).
 - Chaser v2 (heads to center when outside radius−1). Replacing v1: 18.5% per seat vs 17.2%. v1 and v2 in the same lineup, 10k: v2 14.1%, v1 13.0% — real (~4σ) but small. Survival turns identical, so the gain is from converging on the survivors, not from dodging damage. Margin 0 vs 1: no measurable difference. Under default rules the storm can't touch anyone before turn 50; combat has settled most matches by then. → Rules experiments next.
+- **Rules experiments** (10k matches, seed 1790266907455, lineup 3×chaserV2 / 3×chaser / 1×coward, per-seat win %):
+
+  | ruleset | draws | V2 / v1 / coward | V2−v1 | survival (V2) | timeouts |
+  |---|---|---|---|---|---|
+  | 10×10 default (20/10) | 7.5 | 14.1 / 13.0 / 11.3 | 1.1 | 17 | 0 |
+  | 10×10 fast (5/5) | 7.2 | 15.1 / 12.2 / 10.8 | 2.9 | 12 | 0 |
+  | 20×20 default (20/10) | 3.3 | 17.5 / 10.8 / 11.8 | 6.7 | 42 | 7 |
+  | 20×20 fast start (5/10) | 3.6 | 17.8 / 10.5 / 11.4 | 7.3 | 40 | 0 |
+  | 20×20 fast shrink (20/5) | 4.7 | 18.8 / 9.5 / 10.6 | 9.3 | 32 | 0 |
+  | 20×20 both (5/5) | 5.1 | 19.3 / 8.9 / 10.1 | 10.4 | 28 | 0 |
+
+  (storm columns are startTurn / shrinkEvery)
+- Map size is the lever, storm timing is a dial on top. Doubling the map halves draws (spawns aren't on top of each other) and cuts kills/match 7.7 → 6.0 — the "spawn-forced fights" question answered yes.
+- The V2−v1 gap tracks storm pressure monotonically: 1.1 → 2.9 → 6.7 → 10.4. Survival is nearly identical (v1 isn't dying to the storm much earlier); on 20×20 with vision 3, random wander rarely finds anyone, and V2's head-to-center doubles as a *finding* strategy. The storm is doing more work as a convergence rule than as damage.
+- On 20×20, `shrinkEvery` is the knob and `startTurn` is noise (+2.6pp gap vs +0.6). Effects are additive, not interacting. Halving shrink doubles closing speed *and* the damage ramp; starting 15 turns earlier on radius 20 is 1.5 tiles. `startTurn` was never split out on 10×10.
+- Coward is storm-insensitive: 11.3 / 10.8 / 11.8 / 11.4 / 10.6 / 10.1 across all six. It "beat v1" on 20×20 only because v1 fell past it. Same lesson as the earlier "coward wins the wait" misread: check whether the thing moved or the thing next to it moved.
+- 10×10 fast storm compresses the clock (survival 17 → 12) without changing who wins — damage dealt within 1% of default. Combat settles before the storm on the small map regardless of timing.

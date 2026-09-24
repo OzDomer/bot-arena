@@ -19,7 +19,7 @@ const ctx = canvas.getContext('2d')
 if (!ctx) throw new Error('no 2d context')
 
 const seed = Date.now();
-// const seed = 11111;
+// const seed = 1790266907455;
 
 const BOTS = { random: RandomBot, chaser: ChaserFSM, coward: CowardFSM };
 

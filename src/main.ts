@@ -1,12 +1,10 @@
-import type { World, Entrant } from './types';
-import { RandomBot } from './bots/RandomBot';
+import type { World } from './types';
 import { runMatch } from './sim/match';
-import { ChaserFSM } from './bots/ChaserFSM';
 import { TILE } from './render/render';
 import { Player } from './render/Player';
-import { CowardFSM } from './bots/CowardFSM';
 import { runTournament } from './sim/tournament';
 import { makeMatch } from './sim/setup';
+import { entrants } from './bots';
 
 
 const canvas = document.querySelector<HTMLCanvasElement>('#gameCanvas')
@@ -21,19 +19,9 @@ if (!ctx) throw new Error('no 2d context')
 const seed = Date.now();
 // const seed = 1790266907455;
 
-const BOTS = { random: RandomBot, chaser: ChaserFSM, coward: CowardFSM };
 
 console.log(`Match seed: ${seed}`);
-const entrants: Entrant[] =
-  [
-    { name: 'coward', make: rng => new BOTS.coward(rng) },
-    { name: 'chaser', make: rng => new BOTS.chaser(rng) },
-    { name: 'coward', make: rng => new BOTS.coward(rng) },
-    { name: 'chaser', make: rng => new BOTS.chaser(rng) },
-    { name: 'chaser', make: rng => new BOTS.chaser(rng) },
-    { name: 'coward', make: rng => new BOTS.coward(rng) },
-    { name: 'coward', make: rng => new BOTS.coward(rng) }
-  ]
+
 
 const { world, brains } = makeMatch(entrants, seed)
 

@@ -38,3 +38,9 @@ export function attackArc(target: Ship, attackerPos: Position): Arc {
 export function mapCenter(rules: Rules): Position {
     return { x: Math.floor(rules.width / 2), y: Math.floor(rules.height / 2) };
 }
+
+export function inCircle(pos: Position, center: Position, radius: number): boolean {
+    if (radius < 0) return false
+    const dx = pos.x - center.x, dy = pos.y - center.y;
+    return dx * dx + dy * dy <= radius * radius;
+}

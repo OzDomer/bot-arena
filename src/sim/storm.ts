@@ -1,4 +1,4 @@
-import type { Position, Rules } from '../types';
+import type { Rules } from '../types';
 
 export function stormAt(turn: number, rules: Rules) {
     const { startTurn, shrinkEvery, baseDamage } = rules.storm;
@@ -14,8 +14,3 @@ export function stormAt(turn: number, rules: Rules) {
     };
 }
 
-export function isSafe(pos: Position, center: Position, radius: number): boolean {
-    if (radius < 0) return false
-    const dx = pos.x - center.x, dy = pos.y - center.y;
-    return dx * dx + dy * dy <= radius * radius;
-}

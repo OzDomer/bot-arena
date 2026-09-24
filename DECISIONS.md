@@ -15,17 +15,18 @@ Each entry: what we decided, why, and what it would take to revisit.
 - **Attacks resolve before moves**, on start-of-tick positions and facing. Turning happens during the move phase, after combat.
 - **Simultaneous damage** via a tally, so array order never gives initiative.
 - **Dead ships stay** as wrecks and block tiles.
-- **One ship per tile.** Wrecks and stayers claim first; movers resolve in id order (lower id wins — known bias, fix by rotating slots in tournaments).
+- **One ship per tile.** Wrecks, stayers and clamped moves claim first; movers resolve in id order; swaps bounce both; bounces cascade until stable. Ships are solid
 - **Facing = last move direction.** No rotate action. A bounced move still turns the ship. Rear hits ×2, side/front ×1.
 - **Storm:** circle from a center chosen per match, radius shrinks one tile per phase after `startTurn`, damage `baseDamage × phase`, applied after moves, whole map is storm once radius goes negative (floors at −1). Bots see the storm as a player would: center, radius and phase, never the damage number.
 - **Last one standing wins.** 0 alive = draw, >1 at turn cap = timeout.
+- **Ships are solid** — no swapping through each other, both bounce.
 
 ## Rejected
 - Damage RNG (luck, not skill). Move-XOR-attack (kills the RTS feel). Bracing (rewards camping). Bot "retry" on blocked move (breaks the GM model; bots can see the tile is taken).
 
 ## Roadmap
 1. ~~Storm~~ (done — center-fixed; randomize center later)
-2. Tournament stats — per-seat wins, survival turns, damage dealt/taken, kills; rotate slots; headless Node entry. The fitness signal.
+2. ~~Tournament~~ stats — per-seat wins, survival turns, damage dealt/taken, kills; rotate slots; headless Node entry. The fitness signal.
 3. Storm-aware ChaserFSM/CowardFSM v2 (v1 frozen as baselines)
 4. ~~ Observation~~ (map = width/height/turn; storm = center/radius/phase, no damage)
 5. Heal resource

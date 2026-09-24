@@ -179,4 +179,40 @@ describe('step', () => {
         expect(next.ships[0].hp).toBe(0)
 
     })
+
+    it('two ships pushing into the edge do not share a tile', () => {
+        const w = world([
+            ship({ id: 1, position: { x: 8, y: 0 }, facing: 'E' }),
+            ship({ id: 2, position: { x: 9, y: 0 }, facing: 'E' })])
+
+        const next = step(w, { 1: { move: 'E' }, 2: { move: 'NE' } })
+
+        expect(next.ships[0].position).toEqual({ x: 8, y: 0 })
+        expect(next.ships[1].position).toEqual({ x: 9, y: 0 })
+    })
+
+    it('a bounce cannot land on a tile another ship moved into', () => {
+        const w = world([
+            ship({ id: 1, position: { x: 5, y: 5 }, facing: 'E' }),
+            ship({ id: 2, position: { x: 6, y: 5 }, facing: 'E' }),
+            ship({ id: 3, position: { x: 7, y: 5 }, facing: 'E', hp: 0 })])
+
+        const next = step(w, { 1: { move: 'E' }, 2: { move: 'E' } })
+
+        expect(next.ships[0].position).toEqual({ x: 5, y: 5 })
+        expect(next.ships[1].position).toEqual({ x: 6, y: 5 })
+    })
+
+    it('ships cannot swap tiles', () => {
+        const w = world([
+            ship({ id: 1, position: { x: 5, y: 5 }, facing: 'E' }),
+            ship({ id: 2, position: { x: 6, y: 5 }, facing: 'W' })])
+
+        const next = step(w, { 1: { move: 'E' }, 2: { move: 'W' } })
+
+        expect(next.ships[0].position).toEqual({ x: 5, y: 5 })
+        expect(next.ships[0].facing).toEqual('E')
+        expect(next.ships[1].position).toEqual({ x: 6, y: 5 })
+        expect(next.ships[1].facing).toEqual('W')
+    })
 })

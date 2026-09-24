@@ -50,7 +50,7 @@ canvas.height = world.rules.height * TILE
 
 
 
-const result = (runTournament(entrants, 100, seed))
+const result = (runTournament(entrants, 1000, seed))
 console.table(result.tally)
 console.table(result.totals)
 

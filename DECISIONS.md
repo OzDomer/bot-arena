@@ -15,6 +15,8 @@ Each entry: what we decided, why, and what it would take to revisit.
 - **Kills/match > deaths/match.** Shared kill credit on the death tick inflates the count (7.7 on a 7-ship map with max 6 deaths). Fine as a relative measure across rulesets; don't read the absolute number. Fix when comparing bots, not rules.
 - **Sample size.** 1k matches → identical bots spread ±2pp; 10k → ±0.6pp. Balance claims need 10k. Headless: 10k matches ≈ 4 s in Node (~2,500 matches/s, ~500k `step()`/s).
 - **Rules presets.** `PRESETS` in `sim/presets.ts` is a `Record<PresetName, Rules>`, each spreading `DEFAULT_RULES` and overriding only what changes. CLI takes the name as argv[4]; `runTournament` threads it to `makeMatch`. Presets are data, not functions — no derivation of storm timing from map size (rejected, see findings: startTurn barely matters, so there's nothing worth deriving). Presets are the experiment record: don't overwrite one with another.
+Win % vs the 1/n baseline (it'll be 1/8 with the current seven + camper).
+Survival turns and damage dealt relative to the others. High survival + low damage = outlasting via the safe tile, not holding the objective.
 
 ## Rules (v1)
 - **Chebyshev distance** for vision and attack — matches 8-direction movement. (Manhattan caused diagonal chasers to swap tiles forever.)
@@ -44,7 +46,7 @@ Each entry: what we decided, why, and what it would take to revisit.
 5. ~~`deriveSeed(seed, purpose, index)`~~ — replace `seed + offset` derivation
 6. ~~Storm-aware Chaser v2~~
 7. ~~Rules presets + CLI arg~~ → v2 = 20×20, shrink 5 (preset `bigmap`). Storm-timing derivation rejected. Experiments in findings.
-8. Camper — under v2
+8. ~~Camper~~ — under v2
 9. Pairwise round-robin → decide if evolution is justified
 10. Heal resource
 11. Kiter — keep threats at distance 2, retreat toward center not away from threat, face-and-trade when caught (move into the adjacent enemy = bounce-turn, see findings). Deferred: kiting buys time, and time is worthless without a resource to spend it on. Needs heals first.
@@ -79,3 +81,16 @@ Each entry: what we decided, why, and what it would take to revisit.
 - On 20×20, `shrinkEvery` is the knob and `startTurn` is noise (+2.6pp gap vs +0.6). Effects are additive, not interacting. Halving shrink doubles closing speed *and* the damage ramp; starting 15 turns earlier on radius 20 is 1.5 tiles. `startTurn` was never split out on 10×10.
 - Coward is storm-insensitive: 11.3 / 10.8 / 11.8 / 11.4 / 10.6 / 10.1 across all six. It "beat v1" on 20×20 only because v1 fell past it. Same lesson as the earlier "coward wins the wait" misread: check whether the thing moved or the thing next to it moved.
 - 10×10 fast storm compresses the clock (survival 17 → 12) without changing who wins — damage dealt within 1% of default. Combat settles before the storm on the small map regardless of timing.
+- **Camper v1** (8-seat lineup: 3×chaserV2 / 3×chaserV1 / camper / coward, 10k, seed 1790266907455, bigmap). Lineup changed, so numbers aren't comparable to the 7-seat runs above; ×baseline (1/8) is what carries across.
+
+  | | win % | ×baseline | survival | dmg dealt | dmg taken |
+  |---|---|---|---|---|---|
+  | chaserV2 | 15.8 | 1.26 | 33 | 90.6k | 85.6k |
+  | camperV1 | 14.8 | 1.18 | 27 | 72.9k | 93.8k |
+  | chaserV1 | 7.2 | 0.58 | 30 | 97k | 83.7k |
+  | coward | 6.5 | 0.52 | 28 | 60.4k | 94.5k |
+  | draws | 9.6% | | | | |
+
+- Camper is strong, not degenerate. Pre-declared tell for "outlasting on the safe tile" was high survival + low damage; it has the *lowest* survival and the highest damage taken. It arrives at center ~turn 12, gets swarmed, and wins the matches where it survives the pile-on. Gate for evolution passed: the ruleset doesn't collapse to "sit on the center."
+- Camper as bait: draws doubled (4.7 → 9.6%). Center is a fixed fight location from early on, more simultaneous deaths. chaserV1's damage dealt went up and wins went down — it hits the camper at center, then V2s (arriving via the storm rule) finish it.
+- Camper takes ×2 from behind because `STAY` never rotates. → v2 with bounce-turn.

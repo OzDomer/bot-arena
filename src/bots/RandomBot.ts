@@ -7,7 +7,7 @@ export class RandomBot extends RandomizedBot {
 
     decide(obs: Observation): Action {
         const move = pickRandom(DIRECTIONS, this.rng);
-        const target = obs.visibleShips.find(ship => ship.hp > 0 && chebyshev(obs.self.position, ship.position) <= obs.self.attackRange);
+        const target = obs.visibleShips.find(ship => ship.hp > 0 && chebyshev(obs.self.position, ship.position) <= obs.self.attackRange)
         return { move, attack: target?.id };
     }
-}
+}   

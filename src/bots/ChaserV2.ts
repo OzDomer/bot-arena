@@ -15,7 +15,6 @@ export class ChaserV2 extends RandomizedBot {
         const isSafe = inCircle(obs.self.position, obs.storm.center, obs.storm.radius - 1)
         const locked = obs.visibleShips.find(s => s.id === this.targetId && s.hp > 0)
         const aliveShips = obs.visibleShips.filter(ship => ship.hp > 0)
-
         if (!isSafe) {
             const inRange = obs.visibleShips.find(s => s.hp > 0 && chebyshev(obs.self.position, s.position) <= obs.self.attackRange)
             return { move: directionToward(obs.self.position, obs.storm.center), attack: inRange?.id }

@@ -1,4 +1,4 @@
-import { DELTAS, type Arc, type Direction, type Facing, type Position, type Rules, type Ship, type VisibleShip } from "../types";
+import { DELTAS, type Arc, type Direction, type Position, type Rules, type Ship, type VisibleShip } from "../types";
 
 export function chebyshev(a: Position, b: Position): number {
     return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));

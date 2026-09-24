@@ -8,11 +8,11 @@ export const BOTS = { random: RandomBot, chaser: ChaserFSM, coward: CowardFSM, c
 
 export const entrants: Entrant[] =
     [
-        { name: 'coward', make: rng => new BOTS.coward(rng) },
-        { name: 'chaserV2', make: rng => new BOTS.chaserV2(rng) },
-        { name: 'coward', make: rng => new BOTS.coward(rng) },
         { name: 'chaserV2', make: rng => new BOTS.chaserV2(rng) },
         { name: 'chaserV2', make: rng => new BOTS.chaserV2(rng) },
-        { name: 'coward', make: rng => new BOTS.coward(rng) },
+        { name: 'chaserV2', make: rng => new BOTS.chaserV2(rng) },
+        { name: 'chaser', make: rng => new BOTS.chaser(rng) },
+        { name: 'chaser', make: rng => new BOTS.chaser(rng) },
+        { name: 'chaser', make: rng => new BOTS.chaser(rng) },
         { name: 'coward', make: rng => new BOTS.coward(rng) }
     ]

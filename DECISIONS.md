@@ -21,6 +21,7 @@ Survival turns and damage dealt relative to the others. High survival + low dama
 ## Rules (v1)
 - **Chebyshev distance** for vision and attack — matches 8-direction movement. (Manhattan caused diagonal chasers to swap tiles forever.)
 - **Attacks resolve before moves**, on start-of-tick positions and facing. Turning happens during the move phase, after combat.
+- **Attacks can be initiated from all sides**, a player can attack any tile aslong as they are in range.
 - **Simultaneous damage** via a tally, so array order never gives initiative.
 - **Dead ships stay** as wrecks and block tiles.
 - **One ship per tile.** Wrecks, stayers and clamped moves claim first; movers resolve in id order (lower id wins — known bias, washed out by random seating); swaps bounce both; bounces cascade until stable. Ships are solid: no passing through each other. (Ramming later.)
@@ -94,3 +95,6 @@ Survival turns and damage dealt relative to the others. High survival + low dama
 - Camper is strong, not degenerate. Pre-declared tell for "outlasting on the safe tile" was high survival + low damage; it has the *lowest* survival and the highest damage taken. It arrives at center ~turn 12, gets swarmed, and wins the matches where it survives the pile-on. Gate for evolution passed: the ruleset doesn't collapse to "sit on the center."
 - Camper as bait: draws doubled (4.7 → 9.6%). Center is a fixed fight location from early on, more simultaneous deaths. chaserV1's damage dealt went up and wins went down — it hits the camper at center, then V2s (arriving via the storm rule) finish it.
 - Camper takes ×2 from behind because `STAY` never rotates. → v2 with bounce-turn.
+- **Camper v2** (bounce-turn when the adjacent target is at rear). 1:1 swap for v1, same seed: 15.7% vs 14.8% (+0.9pp), damage taken −2%, draws 9.6 → 8.5. Both in one 9-seat lineup: v2 10.9 / v1 10.4, both below baseline — two campers fight for one tile and the loser parks adjacent as a stationary target. Swap is the measurement.
+- Facing has a low ceiling: rear is 1 of 8 approach arcs and the first rear hit is unavoidable, so bounce-turn can only touch ~1/8 of incoming damage. The ×2 rear bonus is too narrow to shape play. Revisit if facing should matter more: wider rear arc, or side ×1.5.
+- v1 retired; "camper" = v2 from here.

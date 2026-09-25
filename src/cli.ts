@@ -17,4 +17,4 @@ const rules = PRESETS[preset]   // preset is now PresetName — no cast
 console.log(`matches: ${matches}  seed: ${seed} preset: ${preset}`)
 const { tally, totals } = runTournament(entrants, matches, seed, rules)
 console.table(tally)
-console.table(totals)
+console.table(totals.map((t, i) => ({name: entrants[i].name, ...t})))

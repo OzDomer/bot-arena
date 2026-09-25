@@ -15,8 +15,6 @@ Each entry: what we decided, why, and what it would take to revisit.
 - **Kills/match > deaths/match.** Shared kill credit on the death tick inflates the count (7.7 on a 7-ship map with max 6 deaths). Fine as a relative measure across rulesets; don't read the absolute number. Fix when comparing bots, not rules.
 - **Sample size.** 1k matches → identical bots spread ±2pp; 10k → ±0.6pp. Balance claims need 10k. Headless: 10k matches ≈ 4 s in Node (~2,500 matches/s, ~500k `step()`/s).
 - **Rules presets.** `PRESETS` in `sim/presets.ts` is a `Record<PresetName, Rules>`, each spreading `DEFAULT_RULES` and overriding only what changes. CLI takes the name as argv[4]; `runTournament` threads it to `makeMatch`. Presets are data, not functions — no derivation of storm timing from map size (rejected, see findings: startTurn barely matters, so there's nothing worth deriving). Presets are the experiment record: don't overwrite one with another.
-Win % vs the 1/n baseline (it'll be 1/8 with the current seven + camper).
-Survival turns and damage dealt relative to the others. High survival + low damage = outlasting via the safe tile, not holding the objective.
 
 ## Rules (v1)
 - **Chebyshev distance** for vision and attack — matches 8-direction movement. (Manhattan caused diagonal chasers to swap tiles forever.)
@@ -51,9 +49,9 @@ Survival turns and damage dealt relative to the others. High survival + low dama
 9. Pairwise round-robin → decide if evolution is justified
 10. Heal resource
 11. Kiter — keep threats at distance 2, retreat toward center not away from threat, face-and-trade when caught (move into the adjacent enemy = bounce-turn, see findings). Deferred: kiting buys time, and time is worthless without a resource to spend it on. Needs heals first.
-11. Evolution (tiny NN brains), then RL
-12. Port `step()` to Rust — to learn Rust, not for speed
-13. RTS: momentum physics, continuous positions, islands, ramming, disembarking; re-evolve
+12. Evolution (tiny NN brains), then RL
+13. Port `step()` to Rust — to learn Rust, not for speed
+14. RTS: momentum physics, continuous positions, islands, ramming, disembarking; re-evolve
 
 ## Tournament findings
 - Identical-stat shooters always draw 1v1 → needed asymmetry → facing.
@@ -98,3 +96,40 @@ Survival turns and damage dealt relative to the others. High survival + low dama
 - **Camper v2** (bounce-turn when the adjacent target is at rear). 1:1 swap for v1, same seed: 15.7% vs 14.8% (+0.9pp), damage taken −2%, draws 9.6 → 8.5. Both in one 9-seat lineup: v2 10.9 / v1 10.4, both below baseline — two campers fight for one tile and the loser parks adjacent as a stationary target. Swap is the measurement.
 - Facing has a low ceiling: rear is 1 of 8 approach arcs and the first rear hit is unavoidable, so bounce-turn can only touch ~1/8 of incoming damage. The ×2 rear bonus is too narrow to shape play. Revisit if facing should matter more: wider rear arc, or side ×1.5.
 - v1 retired; "camper" = v2 from here.
+
+## Evolution (v1 design)
+
+### Input encoding
+- k nearest visible ships: k = 3
+- per ship slot: [present, dx, dy, hp]
+- self:[hp, facing sin, facing cos]
+- storm: [center dx, dy, radius] — normalized how
+- total input length: 18
+### Input encoding (18)
+| field | count | divisor |
+|---|---|---|
+| slot × 3: present | 1 | — (0/1) |
+| slot × 3: dx, dy | 2 | visionRange (→ −1…1) |
+| slot × 3: hp | 1 | maxHp (→ 0…1) |
+| self hp | 1 | maxHp |
+| self facing | 2 | sin/cos from DELTAS, diagonals ÷ √2 |
+| storm center dx, dy | 2 | max(width, height) |
+| storm radius | 1 | max(width, height) |
+Slots ordered nearest first; empty slot = present 0, rest 0. Dropped: map w/h (constant), turn and phase (same info as radius), enemy facing (rear is 1/8 of arcs, not worth 6 inputs).
+
+### Output
+- 9 move logits → argmax → Direction
+- attack: hardcoded nearest-alive-in-range (not learned)
+
+### Network
+v0 no hidden layer, 18·9 + 9 = 171 weights. 
+v1 h = 8, tanh, 18·8 + 8 + 8·9 + 9 = 233.
+
+### Fitness
+- pool: chaserV2 ×2, camperV2, coward, plus the network = 5 seats.
+- matches per evaluation: 100
+- score = ?  (must be non-zero for a random brain)
+fitness = score = wins × 100 + survivalTurns + damageDealt (non-zero for a random brain, so gen 1 has something to rank)
+
+### Open
+- if the evolved bot camps, fitness is rewarding survival over engagement; consider weighting damage higher or capping survival.

@@ -96,16 +96,11 @@ Each entry: what we decided, why, and what it would take to revisit.
 - **Camper v2** (bounce-turn when the adjacent target is at rear). 1:1 swap for v1, same seed: 15.7% vs 14.8% (+0.9pp), damage taken −2%, draws 9.6 → 8.5. Both in one 9-seat lineup: v2 10.9 / v1 10.4, both below baseline — two campers fight for one tile and the loser parks adjacent as a stationary target. Swap is the measurement.
 - Facing has a low ceiling: rear is 1 of 8 approach arcs and the first rear hit is unavoidable, so bounce-turn can only touch ~1/8 of incoming damage. The ×2 rear bonus is too narrow to shape play. Revisit if facing should matter more: wider rear arc, or side ×1.5.
 - v1 retired; "camper" = v2 from here.
+- **Net v0, random weights** (9-seat lineup: 3×chaserV2 / 3×chaserV1 / camperV2 / coward / net, 10k, seed 1790266907455, bigmap): 3.2% per seat, 0.29× baseline. Lowest damage taken in the lineup — it wanders away from fights and dies to the storm. This is generation 0; evolution has to beat it.
 
 ## Evolution (v1 design)
 
-### Input encoding
-- k nearest visible ships: k = 3
-- per ship slot: [present, dx, dy, hp]
-- self:[hp, facing sin, facing cos]
-- storm: [center dx, dy, radius] — normalized how
-- total input length: 18
-### Input encoding (18)
+### Input encoding(18)
 | field | count | divisor |
 |---|---|---|
 | slot × 3: present | 1 | — (0/1) |
@@ -115,11 +110,13 @@ Each entry: what we decided, why, and what it would take to revisit.
 | self facing | 2 | sin/cos from DELTAS, diagonals ÷ √2 |
 | storm center dx, dy | 2 | max(width, height) |
 | storm radius | 1 | max(width, height) |
+
 Slots ordered nearest first; empty slot = present 0, rest 0. Dropped: map w/h (constant), turn and phase (same info as radius), enemy facing (rear is 1/8 of arcs, not worth 6 inputs).
 
 ### Output
 - 9 move logits → argmax → Direction
 - attack: hardcoded nearest-alive-in-range (not learned)
+- Output index → `DIRECTIONS[i]` (order from `types.ts`: N, NE, E, SE, S, SW, W, NW, STAY). Weights layout: 9 rows × 19, row `j` = 18 input weights then bias.
 
 ### Network
 v0 no hidden layer, 18·9 + 9 = 171 weights. 
@@ -128,8 +125,7 @@ v1 h = 8, tanh, 18·8 + 8 + 8·9 + 9 = 233.
 ### Fitness
 - pool: chaserV2 ×2, camperV2, coward, plus the network = 5 seats.
 - matches per evaluation: 100
-- score = ?  (must be non-zero for a random brain)
-fitness = score = wins × 100 + survivalTurns + damageDealt (non-zero for a random brain, so gen 1 has something to rank)
+- fitness = score = wins × 100 + survivalTurns + damageDealt (non-zero for a random brain, so gen 1 has something to rank)
 
 ### Open
 - if the evolved bot camps, fitness is rewarding survival over engagement; consider weighting damage higher or capping survival.

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { stormAt, isSafe } from './storm';
+import { stormAt } from './storm';
 import { DEFAULT_RULES } from '../types';
+import { inCircle } from './geometry';
 
 describe('stormAt', () => {
     it('has not started before startTurn', () => {
@@ -26,16 +27,16 @@ describe('stormAt', () => {
 
 describe('isSafe', () => {
     it('center is always safe', () => {
-        expect(isSafe({ x: 5, y: 5 }, { x: 5, y: 5 }, 0)).toBe(true);
+        expect(inCircle({ x: 5, y: 5 }, { x: 5, y: 5 }, 0)).toBe(true);
     })
     it('corner is outside a small circle', () => {
-        expect(isSafe({ x: 0, y: 0 }, { x: 5, y: 5 }, 3)).toBe(false);
+        expect(inCircle({ x: 0, y: 0 }, { x: 5, y: 5 }, 3)).toBe(false);
     })
     it('edge of the circle is safe', () => {
-        expect(isSafe({ x: 8, y: 5 }, { x: 5, y: 5 }, 3)).toBe(true);
+        expect(inCircle({ x: 8, y: 5 }, { x: 5, y: 5 }, 3)).toBe(true);
     })
 
     it('nothing is safe once radius is negative', () => {
-        expect(isSafe({ x: 5, y: 5 }, { x: 5, y: 5 }, -1)).toBe(false);
+        expect(inCircle({ x: 5, y: 5 }, { x: 5, y: 5 }, -1)).toBe(false);
     })
 })

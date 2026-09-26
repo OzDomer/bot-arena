@@ -33,3 +33,19 @@ export function gradLogPi(x: number[], a: number, probs: number[]): Weights {
     }
     return grad
 }
+
+export type Sample = { x: number[]; a: number; probs: number[]; G: number }
+
+export function updateWeights(weights: Weights, samples: Sample[], lr: number): Weights {
+    const meanG = samples.reduce((a, b) => a + b.G, 0) / samples.length
+    const acc = Array.from({ length: 9 }, () => Array(19).fill(0))
+    for (const s of samples) {
+        const adv = s.G - meanG
+        const g = gradLogPi(s.x, s.a, s.probs)
+        for (let j = 0; j < 9; j++)
+            for (let i = 0; i < 19; i++)
+                acc[j][i] += adv * g[j][i]
+    }
+    return Array.from({ length: 9 }, (_, j) =>
+        Array.from({ length: 19 }, (_, i) => weights[j][i] + lr * acc[j][i] / samples.length))
+}

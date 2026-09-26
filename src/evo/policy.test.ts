@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { sample, softmax } from "./policy"
+import { gradLogPi, sample, softmax } from "./policy"
 
 describe('softmax', () => {
     it('uniform logits give equal probabilities ', () => {
@@ -27,6 +27,27 @@ describe('sample', () => {
 
     })
 })
+describe('gradLogPi', () => {
+    it('taken row gets the +1, others only the −prob', () => {
+        const x = Array(18).fill(0.5)
+        const probs = softmax(Array(9).fill(0))      
+        const grad = gradLogPi(x, 3, probs)
+
+        expect(grad[3][0]).toBeCloseTo((1 - 1 / 9) * 0.5)   
+        expect(grad[0][0]).toBeCloseTo(-(1 / 9) * 0.5)      
+        expect(grad[3][18]).toBeCloseTo(1 - 1 / 9)          
+    })
+
+    it('every column sums to zero across rows', () => {
+        const x = Array(18).fill(0.5)
+        const grad = gradLogPi(x, 3, softmax(Array(9).fill(0)))
+        for (let i = 0; i < 19; i++) {
+            const colSum = grad.reduce((s, row) => s + row[i], 0)
+            expect(colSum).toBeCloseTo(0)
+        }
+    })
+})
+
 
 
 

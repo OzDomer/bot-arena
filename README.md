@@ -90,7 +90,7 @@ Each entry is one change to the rules or bots, what the tally said, and what I c
 - ~~**Tournament stats**~~ — per-seat wins, survival, damage, kills; headless runner.
 - ~~**Rules presets**~~ — and the experiments that picked v2.
 - ~~**Opponent pool**~~ — storm-aware Chaser, Camper. The Kiter is deferred: it keeps enemies at range to buy time, and time is worthless until there's a resource to spend it on.
-- **Evolution** — in progress. Linear net evolves and plateaus at "survive first." Next: reweight fitness toward wins and damage; then a hidden layer if the score isn't the ceiling.
+- - ~~**Evolution**~~ — done. Tiny linear nets, tournament fitness, keep-and-mutate. Beats every FSM; learns the pool, not the game. Fitness reweight and co-evolution parked.
 - **Parallel evaluation** — one worker per core. At 500 matches per brain, a generation is ~10 s and this is the bottleneck.
 - **Resources** — map pickups like heal, shield, etc. Then the Kiter.
 - **RL** — brains trained on the game (in Python), plugged back in.

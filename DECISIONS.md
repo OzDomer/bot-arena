@@ -97,6 +97,7 @@ Each entry: what we decided, why, and what it would take to revisit.
 - Facing has a low ceiling: rear is 1 of 8 approach arcs and the first rear hit is unavoidable, so bounce-turn can only touch ~1/8 of incoming damage. The ×2 rear bonus is too narrow to shape play. Revisit if facing should matter more: wider rear arc, or side ×1.5.
 - v1 retired; "camper" = v2 from here.
 - **Net v0, random weights** (9-seat lineup: 3×chaserV2 / 3×chaserV1 / camperV2 / coward / net, 10k, seed 1790266907455, bigmap): 3.2% per seat, 0.29× baseline. Lowest damage taken in the lineup — it wanders away from fights and dies to the storm. This is generation 0; evolution has to beat it.
+- **Evolution, 3 generations** (pop 50, keep 10, step 0.1, fixed eval seed, pool chaserV2×2 / camperV2 / coward). Best score 7357 → 7562 → 7682, `born` advancing every gen. Saved brain in the 9-seat 10k lineup: 7.5% (0.67× baseline) vs 3.2% random — past coward (5.7) and chaserV1 (6.4). Highest survival (36 turns), lowest damage taken (72k), but damage dealt 66k and 5.7k kills — more than coward or camper, so it's fighting, not just hiding. Survival dominates the score (~3,000 of ~7,500); watch damage dealt on longer runs for the camping failure.
 
 ## Evolution (v1 design)
 

@@ -8,7 +8,7 @@ import { NetBrain } from "./NetBrain";
 
 
 
-export function evaluate(weights: Weights, seed: number): number {
+export function evaluate(weights: Weights, seed: number, matches: number = 500): number {
     const lineup: Entrant[] =
         [
             { name: 'chaserV2', make: rng => new BOTS.ChaserV2(rng) },
@@ -17,6 +17,6 @@ export function evaluate(weights: Weights, seed: number): number {
             { name: 'coward', make: rng => new BOTS.CowardV1(rng) },
             { name: 'net', make: () => new NetBrain(weights) }
         ]
-    const { totals } = runTournament(lineup, 100, seed, PRESETS.bigmap)
+    const { totals } = runTournament(lineup, matches, seed, PRESETS.bigmap)
     return fitness(totals[4])
 }

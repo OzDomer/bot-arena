@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest",
-    "tournament": "tsx src/cli.ts"
+    "tournament": "tsx src/cli.ts",
+    "evolve": "tsx src/evolve-cli.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",

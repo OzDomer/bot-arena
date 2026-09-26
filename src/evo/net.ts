@@ -25,3 +25,7 @@ export function argMax(values: number[]): number {
 export function randomWeights(rng: Rng): Weights {
     return Array.from({ length: 9 }, () => Array.from({ length: 19 }, () => rng() * 2 - 1))
 }
+
+export function mutate(weights: Weights, rng: Rng, step: number): Weights {
+    return Array.from({ length: 9 }, (_, row) => Array.from({ length: 19 }, (_, col) => weights[row][col] + (rng() * 2 - 1) * step))
+}

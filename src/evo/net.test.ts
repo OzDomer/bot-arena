@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest"
-import { argMax, forward } from "./net"
+import { argMax, forward, mutate, randomWeights } from "./net"
+import { makeRng } from "../util/random"
 
 
 describe('forward', () => {
@@ -32,5 +33,24 @@ describe('argmax', () => {
 
     it('first element can win', () => {
         expect(argMax([3, 1, 2])).toBe(0)
+    })
+})
+
+describe('mutate', () => {
+    it('weights change after mutate', () => {
+        const w = randomWeights(makeRng(1))
+        expect(mutate(w, makeRng(1), 0.1)).not.toEqual(w)
+    })
+
+    it('weights change are deterministic same seed same number', () => {
+        const w = randomWeights(makeRng(1))
+        const t = randomWeights(makeRng(1))
+        expect(mutate(w, makeRng(1), 0.1)).toEqual(mutate(t, makeRng(1), 0.1))
+    })
+
+    it('mutation doesnt doesnt the input', () => {
+        const w = randomWeights(makeRng(1))
+        mutate(w, makeRng(2), 0.1)
+        expect(w).toEqual(randomWeights(makeRng(1)))
     })
 })

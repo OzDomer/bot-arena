@@ -1,5 +1,4 @@
 import { readFileSync } from "fs";
-import { randomWeights } from "../evo/net";
 import { NetBrain } from "../evo/NetBrain";
 import type { Entrant } from "../types";
 import { CamperV1 } from "./CamperV1";

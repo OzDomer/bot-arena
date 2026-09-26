@@ -5,6 +5,6 @@ import { makeRng } from "../util/random"
 describe('evaluate', () => {
     it('random weights greater than 0', () => {
 
-        expect(evaluate(randomWeights(makeRng(1)))).toBeGreaterThan(0)
+        expect(evaluate(randomWeights(makeRng(1)), 1)).toBeGreaterThan(0)
     })
 })

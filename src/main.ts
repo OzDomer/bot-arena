@@ -1,10 +1,10 @@
-import type { World } from './types';
-import { runMatch } from './sim/match';
-import { TILE } from './render/render';
-import { Player } from './render/Player';
-import { runTournament } from './sim/tournament';
-import { makeMatch } from './sim/setup';
-import { entrants } from './bots';
+import type { World } from './types'
+import { runMatch } from './sim/match'
+import { TILE } from './render/render'
+import { Player } from './render/Player'
+import { runTournament } from './sim/tournament'
+import { makeMatch } from './sim/setup'
+import { showcase } from './bots/lineups'
 
 
 const canvas = document.querySelector<HTMLCanvasElement>('#gameCanvas')
@@ -23,7 +23,7 @@ const seed = Date.now();
 console.log(`Match seed: ${seed}`);
 
 
-const { world, brains } = makeMatch(entrants, seed)
+const { world, brains } = makeMatch(showcase, seed)
 
 const history: World[] = [world];
 
@@ -38,7 +38,7 @@ canvas.height = world.rules.height * TILE
 
 
 
-const result = (runTournament(entrants, 1000, seed))
+const result = (runTournament(showcase, 1000, seed))
 console.table(result.tally)
 console.table(result.totals)
 

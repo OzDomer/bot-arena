@@ -1,4 +1,4 @@
-import { entrants } from './bots'
+import { showcase } from './bots/lineups'
 import { PRESETS, type PresetName } from './sim/presets'
 import { runTournament } from './sim/tournament'
 
@@ -15,6 +15,6 @@ if (!isPresetName(preset)) throw new Error(`unknown preset: ${preset}`)
 const rules = PRESETS[preset]   // preset is now PresetName — no cast
 
 console.log(`matches: ${matches}  seed: ${seed} preset: ${preset}`)
-const { tally, totals } = runTournament(entrants, matches, seed, rules)
+const { tally, totals } = runTournament(showcase, matches, seed, rules)
 console.table(tally)
-console.table(totals.map((t, i) => ({name: entrants[i].name, ...t})))
+console.table(totals.map((t, i) => ({name: showcase[i].name, ...t})))

@@ -34,7 +34,7 @@ Each entry: what we decided, why, and what it would take to revisit.
 
 
 ## Rejected
-- Damage RNG (luck, not skill). Move-XOR-attack (kills the RTS feel). Bracing (rewards camping). Bot "retry" on blocked move (breaks the GM model; bots can see the tile is taken). Coward v2 with storm awareness (its problem is the flee trigger, not the storm — replaced by the Kiter). Capping `damageDealt` at remaining HP (needs an arbitrary overkill split).
+- Damage RNG (luck, not skill). Move-XOR-attack (kills the RTS feel). Bracing (rewards camping). Bot "retry" on blocked move (breaks the GM model; bots can see the tile is taken). Coward v2 with storm awareness (its problem is the flee trigger, not the storm — deferred until heals — see roadmap). Capping `damageDealt` at remaining HP (needs an arbitrary overkill split).
 - Deriving storm timing from map size (`startTurn` barely matters on 20×20; nothing worth deriving — presets stay plain data).
 
 ## Roadmap
@@ -46,12 +46,13 @@ Each entry: what we decided, why, and what it would take to revisit.
 6. ~~Storm-aware Chaser v2~~
 7. ~~Rules presets + CLI arg~~ → v2 = 20×20, shrink 5 (preset `bigmap`). Storm-timing derivation rejected. Experiments in findings.
 8. ~~Camper~~ — under v2
-9. Pairwise round-robin → decide if evolution is justified
+9. ~~Pairwise round-robin~~ → decide if evolution is justified
 10. Heal resource
 11. Kiter — keep threats at distance 2, retreat toward center not away from threat, face-and-trade when caught (move into the adjacent enemy = bounce-turn, see findings). Deferred: kiting buys time, and time is worthless without a resource to spend it on. Needs heals first.
-12. Evolution (tiny NN brains), then RL
-13. Port `step()` to Rust — to learn Rust, not for speed
-14. RTS: momentum physics, continuous positions, islands, ramming, disembarking; re-evolve
+12. Evolution — **in progress.** Linear net plateaus at "survive first" (findings). Next: fitness reweight, then hidden layer.
+13. Parallel evaluation — worker_threads, one worker per core, population split into chunks. ~10 s/gen at 500 matches; the bottleneck now.
+14. Port step() to Rust — was "to learn Rust, not for speed"; at 25k matches/gen it's both.
+15. RTS: momentum physics, continuous positions, islands, ramming, disembarking; re-evolve
 
 ## Tournament findings
 - Identical-stat shooters always draw 1v1 → needed asymmetry → facing.
@@ -109,10 +110,10 @@ Each entry: what we decided, why, and what it would take to revisit.
 - Converges in ~3 generations, then plateaus. Not memorization: rotating the eval seed per generation (`deriveSeed(seed, 'gen', gen)`) gives the same 10k profile. Same brain shape every run — highest survival in the lineup, lowest damage taken, moderate damage dealt. That's the optimum of the score as written: ~3,000 points of survival per 100 matches vs 100 per win, so it learns "don't die" and stops. chaserV2 wins 14% by dealing 92k and dying sooner — a trade the fitness function penalizes.
 - Training score stopped being a progress bar once the seed rotates (per-gen match sets differ in difficulty). The 10k check is the measurement.
 - Past coward (5.7) and chaserV1 (6.4). Below camper and chaserV2.
-- Next, one at a time: (1) eval match count — five-seed spread of one brain to size the noise; (2) fitness reweight — wins ×1000 or dealt ×5; (3) hidden layer only if 1–2 don't move it.
+- Eval noise: one saved brain, five seeds. 100 matches: 6664 / 7325 / 7762 / 7052 / 6872 (±8%). 500 matches: 33575 / 33824 / 35620 / 33824 / 33637 (±3%). Per-generation gains were +20–50 at the 100-match scale, so the top 10 were partly luck. → 500 matches per evaluation.
+- Next, one at a time: ~~(1) eval match count~~ → 500; (2) fitness reweight — wins ×1000 or dealt ×5; (3) hidden layer only if 2 doesn't move it.
 
 ## Evolution (v1 design)
-- matches per evaluation: 100 — under review, see findings
 
 ### Input encoding(18)
 | field | count | divisor |
@@ -136,10 +137,17 @@ Slots ordered nearest first; empty slot = present 0, rest 0. Dropped: map w/h (c
 v0 no hidden layer, 18·9 + 9 = 171 weights. 
 v1 h = 8, tanh, 18·8 + 8 + 8·9 + 9 = 233.
 
+### Loop
+- Population 50, elitism 10 (survivors carry over unchanged and are re-scored every generation), 40 children by mutating survivors round-robin (`i % 10`).
+- `mutate` = every weight + `(rng·2−1)·step`, new copy. step 0.1 default, CLI arg.
+- One eval seed per generation, `deriveSeed(seed, 'gen', gen)`: all 50 brains face the same 500 matches, next generation faces different ones. One master seed reproduces the whole run.
+- Best of the final generation → `best.json` (gitignored). Seat it via the `evolved` entrant for the 10k check.
+- Printed per gen: best score and its `born` generation. A gen-0 brain still on top late is a "nothing's improving" alarm, not a good brain.
+
 ### Fitness
 - pool: chaserV2 ×2, camperV2, coward, plus the network = 5 seats.
-- matches per evaluation: 100
 - fitness = score = wins × 100 + survivalTurns + damageDealt (non-zero for a random brain, so gen 1 has something to rank)
+- matches per evaluation: 500 (100 gave ±8% noise on one brain across five seeds, 500 gives ±3%; see findings)
 
 ### Open
 - if the evolved bot camps, fitness is rewarding survival over engagement; consider weighting damage higher or capping survival.

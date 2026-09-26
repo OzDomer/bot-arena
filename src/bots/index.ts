@@ -10,14 +10,28 @@ import { RandomBot } from "./RandomBot";
 
 export const BOTS = { RandomBot, ChaserV1, CowardV1, ChaserV2, CamperV1, CamperV2, NetBrain }
 
+const defaultseed = JSON.parse(readFileSync('brains/linear-500m-defaultseed.json', 'utf8'))
+const seed2 = JSON.parse(readFileSync('brains/linear-500m-seed2.json', 'utf8'))
+// export const entrants: Entrant[] =
+//     [
+//         { name: 'chaserV2', make: rng => new BOTS.ChaserV2(rng) },
+//         { name: 'chaserV2', make: rng => new BOTS.ChaserV2(rng) },
+//         { name: 'chaserV2', make: rng => new BOTS.ChaserV2(rng) },
+//         { name: 'chaserV1', make: rng => new BOTS.ChaserV1(rng) },
+//         { name: 'chaserV1', make: rng => new BOTS.ChaserV1(rng) },
+//         { name: 'chaserV1', make: rng => new BOTS.ChaserV1(rng) },
+//         { name: 'camperV2', make: () => new BOTS.CamperV2() },
+//         { name: 'coward', make: rng => new BOTS.CowardV1(rng) },
+//         { name: 'evolved', make: () => new NetBrain(JSON.parse(readFileSync('best.json', 'utf8'))) }]
+
+
 export const entrants: Entrant[] =
     [
-        { name: 'chaserV2', make: rng => new BOTS.ChaserV2(rng) },
-        { name: 'chaserV2', make: rng => new BOTS.ChaserV2(rng) },
-        { name: 'chaserV2', make: rng => new BOTS.ChaserV2(rng) },
-        { name: 'chaserV1', make: rng => new BOTS.ChaserV1(rng) },
-        { name: 'chaserV1', make: rng => new BOTS.ChaserV1(rng) },
-        { name: 'chaserV1', make: rng => new BOTS.ChaserV1(rng) },
+        { name: 'defaultseedevo', make: () => new NetBrain(defaultseed) },
+        { name: 'defaultseedevo', make: () => new NetBrain(defaultseed) },
+        { name: 'defaultseedevo', make: () => new NetBrain(defaultseed) },
         { name: 'camperV2', make: () => new BOTS.CamperV2() },
-        { name: 'coward', make: rng => new BOTS.CowardV1(rng) },
-        { name: 'evolved', make: () => new NetBrain(JSON.parse(readFileSync('best.json', 'utf8'))) }]
+        { name: 'camperV2', make: () => new BOTS.CamperV2() },
+        { name: 'chaserV2', make: rng => new BOTS.ChaserV2(rng) },
+        { name: 'chaserV2', make: rng => new BOTS.ChaserV2(rng) },
+        { name: 'seed2evo', make: () => new NetBrain(seed2) }]

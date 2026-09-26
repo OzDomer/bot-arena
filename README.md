@@ -15,13 +15,13 @@ npm run dev
 Open http://localhost:5173/ (the default) to watch a single match replayed on the grid.
 
 ```bash
-npm run tournament -- <matches> <seed> <preset>
+tournament <matches> <preset> <seed>
 ```
 
 Runs a headless tournament in Node and prints the win tally and per-seat stats. Presets are `default` (10×10), `bigmap` (20×20, faster storm — the current ruleset), plus the experiment presets that produced it. 10,000 matches take a few seconds.
 
 ```bash
-npm run evolve -- <generations> <step> <seed>
+npm run evolve -- <generations> <seed> <step> 
 ```
 
 Evolves a linear-net brain against a fixed pool of hand-written bots and writes the best weights to `best.json`. Seat it in the tournament lineup as `evolved` to measure it against everything else.

@@ -102,10 +102,11 @@ Each entry: what we decided, why, and what it would take to revisit.
 
   | run | training score | 10k win % | ×baseline | survival | dealt | taken |
   |---|---|---|---|---|---|---|
-  | random (gen 0) | — | 3.2 | 0.29 | 28 | 58k | 77k |
-  | gen 3, fixed eval seed | 7682 | 7.5 | 0.67 | 36 | 66k | 72k |
-  | gen 100, fixed eval seed | 8162 | 8.0 | 0.72 | 36.5 | 66.6k | 73k |
-  | gen 100, rotating eval seed | ~7000 (noisy) | 7.8 | 0.70 | 36.5 | 65.2k | 73k |
+  | random (gen 0), 100 matches | — | 3.2 | 0.29 | 28 | 58k | 77k |
+  | gen 3, fixed eval seed, 100 matches | 7682 | 7.5 | 0.67 | 36 | 66k | 72k |
+  | gen 100, fixed eval seed, 100 matches | 8162 | 8.0 | 0.72 | 36.5 | 66.6k | 73k |
+  | gen 100, rotating eval seed, 100 matches | ~7000 (noisy) | 7.8 | 0.70 | 36.5 | 65.2k | 73k |
+  | gen 100, rotating seed, 500 matches | 44276 | 13.6 | 1.22 | 37.3 | 66k | 81k |
 
 - Converges in ~3 generations, then plateaus. Not memorization: rotating the eval seed per generation (`deriveSeed(seed, 'gen', gen)`) gives the same 10k profile. Same brain shape every run — highest survival in the lineup, lowest damage taken, moderate damage dealt. That's the optimum of the score as written: ~3,000 points of survival per 100 matches vs 100 per win, so it learns "don't die" and stops. chaserV2 wins 14% by dealing 92k and dying sooner — a trade the fitness function penalizes.
 - Training score stopped being a progress bar once the seed rotates (per-gen match sets differ in difficulty). The 10k check is the measurement.
@@ -148,6 +149,7 @@ v1 h = 8, tanh, 18·8 + 8 + 8·9 + 9 = 233.
 - pool: chaserV2 ×2, camperV2, coward, plus the network = 5 seats.
 - fitness = score = wins × 100 + survivalTurns + damageDealt (non-zero for a random brain, so gen 1 has something to rank)
 - matches per evaluation: 500 (100 gave ±8% noise on one brain across five seeds, 500 gives ±3%; see findings)
+- **500 matches confirmed with a second master seed.** Seed 1: 13.6% (vulture — same damage dealt as the 100-match brains, wins by positioning). Seed 2: 17.3% (fighter — +13k dealt, +2k kills), best in the lineup, above camper and chaserV2. The plateau at 8% was ranking noise, not the fitness formula. Between-seed variance ~±2pp; method comparisons need two seeds each. Both still improving at gen 99.
 
 ### Open
 - if the evolved bot camps, fitness is rewarding survival over engagement; consider weighting damage higher or capping survival.

@@ -97,9 +97,22 @@ Each entry: what we decided, why, and what it would take to revisit.
 - Facing has a low ceiling: rear is 1 of 8 approach arcs and the first rear hit is unavoidable, so bounce-turn can only touch ~1/8 of incoming damage. The ×2 rear bonus is too narrow to shape play. Revisit if facing should matter more: wider rear arc, or side ×1.5.
 - v1 retired; "camper" = v2 from here.
 - **Net v0, random weights** (9-seat lineup: 3×chaserV2 / 3×chaserV1 / camperV2 / coward / net, 10k, seed 1790266907455, bigmap): 3.2% per seat, 0.29× baseline. Lowest damage taken in the lineup — it wanders away from fights and dies to the storm. This is generation 0; evolution has to beat it.
-- **Evolution, 3 generations** (pop 50, keep 10, step 0.1, fixed eval seed, pool chaserV2×2 / camperV2 / coward). Best score 7357 → 7562 → 7682, `born` advancing every gen. Saved brain in the 9-seat 10k lineup: 7.5% (0.67× baseline) vs 3.2% random — past coward (5.7) and chaserV1 (6.4). Highest survival (36 turns), lowest damage taken (72k), but damage dealt 66k and 5.7k kills — more than coward or camper, so it's fighting, not just hiding. Survival dominates the score (~3,000 of ~7,500); watch damage dealt on longer runs for the camping failure.
+- **Evolution v0** (linear, pop 50, keep 10, step 0.1, 100 eval matches, pool chaserV2×2 / camperV2 / coward, score = wins×100 + survival + dealt). Three runs, each 10k-checked in the 9-seat lineup, baseline 11.1%:
+
+  | run | training score | 10k win % | ×baseline | survival | dealt | taken |
+  |---|---|---|---|---|---|---|
+  | random (gen 0) | — | 3.2 | 0.29 | 28 | 58k | 77k |
+  | gen 3, fixed eval seed | 7682 | 7.5 | 0.67 | 36 | 66k | 72k |
+  | gen 100, fixed eval seed | 8162 | 8.0 | 0.72 | 36.5 | 66.6k | 73k |
+  | gen 100, rotating eval seed | ~7000 (noisy) | 7.8 | 0.70 | 36.5 | 65.2k | 73k |
+
+- Converges in ~3 generations, then plateaus. Not memorization: rotating the eval seed per generation (`deriveSeed(seed, 'gen', gen)`) gives the same 10k profile. Same brain shape every run — highest survival in the lineup, lowest damage taken, moderate damage dealt. That's the optimum of the score as written: ~3,000 points of survival per 100 matches vs 100 per win, so it learns "don't die" and stops. chaserV2 wins 14% by dealing 92k and dying sooner — a trade the fitness function penalizes.
+- Training score stopped being a progress bar once the seed rotates (per-gen match sets differ in difficulty). The 10k check is the measurement.
+- Past coward (5.7) and chaserV1 (6.4). Below camper and chaserV2.
+- Next, one at a time: (1) eval match count — five-seed spread of one brain to size the noise; (2) fitness reweight — wins ×1000 or dealt ×5; (3) hidden layer only if 1–2 don't move it.
 
 ## Evolution (v1 design)
+- matches per evaluation: 100 — under review, see findings
 
 ### Input encoding(18)
 | field | count | divisor |
@@ -130,3 +143,4 @@ v1 h = 8, tanh, 18·8 + 8 + 8·9 + 9 = 233.
 
 ### Open
 - if the evolved bot camps, fitness is rewarding survival over engagement; consider weighting damage higher or capping survival.
+- score plateaus at "survive first" — reweight pending

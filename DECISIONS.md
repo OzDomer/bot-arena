@@ -113,6 +113,7 @@ Each entry: what we decided, why, and what it would take to revisit.
 - Past coward (5.7) and chaserV1 (6.4). Below camper and chaserV2.
 - Eval noise: one saved brain, five seeds. 100 matches: 6664 / 7325 / 7762 / 7052 / 6872 (±8%). 500 matches: 33575 / 33824 / 35620 / 33824 / 33637 (±3%). Per-generation gains were +20–50 at the 100-match scale, so the top 10 were partly luck. → 500 matches per evaluation.
 - Next, one at a time: ~~(1) eval match count~~ → 500; (2) fitness reweight — wins ×1000 or dealt ×5; (3) hidden layer only if 2 doesn't move it.
+- **Held-out lineup** (3× seed1 / 2× camperV2 / 2× chaserV2 / 1× seed2, 8 seats, baseline 12.5%, 10k): camper 15.5 (1.24×), seed2 14.7 (1.18×), seed1 9.6 (0.77×), chaserV2 7.4 (0.59×). Evolved brains' survival jumps 36 → 60 and damage dealt/taken both halve — without two chaserV2s hunting them, they mostly drift and outlast. chaserV2 collapses from ~13% to 7.4% next to four evolved brains: they don't just beat it, they farm it. Two of four pool slots were chaserV2, so that's what the fitness landscape was made of. Seed 2 generalizes somewhat; seed 1 doesn't. → Widen the pool, not the search: next run adds the seed2 brain as a fixed opponent.
 
 ## Evolution (v1 design)
 

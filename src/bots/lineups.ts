@@ -16,9 +16,6 @@ export const showcase: Entrant[] =
         { name: 'coward', make: rng => new BOTS.CowardV1(rng) }]
 
 
-
-
-
 export const heldout: Entrant[] =
     [
         { name: 'defaultseedevo', make: () => new BOTS.NetBrain(seedDefault) },
@@ -30,3 +27,10 @@ export const heldout: Entrant[] =
         { name: 'chaserV2', make: rng => new BOTS.ChaserV2(rng) },
         { name: 'coward', make: rng => new BOTS.CowardV1(rng) }]
 
+        
+export const trainingPool: Entrant[] = [
+    { name: 'chaserV2', make: rng => new BOTS.ChaserV2(rng) },
+    { name: 'seed2', make: () => new BOTS.NetBrain(seed2) },
+    { name: 'camperV2', make: () => new BOTS.CamperV2() },
+    { name: 'coward', make: rng => new BOTS.CowardV1(rng) },
+]

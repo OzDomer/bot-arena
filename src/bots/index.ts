@@ -28,10 +28,10 @@ const seed2 = JSON.parse(readFileSync('brains/linear-500m-seed2.json', 'utf8'))
 export const entrants: Entrant[] =
     [
         { name: 'defaultseedevo', make: () => new NetBrain(defaultseed) },
-        { name: 'defaultseedevo', make: () => new NetBrain(defaultseed) },
+        { name: 'seed2evo', make: () => new NetBrain(seed2) },
         { name: 'defaultseedevo', make: () => new NetBrain(defaultseed) },
         { name: 'camperV2', make: () => new BOTS.CamperV2() },
         { name: 'camperV2', make: () => new BOTS.CamperV2() },
         { name: 'chaserV2', make: rng => new BOTS.ChaserV2(rng) },
         { name: 'chaserV2', make: rng => new BOTS.ChaserV2(rng) },
-        { name: 'seed2evo', make: () => new NetBrain(seed2) }]
+        { name: 'evovsevobrain', make: () => new NetBrain(JSON.parse(readFileSync('best.json', 'utf8')))}]

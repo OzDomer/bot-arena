@@ -49,10 +49,10 @@ Each entry: what we decided, why, and what it would take to revisit.
 9. ~~Pairwise round-robin~~ → decide if evolution is justified
 10. Heal resource
 11. Kiter — keep threats at distance 2, retreat toward center not away from threat, face-and-trade when caught (move into the adjacent enemy = bounce-turn, see findings). Deferred: kiting buys time, and time is worthless without a resource to spend it on. Needs heals first.
-12. ~~Evolution~~ — closed; beats FSMs, specializes on pool, fitness rewards passivity. See findings. Reweight and live co-evolution parked under Open.
-13. Parallel evaluation — worker_threads, one worker per core, population split into chunks. ~10 s/gen at 500 matches; the bottleneck now.
-14. Port step() to Rust — was "to learn Rust, not for speed"; at 25k matches/gen it's both.
-15. RTS: momentum physics, continuous positions, islands, ramming, disembarking; re-evolve
+12. ~~Evolution~~ — closed; beats FSMs, specializes on pool, fitness rewards passivity. See findings. Reweight and live co-evolution parked under Open. Gradient descent supersedes it for training. 
+13. ~~REINFORCE (Run A)~~ — 21% held-out, one seed. Next: seed 2, 5000 updates, Run B.14. Parallel evaluation — worker_threads, one worker per core, population split into chunks. ~10 s/gen at 500 matches; the bottleneck now.
+15. Port step() to Rust — was "to learn Rust, not for speed"; at 25k matches/gen it's both.
+16. RTS: momentum physics, continuous positions, islands, ramming, disembarking; re-evolve
 
 ## Tournament findings
 - Identical-stat shooters always draw 1v1 → needed asymmetry → facing.
@@ -116,6 +116,28 @@ Each entry: what we decided, why, and what it would take to revisit.
 - **Held-out lineup** (3× seed1 / 2× camperV2 / 2× chaserV2 / 1× seed2, 8 seats, baseline 12.5%, 10k): camper 15.5 (1.24×), seed2 14.7 (1.18×), seed1 9.6 (0.77×), chaserV2 7.4 (0.59×). Evolved brains' survival jumps 36 → 60 and damage dealt/taken both halve — without two chaserV2s hunting them, they mostly drift and outlast. chaserV2 collapses from ~13% to 7.4% next to four evolved brains: they don't just beat it, they farm it. Two of four pool slots were chaserV2, so that's what the fitness landscape was made of. Seed 2 generalizes somewhat; seed 1 doesn't. → Widen the pool, not the search: next run adds the seed2 brain as a fixed opponent.
 - **Run B: seed2 brain in the training pool** (chaserV2 / seed2 / camperV2 / coward / net, one master seed). Held-out lineup: 8.2% (0.65×), below seed1 and every FSM except chaserV2. Survival 60, damage dealt 45k, taken 48k — the most passive brain in the lineup. Widening the pool with an opponent it can't farm made the survival-first optimum *more* attractive, not less. One seed; ±2pp wouldn't rescue it.
 - **Evolution, closed.** Three findings: (1) fitness-based evolution beats every hand-written FSM within 100 generations once ranking is clean (500 matches; at 100 it was ranking noise and plateaued at 8%). (2) It specializes on the pool — farms chaserV2, collapses when chaserV2 isn't there. (3) Under `wins×100 + survival + dealt`, a harder pool makes it more passive: the noise fix unlocked the search, but the target is still "don't die." Untested: reweight to `wins×1000` on the Run B pool.
+- **REINFORCE, Run A** (same objective as evolution: wins×100 + survival + dealt;
+  same training pool as Run B; linear policy, softmax sampling, batch 500, lr 1;
+  greedy NetBrain(weights) for the check). Held-out 10k, seed 1790266907455,
+  baseline 11.1%:
+
+  | updates | matches | win % | ×baseline | survival | dealt | taken |
+  |---|---|---|---|---|---|---|
+  | 200  | 100k | 5.0  | 0.45 | 57.3k | 51.8k | 57.0k |
+  | 1000 | 500k | 21.0 | 1.89 | 62.3k | 59.9k | 65.4k |
+  | evolution Run B (ref) | 2.5M | 8.2 | 0.65 | 60k | 45k | 48k |
+
+- Highest single-seat result to date, on the held-out. Profile is still
+  survival-first (highest survival in the lineup, mid-pack damage) — the objective
+  does what finding 3 said. But survival executed well *wins*: everyone else lost
+  share (camperV2 17.4 → 14.5, seed2 14.1 → 12.0). One seed; still climbing at
+  update 1000. Second seed and a 5000-update run pending.
+- **Finding 3 corrected.** "Fitness rewards passivity" was right; "so it plateaus at
+  8%" was wrong. Evolution found a bad survival-first brain; gradient found a good one
+  on the same objective in a fifth of the matches. The bottleneck was the optimizer.
+- lr matters at the raw-score scale: lr 0.01 moved weights ~0.001/update and learned
+  nothing in 200 updates; lr 1 moves ~0.1/update (evolution's mutation scale) and
+  learned immediately. Advantage normalization not needed yet.
 
 ## Evolution (v1 design)
 
@@ -155,8 +177,43 @@ v1 h = 8, tanh, 18·8 + 8 + 8·9 + 9 = 233.
 - **500 matches confirmed with a second master seed.** Seed 1: 13.6% (vulture — same damage dealt as the 100-match brains, wins by positioning). Seed 2: 17.3% (fighter — +13k dealt, +2k kills), best in the lineup, above camper and chaserV2. The plateau at 8% was ranking noise, not the fitness formula. Between-seed variance ~±2pp; method comparisons need two seeds each. Both still improving at gen 99.
 
 ### Open
-- if the evolved bot camps, fitness is rewarding survival over engagement; consider weighting damage higher or capping survival.
-- score plateaus at "survive first" — reweight pending
 - live co-evolution: the pool's net slot is "whoever's currently best," updated every generation and slotted in.
-- Reweight: `wins × 1000` (or dealt ×5) on the Run B pool — direct test of finding 3. Two seeds.
 - Live co-evolution: `evaluate` takes `opponent: Weights`, loop sets it to `ranked[0]` each gen. Parked: under the current fitness it would evolve toward passivity; scores stop comparing across gens; risk of chasing its own tail. FSMs stay in the pool as anchor if ever done.
+
+## Policy gradient (v1 design)
+
+### Policy
+Same 18-input encoding and 9-logit linear net as evolution (`net.ts`, 171 weights).
+Training: `PolicyBrain` — softmax over the 9 logits, move sampled from the seeded per-bot
+`Rng`. Attack stays hardcoded (nearest alive in range). Every decision is recorded as
+`{x, a, probs}`. Eval: `NetBrain(weights)` — argmax over the same weights, so the checked
+brain is the greedy version of the trained one and comparable to the saved evolved brains.
+
+### Update (REINFORCE)
+| piece | value |
+|---|---|
+| return per decision `G` | the match's `fitness` (wins×100 + survival + dealt), same for every decision in that match |
+| baseline | mean `G` over the batch |
+| gradient per decision | `(1[j==a] − probs[j]) · [x, 1]`, closed form (`gradLogPi`), no autograd |
+| step | `W += lr · Σ (G − baseline) · grad / N`, N = decisions in the batch |
+| batch | 500 matches per update |
+| lr | 1 (0.01 → ~0.001 weight movement/update, no learning; 1 → ~0.1, evolution's mutation scale) |
+| pool | `trainingPool` (chaserV2 / seed2 / camperV2 / coward) + net, 5 seats, `bigmap` |
+| seeds | `deriveSeed(seed, 'init')` for weights, `deriveSeed(seed, 'train', u·batch + b)` per match; check seed pinned to 1790266907455 |
+
+### Loop
+`train-cli.ts <updates> <batch> <lr> <seed>`. Per update: clear samples; per match: clear
+buffer, `playMatch`, find own ship id via `seating`, tag every buffered decision with the
+match's `R`; then `updateWeights`. Logs mean `R` and max |Δweight| per update. Ends with
+`best-trained.json` and the 10k held-out check.
+
+### Cost
+500 matches per update vs 25k per generation for evolution. 1000 updates = 500k matches ≈
+one fifth of a 100-gen evolution run.
+
+### Open
+- Run B: `G` = discounted per-turn reward (dealt − taken, + kill, + win), no survival term.
+  Only the loop's `G` assignment changes; `updateWeights` is untouched.
+- Advantage normalization (divide by std) if a different objective scale makes `lr` fragile.
+- Entropy bonus if the policy collapses onto one move — not seen at lr 1.
+- Hidden layer (h = 8, tanh): needs a second gradient formula through tanh, or a `Value` port.

@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { BOTS } from "../bots";
+import { BOTS } from "../bots/bots";
 import { PRESETS } from "../sim/presets";
 import { runTournament } from "../sim/tournament";
 import type { Entrant } from "../types";

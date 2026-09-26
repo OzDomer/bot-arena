@@ -155,3 +155,4 @@ v1 h = 8, tanh, 18·8 + 8 + 8·9 + 9 = 233.
 ### Open
 - if the evolved bot camps, fitness is rewarding survival over engagement; consider weighting damage higher or capping survival.
 - score plateaus at "survive first" — reweight pending
+- live co-evolution: the pool's net slot is "whoever's currently best," updated every generation and slotted in.

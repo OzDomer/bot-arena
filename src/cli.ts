@@ -3,8 +3,8 @@ import { PRESETS, type PresetName } from './sim/presets'
 import { runTournament } from './sim/tournament'
 
 const matches = Number(process.argv[2] ?? 1000)   // default match count
-const seed = Number(process.argv[3] ?? 1790266907455)      // picked a fixed one
-const preset = process.argv[4] ?? 'default'
+const preset = process.argv[3] ?? 'default'
+const seed = Number(process.argv[4] ?? 1790266907455)      // picked a fixed one
 
 function isPresetName(s: string): s is PresetName {
     return s in PRESETS

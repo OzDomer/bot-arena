@@ -1,3 +1,4 @@
+import { readFileSync } from "fs";
 import { randomWeights } from "../evo/net";
 import { NetBrain } from "../evo/NetBrain";
 import type { Entrant } from "../types";
@@ -20,5 +21,4 @@ export const entrants: Entrant[] =
         { name: 'chaserV1', make: rng => new BOTS.ChaserV1(rng) },
         { name: 'camperV2', make: () => new BOTS.CamperV2() },
         { name: 'coward', make: rng => new BOTS.CowardV1(rng) },
-        { name: 'net', make: rng => new NetBrain(randomWeights(rng)) }
-    ]
+        { name: 'evolved', make: () => new NetBrain(JSON.parse(readFileSync('best.json', 'utf8'))) }]

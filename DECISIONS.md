@@ -49,10 +49,14 @@ Each entry: what we decided, why, and what it would take to revisit.
 9. ~~Pairwise round-robin~~ → decide if evolution is justified
 10. Heal resource
 11. Kiter — keep threats at distance 2, retreat toward center not away from threat, face-and-trade when caught (move into the adjacent enemy = bounce-turn, see findings). Deferred: kiting buys time, and time is worthless without a resource to spend it on. Needs heals first.
-12. ~~Evolution~~ — closed; beats FSMs, specializes on pool, fitness rewards passivity. See findings. Reweight and live co-evolution parked under Open. Gradient descent supersedes it for training. 13. ~~REINFORCE~~ — closed at 28.3 / 28.8 (v2 + dense). See docs/learning.md.
-14. Parallel evaluation — worker_threads, one worker per core, population split into chunks. ~10 s/gen at 500 matches; the bottleneck now.
-15. Port step() to Rust — was "to learn Rust, not for speed"; at 25k matches/gen it's both.
-16. RTS: momentum physics, continuous positions, islands, ramming, disembarking; re-evolve
+12. ~~Evolution~~ — closed; beats FSMs, specializes on pool, fitness rewards passivity. See findings. Reweight and live co-evolution parked under Open. Gradient descent supersedes it for training. 
+13. ~~REINFORCE~~ — closed at 28.3 / 28.8 (v2 + dense). See docs/learning.md. Brain is now a playtester for rules changes.
+14. **Isometric renderer.** `project(x, y, z) → screen` owns the camera; everything draws through it; `TOP_DOWN` flag returns the old view. Floor as diamonds, storm circle as a 64-point polygon, ships as three-face boxes (top + two shaded sides), wrecks flat. Draw order: sort by `x + y` ascending. Text and bars at `project(x, y, h)` in screen space. Renderer only — sim untouched.
+15. **Brain intent overlay.** For every `NetBrain` seat, eight arrows from the ship top with length = softmax probability of that move, dot for STAY, per frame. Uses `encode` → `forward` → `softmax`  on the frame's observation; no new sim state. Toggle in the controls. Output: a README GIF.
+16. **Match readability.** HP bars, bot name over the ship, attacker→target flash on the hit tick, storm-damage tint, storm ring pulse on phase change. All in projected space, so it's drawn once.
+17. Storm center randomization — first rules change checked against a retrained brain with the overlay on.
+18. Heal resource, Kiter (as before, deferred until 17 says what the meta looks like).15. Port step() to Rust — was "to learn Rust, not for speed"; at 25k matches/gen it's both.
+19. RTS: momentum physics, continuous positions, islands, ramming, disembarking; re-evolve
 
 ## Tournament findings
 - Identical-stat shooters always draw 1v1 → needed asymmetry → facing.

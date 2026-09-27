@@ -2,7 +2,7 @@ import { BOTS } from "./bots"
 import type { Entrant } from "../types"
 import v1seed1 from '../../brains/linear-500m-seed1.json'
 import v1seed2 from '../../brains/linear-500m-seed2.json'
-import v2reinforceseed1 from '../../brains/linear-500m-seed2.json'
+import v2reinforceseed1 from '../../brains/reinforce-v2-dense-5000u-seed1.json'
 
 
 

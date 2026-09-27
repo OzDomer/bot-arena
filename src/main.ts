@@ -5,6 +5,7 @@ import { Player } from './render/Player'
 import { runTournament } from './sim/tournament'
 import { makeMatch } from './sim/setup'
 import { showcase } from './bots/lineups'
+import { PRESETS } from './sim/presets'
 
 
 const canvas = document.querySelector<HTMLCanvasElement>('#gameCanvas')
@@ -23,7 +24,7 @@ const seed = Date.now();
 console.log(`Match seed: ${seed}`);
 
 
-const { world, brains } = makeMatch(showcase, seed)
+const { world, brains } = makeMatch(showcase, seed, PRESETS.bigmap)
 
 const history: World[] = [world];
 

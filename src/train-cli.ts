@@ -62,8 +62,8 @@ for (let u = 0; u < updates; u++) {
     const prev = weights
     weights = updateWeights(weights, samples, lr)
     let maxDelta = 0
-    for (let j = 0; weights.length; j++)
-        for (let i = 0; weights[0].length; i++)
+    for (let j = 0; j < weights.length; j++)
+        for (let i = 0; i < weights[0].length; i++)
             maxDelta = Math.max(maxDelta, Math.abs(weights[j][i] - prev[j][i]))
     console.log(u, (sumR / batch).toFixed(2), maxDelta.toFixed(5))
 }

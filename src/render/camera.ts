@@ -64,7 +64,10 @@ export function makeCamera(mode: ViewMode, rules: Rules): Camera {
         mode,
         width,
         height,
-        project: p => {project(p), },
+        project: p => {
+            const raw = view.basis(p)
+            return { x: raw.x + originX, y: raw.y + originY }
+        },
         depth: view.depth
 
     }

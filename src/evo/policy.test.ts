@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest"
 import { gradLogPi, sample, softmax, updateWeights, type Sample } from "./policy"
 import { makeRng } from "../util/random"
-import { INPUTS, OUTPUTS, randomWeights } from "./net"
+import { OUTPUTS, randomWeights } from "./net"
+import { ENCODING_VERSION, inputsFor } from "./encode"
+
+const N = inputsFor(ENCODING_VERSION)
 
 describe('softmax', () => {
     it('uniform logits give equal probabilities ', () => {
@@ -31,19 +34,19 @@ describe('sample', () => {
 })
 describe('gradLogPi', () => {
     it('taken row gets the +1, others only the −prob', () => {
-        const x = Array(INPUTS).fill(0.5)
+        const x = Array(N).fill(0.5)
         const probs = softmax(Array(OUTPUTS).fill(0))
         const grad = gradLogPi(x, 3, probs)
 
         expect(grad[3][0]).toBeCloseTo((1 - 1 / OUTPUTS) * 0.5)
         expect(grad[0][0]).toBeCloseTo(-(1 / OUTPUTS) * 0.5)
-        expect(grad[3][INPUTS]).toBeCloseTo(1 - 1 / OUTPUTS)
+        expect(grad[3][N]).toBeCloseTo(1 - 1 / OUTPUTS)
     })
 
     it('every column sums to zero across rows', () => {
-        const x = Array(INPUTS).fill(0.5)
+        const x = Array(N).fill(0.5)
         const grad = gradLogPi(x, 3, softmax(Array(OUTPUTS).fill(0)))
-        for (let i = 0; i < INPUTS + 1; i++) {
+        for (let i = 0; i < N + 1; i++) {
             const colSum = grad.reduce((s, row) => s + row[i], 0)
             expect(colSum).toBeCloseTo(0)
         }
@@ -52,8 +55,8 @@ describe('gradLogPi', () => {
 
 describe('updateWeights', () => {
     it('does not move when every sample has the same return', () => {
-        const w = randomWeights(makeRng(1))
-        const x = Array(INPUTS).fill(0.5)
+        const w = randomWeights(makeRng(1), inputsFor(ENCODING_VERSION))
+        const x = Array(N).fill(0.5)
         const probs = softmax(Array(OUTPUTS).fill(0))
         const samples: Sample[] = [
             { x, a: 2, probs, G: 7 },

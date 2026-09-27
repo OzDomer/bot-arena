@@ -18,14 +18,33 @@ export const ENCODE_DELTAS: Record<Facing, { dx: number; dy: number }> = {
 // [6..17] 3 slots × [present, dx/vision, dy/vision, hp/maxHp], nearest first
 
 
-export function encode(obs: Observation): number[] {
+export const ENCODING_VERSION: EncodingVersion = 2
+const INPUTS_BY_VERSION = { 1: 18, 2: 19 } as const
+
+
+export type EncodingVersion = keyof typeof INPUTS_BY_VERSION
+export function inputsFor(version: EncodingVersion): number {
+    return INPUTS_BY_VERSION[version]
+}
+
+export function versionFor(inputs: number): EncodingVersion {
+    for (const [v, n] of Object.entries(INPUTS_BY_VERSION))
+        if (n === inputs) return Number(v) as EncodingVersion
+    throw new Error(`no encoding version has ${inputs} inputs`)
+}
+
+
+
+export function encode(obs: Observation, version: EncodingVersion): number[] {
     const out: number[] = []
     const scale = Math.max(obs.map.width, obs.map.height)
     out.push(obs.self.hp / obs.self.maxHp)
     out.push(ENCODE_DELTAS[obs.self.facing].dx, ENCODE_DELTAS[obs.self.facing].dy)
-    out.push((obs.storm.center.x - obs.self.position.x) / scale)
-    out.push((obs.storm.center.y - obs.self.position.y) / scale)
-    out.push(obs.storm.radius / scale)
+    const sdx = obs.storm.center.x - obs.self.position.x
+    const sdy = obs.storm.center.y - obs.self.position.y
+    out.push(sdx / scale, sdy / scale, obs.storm.radius / scale)
+    if (version >= 2) out.push((Math.sqrt(sdx * sdx + sdy * sdy) - obs.storm.radius) / scale)
+
     const alive = obs.visibleShips.filter(s => s.hp > 0)// this gives alive visibleships are 
     const aliveSorted = alive.sort((a, b) => chebyshev(obs.self.position, a.position) - chebyshev(obs.self.position, b.position))
     for (let i = 0; i < 3; i++) {

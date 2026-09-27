@@ -1,5 +1,5 @@
 import type { Rng } from "../util/random"
-import { INPUTS, OUTPUTS, type Weights } from "./net"
+import { OUTPUTS, type Weights } from "./net"
 
 export function softmax(logits: number[]): number[] {
     const maxLogit = Math.max(...logits)
@@ -21,14 +21,14 @@ export function sample(probs: number[], rng: Rng): number {
 
 export function gradLogPi(x: number[], a: number, probs: number[]): Weights {
     const grad: Weights = []
-
+    const n = x.length    
     for (let j = 0; j < OUTPUTS; j++) {
         grad[j] = []                        // one row per direction
         const d = (j === a ? 1 : 0) - probs[j]       // ← probs used here, once
-        for (let i = 0; i < INPUTS; i++) {                     // 18 inputs
+        for (let i = 0; i < n; i++) {                     // n inputs x.length contorls how many inputs depending on the brain version
             grad[j][i] = d * x[i]
         }
-        grad[j][INPUTS] = d
+        grad[j][n] = d
         // bias column
     }
     return grad
@@ -38,14 +38,16 @@ export type Sample = { x: number[]; a: number; probs: number[]; G: number }
 
 export function updateWeights(weights: Weights, samples: Sample[], lr: number): Weights {
     const meanG = samples.reduce((a, b) => a + b.G, 0) / samples.length
-    const acc = Array.from({ length: 9 }, () => Array(19).fill(0))
+    const rows = weights.length
+    const cols = weights[0].length
+    const acc = Array.from({ length: rows }, () => Array(cols).fill(0))
     for (const s of samples) {
         const adv = s.G - meanG
         const g = gradLogPi(s.x, s.a, s.probs)
-        for (let j = 0; j < 9; j++)
-            for (let i = 0; i < 19; i++)
+        for (let j = 0; j < rows; j++)
+            for (let i = 0; i < cols; i++)
                 acc[j][i] += adv * g[j][i]
     }
-    return Array.from({ length: 9 }, (_, j) =>
-        Array.from({ length: 19 }, (_, i) => weights[j][i] + lr * acc[j][i] / samples.length))
+    return Array.from({ length: rows }, (_, j) =>
+        Array.from({ length: cols }, (_, i) => weights[j][i] + lr * acc[j][i] / samples.length))
 }

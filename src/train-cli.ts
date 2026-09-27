@@ -10,6 +10,7 @@ import type { Entrant, Hit } from "./types"
 import { heldout, trainingPool } from "./bots/lineups"
 import { runTournament } from "./sim/tournament"
 import { NetBrain } from "./evo/NetBrain"
+import { ENCODING_VERSION, inputsFor } from "./evo/encode"
 
 const updates = Number(process.argv[2] ?? 200)
 const batch = Number(process.argv[3] ?? 500)
@@ -18,7 +19,7 @@ const seed = Number(process.argv[5] ?? 1790266907455)
 const mode = process.argv[6] ?? 'fitness'
 if (mode !== 'fitness' && mode !== 'dense') throw new Error(`unknown mode: ${mode}`)
 
-let weights = randomWeights(makeRng(deriveSeed(seed, 'init')))
+let weights = randomWeights(makeRng(deriveSeed(seed, 'init')), inputsFor(ENCODING_VERSION))
 
 const buffer: Decision[] = []
 const samples: Sample[] = []
@@ -66,7 +67,7 @@ for (let u = 0; u < updates; u++) {
             maxDelta = Math.max(maxDelta, Math.abs(weights[j][i] - prev[j][i]))
     console.log(u, (sumR / batch).toFixed(2), maxDelta.toFixed(5))
 }
-writeFileSync(`reinforce-${mode}-${updates}u-seed${seed === 1790266907455 ? 1 : seed}`, JSON.stringify(weights))
+writeFileSync(`reinforce-${mode}-${updates}u-seed${seed === 1790266907455 ? 1 : seed}.json`, JSON.stringify(weights))
 const CHECK_SEED = 1790266907455
 const checkLineup: Entrant[] = [...heldout, { name: 'trained', make: () => new NetBrain(weights) }]
 const { tally, totals } = runTournament(checkLineup, 10000, CHECK_SEED, PRESETS.bigmap)

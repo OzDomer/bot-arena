@@ -1,4 +1,5 @@
 import { deriveSeed, makeRng } from "../util/random";
+import { inputsFor, ENCODING_VERSION } from "./encode";
 import { evaluate } from "./evaluate";
 import { mutate, randomWeights, type Weights } from "./net";
 
@@ -10,7 +11,7 @@ type Candidate = {
 
 export function evolve(generations: number, seed: number, step: number) {
     const rng = makeRng(seed)
-    let population: Candidate[] = Array.from({ length: 50 }, () => ({ weights: randomWeights(rng), score: 0, born: 0 }))
+    let population: Candidate[] = Array.from({ length: 50 }, () => ({ weights: randomWeights(rng, inputsFor(ENCODING_VERSION)), score: 0, born: 0 }))
     for (let gen = 0; gen < generations; gen++) {
         const genSeed = deriveSeed(seed, 'gen', gen)
         const scored = population.map(p => ({ ...p, score: evaluate(p.weights, genSeed) }))

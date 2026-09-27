@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest"
 import { argMax, forward, mutate, randomWeights } from "./net"
 import { makeRng } from "../util/random"
+import { inputsFor, ENCODING_VERSION } from "./encode"
 
+const N = inputsFor(ENCODING_VERSION)
 
 describe('forward', () => {
     it('zero weights give zero outputs', () => {
@@ -37,20 +39,21 @@ describe('argmax', () => {
 })
 
 describe('mutate', () => {
+
     it('weights change after mutate', () => {
-        const w = randomWeights(makeRng(1))
+        const w = randomWeights(makeRng(1), N)
         expect(mutate(w, makeRng(1), 0.1)).not.toEqual(w)
     })
 
-    it('weights change are deterministic same seed same number', () => {
-        const w = randomWeights(makeRng(1))
-        const t = randomWeights(makeRng(1))
+    it('same seed gives the same mutation', () => {
+        const w = randomWeights(makeRng(1), N)
+        const t = randomWeights(makeRng(1), N)
         expect(mutate(w, makeRng(1), 0.1)).toEqual(mutate(t, makeRng(1), 0.1))
     })
 
-    it('mutation doesnt doesnt the input', () => {
-        const w = randomWeights(makeRng(1))
+    it('mutate does not change its input', () => {
+        const w = randomWeights(makeRng(1), N)
         mutate(w, makeRng(2), 0.1)
-        expect(w).toEqual(randomWeights(makeRng(1)))
+        expect(w).toEqual(randomWeights(makeRng(1), N))
     })
 })

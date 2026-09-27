@@ -49,8 +49,8 @@ Each entry: what we decided, why, and what it would take to revisit.
 9. ~~Pairwise round-robin~~ → decide if evolution is justified
 10. Heal resource
 11. Kiter — keep threats at distance 2, retreat toward center not away from threat, face-and-trade when caught (move into the adjacent enemy = bounce-turn, see findings). Deferred: kiting buys time, and time is worthless without a resource to spend it on. Needs heals first.
-12. ~~Evolution~~ — closed; beats FSMs, specializes on pool, fitness rewards passivity. See findings. Reweight and live co-evolution parked under Open. Gradient descent supersedes it for training. 
-13. ~~REINFORCE (Run A, Run B)~~ — 25.3/25.9 on the evolution objective, 30.1/20.6 on dense. Next: B variance fix, then INPUTS refactor + storm-edge input.
+12. ~~Evolution~~ — closed; beats FSMs, specializes on pool, fitness rewards passivity. See findings. Reweight and live co-evolution parked under Open. Gradient descent supersedes it for training. 13. ~~REINFORCE~~ — closed at 28.3 / 28.8 (v2 + dense). See docs/learning.md.
+14. Parallel evaluation — worker_threads, one worker per core, population split into chunks. ~10 s/gen at 500 matches; the bottleneck now.
 15. Port step() to Rust — was "to learn Rust, not for speed"; at 25k matches/gen it's both.
 16. RTS: momentum physics, continuous positions, islands, ramming, disembarking; re-evolve
 
@@ -205,6 +205,16 @@ Each entry: what we decided, why, and what it would take to revisit.
   fixed it. Variance was partly a missing input. Advantage normalization demoted to Open:
   nothing left for it to fix at this spread. **v2 + dense is the default from here.**
   Brains: `reinforce-v2-dense-5000u-seed1`, `-seed2`.
+  - **Learning chapter, closed.** Evolution → REINFORCE (same objective) → dense reward →
+  storm-edge input. Final: v2 + dense, 28.3 / 28.8 on the held-out at 2.5M matches, both
+  seeds the same shape. Reweight, hidden layer, memory, normalization stay under Open with
+  the numbers to beat next to them. Reframe: the trained brain is a **playtester**, not a
+  product. Every rules change from here gets checked against the FSMs *and* a brain
+  retrained on the new rules (25 min at 5000 updates). "Does a learned agent still find
+  survival-first under heals?" is the question that makes rules design honest, and it's
+  the reason the chapter was worth doing.
+  `reinforce-v2-dense-5000u-seed1` joins `showcase`. `heldout` stays fixed as the
+  measuring stick for whenever the chapter reopens.
 
 ## Evolution (v1 design)
 

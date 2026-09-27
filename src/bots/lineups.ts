@@ -1,6 +1,6 @@
 import { BOTS } from "./bots"
 import type { Entrant } from "../types"
-import seedDefault from '../../brains/linear-500m-defaultseed.json'
+import seedDefault from '../../brains/linear-500m-seed1.json'
 import seed2 from '../../brains/linear-500m-seed2.json'
 
 

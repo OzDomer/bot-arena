@@ -15,7 +15,7 @@ npm run dev
 Open http://localhost:5173/ (the default) to watch a single match replayed on the grid.
 
 ```bash
-tournament <matches> <preset> <seed>
+npm run tournament <matches> <preset> <seed>
 ```
 
 Runs a headless tournament in Node and prints the win tally and per-seat stats. Presets are `default` (10×10), `bigmap` (20×20, faster storm — the current ruleset), plus the experiment presets that produced it. 10,000 matches take a few seconds.

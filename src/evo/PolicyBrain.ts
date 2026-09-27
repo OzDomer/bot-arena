@@ -2,7 +2,7 @@ import { chebyshev } from "../sim/geometry";
 import { type Brain, type Observation, type Action, DIRECTIONS } from "../types";
 import type { Rng } from "../util/random";
 import { encode } from "./encode";
-import { type Weights, forward} from "./net";
+import { INPUTS, OUTPUTS, type Weights, forward } from "./net";
 import { sample, softmax } from "./policy";
 
 export type Decision = { x: number[]; a: number; probs: number[] }
@@ -15,6 +15,8 @@ export class PolicyBrain implements Brain {
         this.weights = weights
         this.rng = rng
         this.buffer = buffer
+        if (weights.length !== OUTPUTS || weights.some(r => r.length !== INPUTS + 1))
+            throw new Error(`PolicyBrain: expected ${OUTPUTS}x${INPUTS + 1} weights, got ${weights.length}x${weights[0]?.length}`)
     }
 
     decide(obs: Observation): Action {

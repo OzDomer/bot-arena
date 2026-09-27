@@ -1,5 +1,5 @@
 import type { Rng } from "../util/random"
-import type { Weights } from "./net"
+import { INPUTS, OUTPUTS, type Weights } from "./net"
 
 export function softmax(logits: number[]): number[] {
     const maxLogit = Math.max(...logits)
@@ -22,13 +22,13 @@ export function sample(probs: number[], rng: Rng): number {
 export function gradLogPi(x: number[], a: number, probs: number[]): Weights {
     const grad: Weights = []
 
-    for (let j = 0; j < 9; j++) {
+    for (let j = 0; j < OUTPUTS; j++) {
         grad[j] = []                        // one row per direction
         const d = (j === a ? 1 : 0) - probs[j]       // ← probs used here, once
-        for (let i = 0; i < 18; i++) {                     // 18 inputs
+        for (let i = 0; i < INPUTS; i++) {                     // 18 inputs
             grad[j][i] = d * x[i]
         }
-        grad[j][18] = d
+        grad[j][INPUTS] = d
         // bias column
     }
     return grad

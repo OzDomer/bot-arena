@@ -67,7 +67,7 @@ for (let u = 0; u < updates; u++) {
             maxDelta = Math.max(maxDelta, Math.abs(weights[j][i] - prev[j][i]))
     console.log(u, (sumR / batch).toFixed(2), maxDelta.toFixed(5))
 }
-writeFileSync(`reinforce-${mode}-${updates}u-seed${seed === 1790266907455 ? 1 : seed}.json`, JSON.stringify(weights))
+writeFileSync(`runs/reinforce-v${ENCODING_VERSION}-${mode}-${updates}u-seed${seed === 1790266907455 ? 1 : seed}.json`, JSON.stringify(weights))
 const CHECK_SEED = 1790266907455
 const checkLineup: Entrant[] = [...heldout, { name: 'trained', make: () => new NetBrain(weights) }]
 const { tally, totals } = runTournament(checkLineup, 10000, CHECK_SEED, PRESETS.bigmap)

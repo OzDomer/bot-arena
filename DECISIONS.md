@@ -172,6 +172,39 @@ Each entry: what we decided, why, and what it would take to revisit.
 - → Advantage normalization (or lr 0.5) on B, two seeds. Until that's done A is the
   reference objective and B is the promising one. Brains:
   `reinforce-fitness-5000u-seed1`, `reinforce-dense-5000u-seed1`.
+- Adding a input for whether the ship is inside or outside the storm. Prediction: Wont change its Behavior its already "survive first" mindset. It probably learned to stay in the storm by implicit positioning.
+- **Result** (v2 encoding, fitness objective, 1000 updates, same lineup/seed as Run A;
+  v1 numbers from the Run A/B table):
+
+  | | seed 1 | seed 2 | survival | dealt | taken | train meanR |
+  |---|---|---|---|---|---|---|
+  | v1 | 21.0 | 16.9 | 62.3k / 62.9k | 59.9k / 55.6k | 65.4k / 61.5k | ~107 / ~105 |
+  | v2 | 22.4 | 15.4 | 68.3k / 66.2k | 54.9k / 53.8k | 56.3k / 55.8k | ~121 / ~120 |
+
+  Wins unchanged (+1.4 / −1.5, seed noise). Behaviour changed on both seeds in the same
+  direction: survival +6k / +3k, damage taken −9k / −6k, dealt −5k / −2k, and training
+  fitness ~107 → ~121 — higher at 1000 updates than v1 reached at 5000. The input made
+  the net a better dodger; it spent the gain on being more passive, not on winning.
+  Prediction half right: right that wins wouldn't move, wrong about why — center-seeking
+  wasn't already sufficient, the net just had nowhere to spend better survival under an
+  objective that had it at the survival ceiling. Corollary: "engineered inputs move the
+  net" is confirmed; what they move *toward* is whatever the objective pays for.
+  Training fitness is not the metric, again (+13% train, 0 held-out).
+- → v2 + dense, 1000, two seeds: does the objective that pays for damage convert the
+  free survival into wins? Compare to v1 dense 24.2 / 18.8.
+  - **v2 + dense, 1000, two seeds: 26.7 / 22.3** (v1 dense: 24.2 / 18.8). Both up, +2.5 /
+  +3.5. Seed 1 deals 72.4k (most of any brain) at 1000 updates and beats v1-fitness at
+  5000. Same input that did nothing for wins under fitness converts under dense: the input
+  supplies better dodging, the objective decides what it's spent on. Seeds still take
+  different shapes (s1 damage-heavy, s2 survival-heavy) — dense variance, unchanged.
+  → 5000 pair on v2 dense; then advantage normalization before dense becomes the default.
+  - **v2 + dense, 5000, two seeds: 28.3 / 28.8** (v1 dense: 30.1 / 20.6). Mean 25.4 → 28.6,
+  spread 9.5 → 0.5. Both seeds converge: dealt 68–72k, kills 6.1–6.4k (highest of any
+  learned brain), survival top of lineup, draws ~12%. The v1 seed-2 collapse was a seed
+  that never learned storm-dodging from dx/dy/radius — not linear — and the edge input
+  fixed it. Variance was partly a missing input. Advantage normalization demoted to Open:
+  nothing left for it to fix at this spread. **v2 + dense is the default from here.**
+  Brains: `reinforce-v2-dense-5000u-seed1`, `-seed2`.
 
 ## Evolution (v1 design)
 
@@ -251,4 +284,3 @@ one fifth of a 100-gen evolution run.
 - Advantage normalization (divide by std) if a different objective scale makes `lr` fragile.
 - Entropy bonus if the policy collapses onto one move — not seen at lr 1.
 - Hidden layer (h = 8, tanh): needs a second gradient formula through tanh, or a `Value` port.
-- Adding a input for whether the ship is inside or outside the storm. Prediction: Wont change its Behavior its already "survive first" mindset. Tt probably learned to stay in the storm by implicit positioning.

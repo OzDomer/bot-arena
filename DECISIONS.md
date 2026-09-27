@@ -50,7 +50,7 @@ Each entry: what we decided, why, and what it would take to revisit.
 10. Heal resource
 11. Kiter — keep threats at distance 2, retreat toward center not away from threat, face-and-trade when caught (move into the adjacent enemy = bounce-turn, see findings). Deferred: kiting buys time, and time is worthless without a resource to spend it on. Needs heals first.
 12. ~~Evolution~~ — closed; beats FSMs, specializes on pool, fitness rewards passivity. See findings. Reweight and live co-evolution parked under Open. Gradient descent supersedes it for training. 
-13. ~~REINFORCE (Run A)~~ — 21% held-out, one seed. Next: seed 2, 5000 updates, Run B.14. Parallel evaluation — worker_threads, one worker per core, population split into chunks. ~10 s/gen at 500 matches; the bottleneck now.
+13. ~~REINFORCE (Run A, Run B)~~ — 25.3/25.9 on the evolution objective, 30.1/20.6 on dense. Next: B variance fix, then INPUTS refactor + storm-edge input.
 15. Port step() to Rust — was "to learn Rust, not for speed"; at 25k matches/gen it's both.
 16. RTS: momentum physics, continuous positions, islands, ramming, disembarking; re-evolve
 
@@ -115,29 +115,63 @@ Each entry: what we decided, why, and what it would take to revisit.
 - Next, one at a time: ~~(1) eval match count~~ → 500; (2) fitness reweight — wins ×1000 or dealt ×5; (3) hidden layer only if 2 doesn't move it.
 - **Held-out lineup** (3× seed1 / 2× camperV2 / 2× chaserV2 / 1× seed2, 8 seats, baseline 12.5%, 10k): camper 15.5 (1.24×), seed2 14.7 (1.18×), seed1 9.6 (0.77×), chaserV2 7.4 (0.59×). Evolved brains' survival jumps 36 → 60 and damage dealt/taken both halve — without two chaserV2s hunting them, they mostly drift and outlast. chaserV2 collapses from ~13% to 7.4% next to four evolved brains: they don't just beat it, they farm it. Two of four pool slots were chaserV2, so that's what the fitness landscape was made of. Seed 2 generalizes somewhat; seed 1 doesn't. → Widen the pool, not the search: next run adds the seed2 brain as a fixed opponent.
 - **Run B: seed2 brain in the training pool** (chaserV2 / seed2 / camperV2 / coward / net, one master seed). Held-out lineup: 8.2% (0.65×), below seed1 and every FSM except chaserV2. Survival 60, damage dealt 45k, taken 48k — the most passive brain in the lineup. Widening the pool with an opponent it can't farm made the survival-first optimum *more* attractive, not less. One seed; ±2pp wouldn't rescue it.
-- **Evolution, closed.** Three findings: (1) fitness-based evolution beats every hand-written FSM within 100 generations once ranking is clean (500 matches; at 100 it was ranking noise and plateaued at 8%). (2) It specializes on the pool — farms chaserV2, collapses when chaserV2 isn't there. (3) Under `wins×100 + survival + dealt`, a harder pool makes it more passive: the noise fix unlocked the search, but the target is still "don't die." Untested: reweight to `wins×1000` on the Run B pool.
+- **Evolution, closed.** Three findings: (1) fitness-based evolution beats every hand-written FSM within 100 generations once ranking is clean (500 matches; at 100 it was ranking noise and plateaued at 8%). (2) It specializes on the pool — farms chaserV2, collapses when chaserV2 isn't there. (3) Under `wins×100 + survival + dealt`, a harder pool makes it more passive: the noise fix unlocked the search, but the target is still "don't die." Superseded by REINFORCE below: same objective, 25.3% held-out. The reweight question survives as Run B under Policy gradient.
 - **REINFORCE, Run A** (same objective as evolution: wins×100 + survival + dealt;
-  same training pool as Run B; linear policy, softmax sampling, batch 500, lr 1;
-  greedy NetBrain(weights) for the check). Held-out 10k, seed 1790266907455,
-  baseline 11.1%:
+  training pool chaserV2 / seed2 / camperV2 / coward; linear policy, softmax sampling,
+  batch 500, lr 1; greedy NetBrain(weights) for the check). Held-out 10k,
+  seed 1790266907455, 9 seats, baseline 11.1%. Same-table reference: seed2evo 12.0 / 10.4,
+  defaultseedevo ~7.5, camperV2 ~14.
 
-  | updates | matches | win % | ×baseline | survival | dealt | taken |
-  |---|---|---|---|---|---|---|
-  | 200  | 100k | 5.0  | 0.45 | 57.3k | 51.8k | 57.0k |
-  | 1000 | 500k | 21.0 | 1.89 | 62.3k | 59.9k | 65.4k |
-  | evolution Run B (ref) | 2.5M | 8.2 | 0.65 | 60k | 45k | 48k |
+  | updates | matches | win % | ×baseline | survival | dealt | taken | meanR (train) |
+  |---|---|---|---|---|---|---|---|
+  | 200  | 100k | 5.0  | 0.45 | 57.3k | 51.8k | 57.0k | ~90  |
+  | 1000 | 500k | 21.0 | 1.89 | 62.3k | 59.9k | 65.4k | ~107 |
+  | 5000 | 2.5M | 25.3 | 2.28 | 65.4k | 64.5k | 69.7k | ~114 |
 
-- Highest single-seat result to date, on the held-out. Profile is still
-  survival-first (highest survival in the lineup, mid-pack damage) — the objective
-  does what finding 3 said. But survival executed well *wins*: everyone else lost
-  share (camperV2 17.4 → 14.5, seed2 14.1 → 12.0). One seed; still climbing at
-  update 1000. Second seed and a 5000-update run pending.
+- Highest single-seat result to date, on the held-out, at both budgets. Profile is
+  survival-first throughout (highest survival in the lineup by ~60k at 5000), as finding 3
+  predicts of the objective — but it wins with it, and everyone else loses share
+  (camperV2 17.4 → 13.7, seed2evo 14.1 → 10.4). 1000 → 5000 added survival *and* damage
+  (dealt now above seed2evo); it didn't trade one for the other.
+- Training curve is roughly logarithmic: meanR ~107 → 110 → 112 → 113 → 114 per thousand
+  updates. No hard plateau by 5000; diminishing. Logs in `runs/` (gitignored).
+- **Two seeds.** Seed 2: 16.9% at 1000, 25.9% at 5000. At 2.5M matches the seeds land
+  25.3 / 25.9 — ±0.3pp. The 4pp gap at 1000 was init; both converge to the same brain,
+  and training meanR converges too (~114 both). Training score predicts held-out only
+  once converged.
 - **Finding 3 corrected.** "Fitness rewards passivity" was right; "so it plateaus at
   8%" was wrong. Evolution found a bad survival-first brain; gradient found a good one
-  on the same objective in a fifth of the matches. The bottleneck was the optimizer.
+  on the same objective in a fifth of the matches. The bottleneck was the optimizer. Confirmed at evolution's own budget: 2.5M matches, 25.3% vs Run B's 8.2%. (Held-out composition differs between those two runs — coward was added, one seed1 removed — so use the in-table pairs above as the claim and this as indicative.)
 - lr matters at the raw-score scale: lr 0.01 moved weights ~0.001/update and learned
   nothing in 200 updates; lr 1 moves ~0.1/update (evolution's mutation scale) and
-  learned immediately. Advantage normalization not needed yet.
+  learned immediately. Advantage normalization not needed on the fitness objective; see Run B
+  - **Run B: dense reward** (`G` = per-turn dealt − taken, +100 on the last turn for a
+  sole-survivor win, undiscounted return-to-go, no survival term; everything else as
+  Run A; `mode dense` in train-cli). Held-out 10k, same lineup and seed as Run A:
+
+  | | seed 1 | seed 2 | survival (s1/s2) | dealt (s1/s2) |
+  |---|---|---|---|---|
+  | Run A 1000 | 21.0 | 16.9 | 62.3k / 62.9k | 59.9k / 55.6k |
+  | Run B 1000 | 24.2 | 18.8 | 61.1k / 60.5k | 62.3k / 56.6k |
+  | Run A 5000 | 25.3 | 25.9 | 65.4k / 66.3k | 64.5k / 62.0k |
+  | Run B 5000 | 30.1 | 20.6 | 61.7k / 59.9k | 70.3k / 61.1k |
+
+- At 1000 the profile looked unchanged; at 5000 it isn't. Both B seeds carry ~5k less
+  survival than A, and seed 1 deals 70k — the most of any learned brain — and wins 30.1%,
+  best result to date. Dropping the survival term does shift the brain toward damage,
+  and that brain wins more. The 1000-update read was pre-convergence.
+- But B's seeds are 9.5pp apart where A's were 0.6, with the same mean (25.4 vs 25.6).
+  Seed 2's log has a collapse-and-recover at ~2000 updates that A never shows; maxDelta
+  is ~50% larger throughout. Per-turn credit is a sharper signal with higher variance,
+  and lr 1 was tuned on A's scale. Two seeds can't separate "higher ceiling" from "wider
+  spread". Training fitness is lower under B (~110 vs ~114) while held-out can be higher —
+  training score is not the metric.
+- Finding 3, final form: the survival-first shape is what wins under last-one-standing;
+  a reward that never pays for survival still finds it first, then trades some of it for
+  damage once converged. The formula was never the bug.
+- → Advantage normalization (or lr 0.5) on B, two seeds. Until that's done A is the
+  reference objective and B is the promising one. Brains:
+  `reinforce-fitness-5000u-seed1`, `reinforce-dense-5000u-seed1`.
 
 ## Evolution (v1 design)
 
@@ -217,3 +251,4 @@ one fifth of a 100-gen evolution run.
 - Advantage normalization (divide by std) if a different objective scale makes `lr` fragile.
 - Entropy bonus if the policy collapses onto one move — not seen at lr 1.
 - Hidden layer (h = 8, tanh): needs a second gradient formula through tanh, or a `Value` port.
+- Adding a input for whether the ship is inside or outside the storm. Prediction: Wont change its Behavior its already "survive first" mindset. Tt probably learned to stay in the storm by implicit positioning.

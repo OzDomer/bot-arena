@@ -1,6 +1,6 @@
 # bot arena
 
-A project where you can pit bots against each other in a last-man-standing match on a fog-of-war grid. The rules evolve over versions (storm, resources), and so do the bots — hand-written FSMs first, then evolved neural-net brains, ML later.
+A project where you can pit bots against each other in a last-man-standing match on a fog-of-war grid. The rules evolve over versions (storm, resources), and so do the bots — hand-written FSMs first, then learned brains.
 
 ## Run it
 
@@ -26,6 +26,12 @@ npm run evolve -- <generations> <seed> <step>
 
 Evolves a linear-net brain against a fixed pool of hand-written bots and writes the best weights to `best.json`. Seat it in the tournament lineup as `evolved` to measure it against everything else.
 
+```bash
+npm run train -- <updates> <batch> <lr> <seed> <fitness|dense>
+```
+
+Trains the same linear brain with policy gradient (REINFORCE) instead of evolution, against the same pool, and runs the 10k held-out check at the end. `dense` is the current objective; 5000 updates take ~25 minutes. Weights land in `runs/`; the ones worth keeping are in `brains/`.
+
 ## How it works
 
 - **Pure sim** (`step`, `observe`) — the renderer is a separate consumer. The `sim/` folder contains all the engine-like features the game needs; for example `chebyshev()` gives each player its square-shaped range. Because nothing in the sim knows about the browser, the same code runs the canvas replay, the headless tournament, and evolution.
@@ -33,7 +39,8 @@ Evolves a linear-net brain against a fixed pool of hand-written bots and writes 
 - **Seeded RNG** — every match is reproducible. `random.ts` builds a seeded generator, with a separate stream for the world, the seating, and each bot, so any result can be replayed.
 - **Per-seat stats** — every match logs wins, survival turns, damage dealt/taken and kills per entrant, with random seating so no bot is stuck with a lucky or unlucky slot.
 - **Rules presets** — every tunable lives in one `Rules` object. Presets are named `Rules` values; the CLI picks one. Experiments are run by swapping presets, never by editing constants, so the preset file is the record of what was tested.
-- **Evolution pipeline** — `encode()` turns an observation into 18 numbers (nearest three ships, own HP and facing, storm offset and radius). `NetBrain` is a linear net: 18 inputs → 9 move logits → argmax → direction; attack is hardcoded to nearest-in-range. `fitness()` scores a brain from its per-seat stats. `evolve()` runs a population of 50, keeps the top 10, refills by mutation. Plain arrays, no libraries.
+- **Learning pipeline** — `encode()` turns an observation into a fixed-size input vector: nearest three ships, own HP and facing, storm offset and radius, and (v2) distance to the storm edge. Encodings are versioned; a brain infers its version from its weight shape, so old saved brains keep working next to new ones. `NetBrain` is a linear net: inputs → 9 move logits → argmax → direction; attack is hardcoded to nearest-in-range. Plain arrays, no libraries.
+- **Two trainers, one brain.** `evolve()` runs a population of 50, keeps the top 10, refills by mutation. `train` runs REINFORCE: a `PolicyBrain` samples moves from a softmax over the same logits, records every decision, and the loop takes one gradient step per batch of matches — closed-form gradient of the log-probability, no autograd. Either one produces a `NetBrain`.
 
 ## Rules (v1 → v2)
 
@@ -56,7 +63,8 @@ v1 was a 10×10 map with the storm shrinking every 10 turns. **v2** is 20×20 wi
 - **Chaser v2** — same, but heads for the storm center whenever it's outside the safe circle. On a big map with short vision, this doubles as a way to *find* enemies.
 - **Coward** — wanders and fights like the chaser, but once its HP drops below 45% it runs from the nearest visible enemy.
 - **Camper** — walks to the storm center and stays, shooting anything in range. v2 turns to face an attacker at its rear (the free-rotate rule above).
-- **Evolved** — the saved neural-net brain from `npm run evolve`.
+- **Evolved** — the saved brains from `npm run evolve` (two seeds).
+- **Reinforce** — the saved brain from `npm run train`, v2 encoding, dense objective. Currently the strongest seat in the lineup.
 
 ## What the tournament taught me
 
@@ -84,14 +92,23 @@ Each entry is one change to the rules or bots, what the tally said, and what I c
 
 **Evolution v0.** A random linear net wins 3.2% per seat. After three generations: 7.5%, past the coward and the plain chaser. After a hundred: 8%. Rotating the evaluation matches each generation to rule out memorization: still 8%. Three runs, same brain shape every time — highest survival in the lineup, lowest damage taken, moderate damage dealt. It found the optimum of the fitness function as written, where survival turns outweigh wins thirty to one, and stopped. The storm-aware chaser wins 14% by dealing more and dying sooner — a trade the score penalizes. Also measured: 100 evaluation matches gives ±8% noise on a single brain's score across seeds, so early generations were ranking luck; 500 gives ±3%. → Fitness reweight next.
 
+**Same objective, gradient instead of evolution.** REINFORCE on the same linear brain, same fitness, same opponents: 21.0% and 16.9% on the held-out after 500k matches (two seeds), 25.3% and 25.9% after 2.5M — versus 8.2% for evolution at 2.5M. Same survival-first shape, but a good version of it. The formula wasn't the bug, the optimizer was: evolution burns 25k matches per step ranking candidates and keeps a few bits, policy gradient gets a direction out of every match.
+
+**Paying for damage.** A per-turn reward (dealt − taken, +100 for a win, no survival term) produced a fighter on one seed — 30.1%, 70k damage, the most of any brain — and 20.6% on the other. Same mean as before, ten times the spread. Dropping the survival term does move the brain toward damage once it converges; it just doesn't do it reliably.
+
+**One input.** A linear net can't compute "am I inside the storm" from center offset and radius — that's a square root. Adding it as a 19th input did nothing for the survival objective (the net survived more, wins didn't move) and fixed the damage objective: 28.3% and 28.8% at 2.5M, spread 0.5 points. The weak seed had never learned to dodge the storm; hand it the edge distance and both seeds converge. The variance was a missing input. → Learning chapter closed; the brain is now a playtester for rules changes. Full write-up in `docs/learning.md`.
+
 ## Roadmap
 
 - ~~**Storm**~~ — a closing zone to encourage fighting.
 - ~~**Tournament stats**~~ — per-seat wins, survival, damage, kills; headless runner.
 - ~~**Rules presets**~~ — and the experiments that picked v2.
-- ~~**Opponent pool**~~ — storm-aware Chaser, Camper. The Kiter is deferred: it keeps enemies at range to buy time, and time is worthless until there's a resource to spend it on.
-- - ~~**Evolution**~~ — done. Tiny linear nets, tournament fitness, keep-and-mutate. Beats every FSM; learns the pool, not the game. Fitness reweight and co-evolution parked.
-- **Parallel evaluation** — one worker per core. At 500 matches per brain, a generation is ~10 s and this is the bottleneck.
-- **Resources** — map pickups like heal, shield, etc. Then the Kiter.
-- **RL** — brains trained on the game (in Python), plugged back in.
-- **Rust/WASM** — I want to learn Rust. This was "for learning, not speed" when 10k matches took 4 s; now that evolution runs 25k matches a generation, it's both.
+- ~~**Opponent pool**~~ — storm-aware Chaser, Camper.
+- ~~**Evolution**~~ — beats every FSM; learns the pool, not the game.
+- ~~**Policy gradient**~~ — same brain, REINFORCE, dense reward, one engineered input: 28.3 / 28.8 on the held-out. Closed; see `docs/learning.md`.
+- **Isometric renderer** — 2.5D projection, ships as boxes, renderer-only.
+- **Brain intent overlay** — draw the net's move probabilities as arrows each turn.
+- **Match readability** — HP bars, names, hit flashes, storm tint.
+- **Storm center randomization** — first rules change checked against a retrained brain.
+- **Resources** — heal first, then the Kiter (it needs time to be worth something).
+- **Rust/WASM** — I want to learn Rust. Was "for learning, not speed"; at 2.5M matches a run, it's both. After the rules settle.

@@ -9,14 +9,20 @@ const visibleCount = (polys: Poly[], cam: Camera) =>
     polys.filter(face => signedArea(face.pts.map(p => cam.project(p))) > CULL_EPS).length
 
 describe('buildShips', () => {
-    it('five faces per ship', () => {
+    it('six faces per alive ship', () => {
         const w = world([
             ship({ id: 1, position: { x: 5, y: 5 }, hp: 10 }),
-            ship({ id: 2, position: { x: 7, y: 9 }, hp: 10 }),
+        ])
+        const polys = buildShips(w)
+        expect(polys.length).toBe(6)
+    })
+
+    it('five faces per dead ship', () => {
+        const w = world([
             ship({ id: 3, position: { x: 6, y: 9 }, hp: 0 })
         ])
         const polys = buildShips(w)
-        expect(polys.length).toBe(15)
+        expect(polys.length).toBe(5)
     })
 
     it('Culling shows the right faces', () => {
@@ -25,8 +31,8 @@ describe('buildShips', () => {
         const polys = buildShips(w)
         const isoCam = makeCamera("iso", PRESETS.bigmap)
         const topCam = makeCamera("top", PRESETS.bigmap)
-        expect(visibleCount(polys, isoCam)).toBe(3)
-        expect(visibleCount(polys, topCam)).toBe(1)
+        expect(visibleCount(polys, isoCam)).toBe(4)
+        expect(visibleCount(polys, topCam)).toBe(2)
 
     })
 
@@ -54,8 +60,20 @@ describe('buildShips', () => {
         expect(polys.flatMap(p => p.pts).every(p => p.x > 3 && p.x < 4 && p.y > 4 && p.y < 5 && p.z >= 0 && p.z <= SHIP_H)).toBe(true)
     })
 
-    it('all five faces share the tile-center anchor', () => {
+    it('every face shares the tile-center anchor', () => {
         const w = world([ship({ id: 1, position: { x: 3, y: 4 } })])
         for (const face of buildShips(w)) expect(face.anchor).toEqual({ x: 3.5, y: 4.5, z: 0 })
+    })
+
+    it('nose tip points along the facing', () => {
+        const w = world([
+            ship({ id: 1, position: { x: 3, y: 4 }, facing: 'E' }),
+        ])
+        const polys = buildShips(w)
+        const tip = polys[polys.length - 1].pts[0]
+        expect(tip.x).toBeCloseTo(3.8)
+        expect(tip.y).toBeCloseTo(4.5)
+        expect(tip.z).toBeCloseTo(SHIP_H)
+
     })
 })

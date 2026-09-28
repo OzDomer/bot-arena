@@ -55,8 +55,12 @@ Each entry: what we decided, why, and what it would take to revisit.
 15. **Brain intent overlay.** For every `NetBrain` seat, eight arrows from the ship top with length = softmax probability of that move, dot for STAY, per frame. Uses `encode` → `forward` → `softmax`  on the frame's observation; no new sim state. Toggle in the controls. Output: a README GIF.
 16. **Match readability.** HP bars, bot name over the ship, attacker→target flash on the hit tick, storm-damage tint, storm ring pulse on phase change. All in projected space, so it's drawn once.
 17. Storm center randomization — first rules change checked against a retrained brain with the overlay on.
-18. Heal resource, Kiter (as before, deferred until 17 says what the meta looks like).15. Port step() to Rust — was "to learn Rust, not for speed"; at 25k matches/gen it's both.
-19. RTS: momentum physics, continuous positions, islands, ramming, disembarking; re-evolve
+18. Movement: momentum + turn rate + ramming, and a Rammer bot 
+19. Heal resource, Kiter (as before, deferred until 17 says what the meta looks like).15. Port step() to Rust — was "to learn Rust, not for speed"; at 25k matches/gen it's both.
+20. RTS: momentum physics, continuous positions, islands, ramming, disembarking; re-evolve
+
+## Open
+- Item 18 movement "rework" thoughts how should ships interact with eachother. once displacement is a thing that can be affected by outside sources step() machinery doesnt account for that kind of thing yet. 
 
 ## Tournament findings
 - Identical-stat shooters always draw 1v1 → needed asymmetry → facing.

@@ -4,6 +4,7 @@ import { DELTAS, type World } from "../types";
 export const TILE = 40;
 
 export function drawGrid(ctx: CanvasRenderingContext2D, world: World) {
+        ctx.save()
 
     for (let x = 0; x <= world.rules.width; x++) {
         ctx.beginPath();
@@ -17,6 +18,7 @@ export function drawGrid(ctx: CanvasRenderingContext2D, world: World) {
         ctx.moveTo(0 * TILE, y * TILE);
         ctx.lineTo(world.rules.width * TILE, y * TILE);
         ctx.stroke();
+        ctx.restore()
     }
 }
 
@@ -25,6 +27,8 @@ const DEAD = '#999';
 
 export function drawShips(ctx: CanvasRenderingContext2D, world: World) {
     for (const ship of world.ships) {
+        ctx.save()
+
         const px = ship.position.x * TILE   // pixel x of the tile's top-left
         const py = ship.position.y * TILE
 
@@ -43,11 +47,13 @@ export function drawShips(ctx: CanvasRenderingContext2D, world: World) {
             ctx.beginPath();
             ctx.moveTo(cx, cy);
             ctx.lineTo(cx + dx * TILE / 3, cy + dy * TILE / 3);
-            ctx.stroke();
+            ctx.stroke()
+            ctx.restore()
         }
     }
 }
 export function drawStorm(ctx: CanvasRenderingContext2D, world: World) {
+    ctx.save()
     const { radius } = stormAt(world.turn, world.rules)
     const w = world.rules.width * TILE
     const h = world.rules.height * TILE
@@ -61,6 +67,7 @@ export function drawStorm(ctx: CanvasRenderingContext2D, world: World) {
         ctx.arc(cx, cy, radius * TILE, 0, Math.PI * 2)   // …minus the safe circle
     }
     ctx.fill('evenodd')
+    ctx.restore()
 }
 
 export function drawWorld(ctx: CanvasRenderingContext2D, world: World) {
@@ -69,5 +76,6 @@ export function drawWorld(ctx: CanvasRenderingContext2D, world: World) {
     drawGrid(ctx, world)
     drawStorm(ctx, world)
     drawShips(ctx, world)
+    ctx.restore()
 }
 

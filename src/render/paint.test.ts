@@ -1,0 +1,56 @@
+import { describe, expect, it } from "vitest"
+import { signedArea } from "./paint"
+import { makeCamera, type Vec2, type Vec3 } from "./camera"
+import { PRESETS } from "../sim/presets"
+
+describe('signedArea', () => {
+    it('floor order positive', () => {
+        const square: Vec2[] = [
+            { x: 0, y: 0 },
+            { x: 1, y: 0 },
+            { x: 1, y: 1 },
+            { x: 0, y: 1 }
+        ]
+        expect(signedArea(square)).toBe(1)
+
+    })
+    it('reversed order is negative', () => {
+        const square: Vec2[] = [
+            { x: 0, y: 0 },
+            { x: 0, y: 1 },
+            { x: 1, y: 1 },
+            { x: 1, y: 0 }
+        ]
+        expect(signedArea(square)).toBe(-1)
+
+    })
+
+    it('side face is flat in top', () => {
+        const cam = makeCamera('top', PRESETS.bigmap)
+        const face: Vec3[] = [
+            { x: 1, y: 0, z: 0 },
+            { x: 1, y: 1, z: 0 },
+            { x: 1, y: 1, z: 1 },
+            { x: 1, y: 0, z: 1 }
+        ]
+        const screen = face.map(p => cam.project(p))
+        expect(signedArea(screen)).toBeCloseTo(0)
+
+    })
+
+    it('floor tile is front-facing in both modes', () => {
+        const topCam = makeCamera('top', PRESETS.bigmap)
+        const isoCam = makeCamera('iso', PRESETS.bigmap)
+        const tile: Vec3[] = [
+            { x: 0, y: 0, z: 0 },
+            { x: 1, y: 0, z: 0 },
+            { x: 1, y: 1, z: 0 },
+            { x: 0, y: 1, z: 0 }
+        ]
+        const topScreen = tile.map(p => topCam.project(p))
+        const isoScreen = tile.map(p => isoCam.project(p))
+        expect(signedArea(topScreen)).toBeGreaterThan(0)
+        expect(signedArea(isoScreen)).toBeGreaterThan(0)
+
+    })
+})

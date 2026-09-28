@@ -1,6 +1,6 @@
 import type { Camera, Vec2, Vec3 } from "./camera";
 
-export type Poly = { pts: Vec3[]; fill?: string; stroke?: string; lineWidth?: number }
+export type Poly = { pts: Vec3[], fill?: string, stroke?: string, lineWidth?: number, anchor?: Vec3 }
 
 export const CULL_EPS = 1e-6
 
@@ -17,7 +17,9 @@ export function signedArea(pts: Vec2[]): number {
 
 
 export function paint(ctx: CanvasRenderingContext2D, cam: Camera, polys: Poly[]): void {
-    for (const poly of polys) {
+    const depthOf = (p: Poly) => p.anchor ? cam.depth(p.anchor) : 0
+    const ordered = [...polys].sort((a, b) => depthOf(a) - depthOf(b))
+    for (const poly of ordered) {
         const screen = poly.pts.map(p => cam.project(p))
         if (signedArea(screen) <= CULL_EPS) continue
         ctx.beginPath()

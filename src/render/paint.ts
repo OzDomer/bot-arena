@@ -36,3 +36,4 @@ export function paint(ctx: CanvasRenderingContext2D, cam: Camera, polys: Poly[])
             ctx.stroke()
         }
     }
+}

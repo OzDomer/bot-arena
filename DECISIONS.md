@@ -15,6 +15,8 @@ Each entry: what we decided, why, and what it would take to revisit.
 - **Kills/match > deaths/match.** Shared kill credit on the death tick inflates the count (7.7 on a 7-ship map with max 6 deaths). Fine as a relative measure across rulesets; don't read the absolute number. Fix when comparing bots, not rules.
 - **Sample size.** 1k matches → identical bots spread ±2pp; 10k → ±0.6pp. Balance claims need 10k. Headless: 10k matches ≈ 4 s in Node (~2,500 matches/s, ~500k `step()`/s).
 - **Rules presets.** `PRESETS` in `sim/presets.ts` is a `Record<PresetName, Rules>`, each spreading `DEFAULT_RULES` and overriding only what changes. CLI takes the name as argv[4]; `runTournament` threads it to `makeMatch`. Presets are data, not functions — no derivation of storm timing from map size (rejected, see findings: startTurn barely matters, so there's nothing worth deriving). Presets are the experiment record: don't overwrite one with another.
+- **Renderer is build → paint.** Builders are pure `World → Poly[]` in world space; `paint(ctx, cam, polys)` does all projection, culling and styling. Builders are tested without a canvas; paint is checked by eye. Same split as sim/render.
+- **`main` owns the DOM.** It finds elements, sizes the canvas and wires events. `Player` only draws into the ctx and element it's handed; `setCamera` swaps the view on the current frame without touching layout.
 
 ## Rules (v1)
 - **Chebyshev distance** for vision and attack — matches 8-direction movement. (Manhattan caused diagonal chasers to swap tiles forever.)
@@ -36,6 +38,7 @@ Each entry: what we decided, why, and what it would take to revisit.
 ## Rejected
 - Damage RNG (luck, not skill). Move-XOR-attack (kills the RTS feel). Bracing (rewards camping). Bot "retry" on blocked move (breaks the GM model; bots can see the tile is taken). Coward v2 with storm awareness (its problem is the flee trigger, not the storm — deferred until heals — see roadmap). Capping `damageDealt` at remaining HP (needs an arbitrary overkill split).
 - Deriving storm timing from map size (`startTurn` barely matters on 20×20; nothing worth deriving — presets stay plain data).
+- `?view=` URL param for the camera mode — a reload reseeds the match (`Date.now()`), so the two views could never be compared on the same match. Replaced by a toggle button.
 
 ## Roadmap
 1. ~~Storm~~ (center-fixed; randomize center later)
@@ -302,3 +305,26 @@ one fifth of a 100-gen evolution run.
 - Advantage normalization (divide by std) if a different objective scale makes `lr` fragile.
 - Entropy bonus if the policy collapses onto one move — not seen at lr 1.
 - Hidden layer (h = 8, tanh): needs a second gradient formula through tanh, or a `Value` port.
+
+## Renderer (v1 design)
+
+### Coordinates
+- World units are tiles. Tile (i, j) spans [i, i+1] × [j, j+1]; centers at +0.5; z up, in tiles.
+
+### Camera
+- `makeCamera(mode, rules) → { mode, project, depth, width, height }`. Per-mode basis and depth live in a `VIEWS` table (`Record<ViewMode, View>`), so a missing mode is a compile error.
+- iso: sx = (x − y)·32, sy = (x + y)·16 − z·32. top: (x·40, y·40), z ignored.
+- Canvas size and origin come from the 8 projected corners of [0,W]×[0,H]×[0,Z_MAX] plus a 16px margin. 20×20: iso 1312×704, top 832×832.
+- In iso, tile (0,0) is the top of the diamond; north points up-right, east down-right.
+
+### Culling
+- `signedArea` is the shoelace formula in screen coords. Every face is authored in floor order — (i,j)→(i+1,j)→(i+1,j+1)→(i,j+1) as seen from outside — and `paint` draws only `signedArea > CULL_EPS` (1e-6). Back faces come out negative, side faces in top-down come out zero. Both projections have a positive determinant, so one sign convention works in both modes; no per-mode geometry.
+
+### Storm
+- Drawn as a floor tint from `inCircle(tile index, center, radius)`, the exact call `step` makes. A continuous ring, when added, is decoration only.
+- Rejected: an even-odd "map minus circle" fill. In iso it bleeds outside the map (the canvas is bigger than the diamond), and it shows a smooth boundary the sim doesn't have.
+- Frame T shows `stormAt(T)`: the ring the next step applies, which is what bots observe at T. Damage already visible in frame T came from `stormAt(T−1)`.
+
+### Draw order
+- Layers: floor → ring → bodies sorted by `cam.depth` → screen-space labels. iso depth = x + y; top depth = 0 (stable sort keeps builder order).
+- Painter's sort by x + y is valid only because every body has a 1×1 footprint. Revisit: continuous positions or multi-tile hulls (roadmap 18/19).

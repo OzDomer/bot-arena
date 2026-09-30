@@ -5,6 +5,8 @@ import { makeMatch } from './sim/setup'
 import { showcase } from './bots/lineups'
 import { PRESETS } from './sim/presets'
 import { makeCamera, type Camera, type ViewMode } from './render/camera'
+import type { Weights } from './evo/net'
+import { NetBrain } from './evo/NetBrain'
 
 
 const canvas = document.querySelector<HTMLCanvasElement>('#gameCanvas')
@@ -49,7 +51,12 @@ const fitCanvas = (cam: Camera) => {
 const names: Record<Ship['id'], string> = {}
 showcase.forEach((e, i) => { names[i + 1] = e.name })
 
-const player = new Player(ctx, cam, history, turnCounter, names)
+const intent: Record<Ship['id'], Weights> = {}
+
+for (const [id, brain] of Object.entries(brains))
+  if (brain instanceof NetBrain) intent[Number(id)] = brain.weights
+
+const player = new Player(ctx, cam, history, turnCounter, names, intent)
 document.getElementById('play')!.onclick = () => player.play()
 document.getElementById('pause')!.onclick = () => player.pause()
 document.getElementById('stepBack')!.onclick = () => player.stepBack()
@@ -60,4 +67,5 @@ document.getElementById('view')!.onclick = () => {
   fitCanvas(camera)
   player.setCamera(camera)
 }
+document.getElementById('intent')!.onclick = () => player.toggleIntent()
 

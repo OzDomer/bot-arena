@@ -303,7 +303,7 @@ one fifth of a 100-gen evolution run.
 - Run B: `G` = discounted per-turn reward (dealt − taken, + kill, + win), no survival term.
   Only the loop's `G` assignment changes; `updateWeights` is untouched.
 - Advantage normalization (divide by std) if a different objective scale makes `lr` fragile.
-- Entropy bonus if the policy collapses onto one move — not seen at lr 1.
+- Entropy: `reinforce-v2-dense-5000u-seed1` is near one-hot per state (overlay shows 1.000 on the argmax at turn 0; the evolved brains sit at 0.5–0.7). Sampling had stopped exploring by the end of training. An entropy bonus is the fix if the chapter reopens.
 - Hidden layer (h = 8, tanh): needs a second gradient formula through tanh, or a `Value` port.
 
 ## Renderer (v1 design)
@@ -328,3 +328,8 @@ one fifth of a 100-gen evolution run.
 ### Draw order
 - Layers: floor → ring → bodies sorted by `cam.depth` → screen-space labels. iso depth = x + y; top depth = 0 (stable sort keeps builder order).
 - Painter's sort by x + y is valid only because every body has a 1×1 footprint. Revisit: continuous positions or multi-tile hulls (roadmap 18/19).
+
+### Intent overlay
+- Per live NetBrain seat: `observe → encode → forward → softmax` on the frame, same calls the brain makes. One thin arrow per direction from the roof center, a square for STAY, argmax in yellow. Sorted with its ship (same anchor).
+- Arrow length is relative to the argmax move (`p / max(p)`): the overlay shows preference order, not calibrated confidence. Absolute lengths were unreadable because the trained policy is near one-hot (see Policy gradient findings).
+- Renderer imports `evo/` for this. Not a sim dependency.

@@ -1,6 +1,8 @@
+import type { Weights } from "../evo/net";
 import { type Ship, type World } from "../types"
 import type { Camera } from "./camera"
 import { buildFloor } from "./floor"
+import { buildIntent } from "./intent";
 import { buildLabels, type Label } from "./labels";
 import { paint } from "./paint"
 import { buildRing } from "./ring";
@@ -9,12 +11,12 @@ import { buildShips } from "./ships";
 const LABEL_LIFT = 6
 
 
-export function drawWorld(ctx: CanvasRenderingContext2D, cam: Camera, world: World, names: Record<Ship['id'], string>) {
+export function drawWorld(ctx: CanvasRenderingContext2D, cam: Camera, world: World, names: Record<Ship['id'], string>, intent: Record<Ship['id'], Weights>) {
     ctx.save()
     ctx.clearRect(0, 0, cam.width, cam.height)
     paint(ctx, cam, buildFloor(world))
     paint(ctx, cam, buildRing(world))
-    paint(ctx, cam, buildShips(world))
+    paint(ctx, cam, [...buildShips(world), ...buildIntent(world, intent)])
     drawLabels(ctx, cam, buildLabels(world, names))
     ctx.restore()
 }

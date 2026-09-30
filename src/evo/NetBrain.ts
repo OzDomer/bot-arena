@@ -4,7 +4,7 @@ import { encode, versionFor } from "./encode";
 import { forward, type Weights, argMax, OUTPUTS } from "./net";
 
 export class NetBrain implements Brain {
-    protected weights: Weights
+    public readonly weights: Weights
     protected version: 1 | 2
     constructor(weights: Weights) {
         this.version = versionFor(weights[0].length - 1)

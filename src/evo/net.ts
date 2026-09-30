@@ -1,6 +1,5 @@
+import type { Weights } from "../types"
 import type { Rng } from "../util/random"
-
-export type Weights = number[][]   // OUTPUTS rows × (INPUTS + 1): INPUTS weights, then bias
 
 export const OUTPUTS = 9
 

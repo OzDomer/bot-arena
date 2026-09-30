@@ -101,4 +101,11 @@ export const DEFAULT_RULES: Rules = {
     ship: { hp: 10, attackDamage: 2, visionRange: 3, attackRange: 1 },
     arcMult: { front: 1, side: 1, rear: 2 },
     storm: { startTurn: 20, shrinkEvery: 10, baseDamage: 1 },
-};
+}
+
+export type Weights = number[][]
+
+export type Frame = { world: World; hits: Hit[] }
+
+export type SceneOpts = { names: Record<Ship['id'], string>; intent: Record<Ship['id'], Weights> }
+

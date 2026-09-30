@@ -1,6 +1,5 @@
-import type { Weights } from '../evo/net';
 import { clamp } from '../sim/geometry';
-import type { Ship, World } from '../types';
+import type { Frame, Ship, Weights } from '../types';
 import type { Camera } from './camera';
 import { drawWorld } from './render';
 
@@ -10,14 +9,15 @@ export class Player {
 
     private ctx: CanvasRenderingContext2D
     private cam: Camera
-    private history: World[]
+    private history: Frame[]
     private turnEl: HTMLElement
     private names: Record<Ship['id'], string>
     private intent: Record<Ship['id'], Weights>
     private showIntent = true
 
 
-    constructor(ctx: CanvasRenderingContext2D, cam: Camera, history: World[], turnEl: HTMLElement, names: Record<Ship['id'], string>, intent: Record<Ship['id'], Weights>) {
+
+    constructor(ctx: CanvasRenderingContext2D, cam: Camera, history: Frame[], turnEl: HTMLElement, names: Record<Ship['id'], string>, intent: Record<Ship['id'], Weights>) {
         this.ctx = ctx
         this.cam = cam
         this.history = history
@@ -30,8 +30,9 @@ export class Player {
     private show(i: number) {
         this.i = clamp(i, 0, this.history.length - 1)
         const frame = this.history[this.i]
-        drawWorld(this.ctx, this.cam, frame, this.names, this.showIntent ? this.intent : {})
-        this.turnEl.textContent = `${frame.turn}`
+        const prev = this.history[Math.max(0, this.i - 1)].world
+        drawWorld(this.ctx, this.cam, frame, prev, { names: this.names, intent: this.showIntent ? this.intent : {} })
+        this.turnEl.textContent = `${frame.world.turn}`
     }
 
     play() {

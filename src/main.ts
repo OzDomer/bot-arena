@@ -1,4 +1,4 @@
-import type { Ship, World } from './types'
+import type { Frame, Ship, World } from './types'
 import { runMatch } from './sim/match'
 import { Player } from './render/Player'
 import { makeMatch } from './sim/setup'
@@ -32,12 +32,14 @@ const { world, brains } = makeMatch(showcase, seed, PRESETS.bigmap)
 
 const cam = makeCamera(mode, world.rules)
 
-const history: World[] = [world];
+const history: Frame[] = [{ world, hits: [] }]
 
 
-const final = runMatch(world, brains, w => {
-  history.push(w)
-})
+
+
+const final = runMatch(world, brains, (w, hits) => history.push({ world: w, hits }))
+
+
 console.log('done at turn', final.turn, 'alive:', final.ships.filter(s => s.hp > 0).map(s => s.id));
 
 canvas.width = cam.width

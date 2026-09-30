@@ -1,6 +1,10 @@
-import { DELTAS, type World } from "../types"
+import { DELTAS, type Position, type World } from "../types"
+import type { Vec3 } from "./camera"
 import { hslToHex, shade } from "./color"
 import type { Poly } from "./paint"
+
+export const roofCenter = (p: Position): Vec3 => ({ x: p.x + 0.5, y: p.y + 0.5, z: SHIP_H })
+
 
 const SEAT_S = 0.65, SEAT_L = 0.5
 export const seatColor = (id: number, count: number) =>

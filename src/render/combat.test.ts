@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { SHIP_H } from "./ships"
 import { ship, world } from "../test/fixtures"
-import { buildHits } from "./hits"
+import { buildHits } from "./combat"
 
 describe('buildHits', () => {
     it('one hit becomes a mark between the two roof centers', () => {

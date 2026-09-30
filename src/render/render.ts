@@ -2,13 +2,12 @@
 import { type Frame, type SceneOpts, type World } from "../types"
 import type { Camera } from "./camera"
 import { buildFloor } from "./floor"
-import { buildHits, type HitMark } from "./hits";
-import { buildHpBars, type HpBar } from "./hpBars";
+import { buildHits, type HitMark } from "./combat";
 import { buildIntent } from "./intent";
-import { buildLabels, type Label } from "./labels";
 import { paint } from "./paint"
-import { buildRing } from "./ring";
 import { buildShips } from "./ships";
+import { buildHpBars, buildLabels, type Label, type HpBar } from "./plate";
+import { buildRing } from "./storm";
 
 const BAR_W = 30
 const BAR_H = 6
@@ -56,8 +55,6 @@ export function drawBars(ctx: CanvasRenderingContext2D, cam: Camera, bars: HpBar
         const y = b.y - BAR_LIFT
         const x0 = b.x - BAR_W / 2
         const cell = (BAR_W - (bar.maxHp - 1) * BAR_GAP) / bar.maxHp
-        ctx.fillStyle = '#111'
-        ctx.fillRect(x0 - 1, y - BAR_H - 1, BAR_W + 2, BAR_H + 2)
         ctx.fillStyle = '#111'
         ctx.fillRect(x0 - 1, y - BAR_H - 1, BAR_W + 2, BAR_H + 2)
         for (let i = 0; i < bar.maxHp; i++) {

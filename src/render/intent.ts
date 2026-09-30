@@ -1,8 +1,8 @@
 import { encode, versionFor } from "../evo/encode"
-import { type Weights, forward, argMax } from "../evo/net"
+import { forward, argMax } from "../evo/net"
 import { softmax } from "../evo/policy"
 import { observe } from "../sim/observe"
-import { type World, type Ship, DIRECTIONS, DELTAS } from "../types"
+import { type World, type Ship, DIRECTIONS, DELTAS, type Weights } from "../types"
 import type { Poly } from "./paint"
 import { SHIP_H } from "./ships"
 

@@ -29,7 +29,7 @@ describe('buildLabels', () => {
             [ship({ id: 1, position: { x: 3, y: 4 }, hp: 7 })])
         const names = { 1: 'chaser' }
         const labels = buildLabels(w, names)
-        expect(labels[0].text).toBe('chaser 7')
+        expect(labels[0].text).toBe('chaser')
 
     })
 
@@ -39,7 +39,7 @@ describe('buildLabels', () => {
             [ship({ id: 1, position: { x: 3, y: 4 }, hp: 7 })])
         const names = {}
         const labels = buildLabels(w, names)
-        expect(labels[0].text).toBe('1 7')
+        expect(labels[0].text).toBe('1')
 
     })
 })

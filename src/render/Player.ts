@@ -1,5 +1,5 @@
 import { clamp } from '../sim/geometry';
-import type { World } from '../types';
+import type { Ship, World } from '../types';
 import type { Camera } from './camera';
 import { drawWorld } from './render';
 
@@ -11,19 +11,21 @@ export class Player {
     private cam: Camera
     private history: World[]
     private turnEl: HTMLElement
+    private names: Record<Ship['id'], string>
 
-    constructor(ctx: CanvasRenderingContext2D, cam: Camera, history: World[], turnEl: HTMLElement) {
+    constructor(ctx: CanvasRenderingContext2D, cam: Camera, history: World[], turnEl: HTMLElement, names: Record<Ship['id'], string>) {
         this.ctx = ctx
         this.cam = cam
         this.history = history
         this.turnEl = turnEl
+        this.names = names
         this.show(0)
     }
 
     private show(i: number) {
         this.i = clamp(i, 0, this.history.length - 1)
         const frame = this.history[this.i]
-        drawWorld(this.ctx, this.cam, frame)
+        drawWorld(this.ctx, this.cam, frame, this.names)
         this.turnEl.textContent = `${frame.turn}`
     }
 

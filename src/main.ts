@@ -1,4 +1,4 @@
-import type { World } from './types'
+import type { Ship, World } from './types'
 import { runMatch } from './sim/match'
 import { Player } from './render/Player'
 import { makeMatch } from './sim/setup'
@@ -46,7 +46,10 @@ const fitCanvas = (cam: Camera) => {
   canvas.height = cam.height
 }
 
-const player = new Player(ctx, cam, history, turnCounter);
+const names: Record<Ship['id'], string> = {}
+showcase.forEach((e, i) => { names[i + 1] = e.name })
+
+const player = new Player(ctx, cam, history, turnCounter, names)
 document.getElementById('play')!.onclick = () => player.play()
 document.getElementById('pause')!.onclick = () => player.pause()
 document.getElementById('stepBack')!.onclick = () => player.stepBack()

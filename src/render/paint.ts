@@ -1,6 +1,6 @@
 import type { Camera, Vec2, Vec3 } from "./camera";
 
-export type Poly = { pts: Vec3[], fill?: string, stroke?: string, lineWidth?: number, anchor?: Vec3 }
+export type Poly = { pts: Vec3[], fill?: string, stroke?: string, lineWidth?: number, anchor?: Vec3, clip?: Vec3[] }
 
 export const CULL_EPS = 1e-6
 
@@ -22,20 +22,32 @@ export function paint(ctx: CanvasRenderingContext2D, cam: Camera, polys: Poly[])
     for (const poly of ordered) {
         const screen = poly.pts.map(p => cam.project(p))
         if (signedArea(screen) <= CULL_EPS) continue
-        ctx.beginPath()
-        ctx.moveTo(screen[0].x, screen[0].y)
-        for (let i = 1; i < screen.length; i++) {
-            ctx.lineTo(screen[i].x, screen[i].y)
+
+        if (poly.clip) {                                        // 1. start clipping (optional)
+            ctx.save()
+            tracePath(ctx, poly.clip.map(p => cam.project(p)))
+            ctx.clip()
         }
-        ctx.closePath()
-        if (poly.fill) {
+
+        tracePath(ctx, screen)                                  // 2. outline of this poly
+
+        if (poly.fill) {                                        // 3. fill
             ctx.fillStyle = poly.fill
             ctx.fill()
         }
-        if (poly.stroke) {
+        if (poly.stroke) {                                      // 4. stroke
             ctx.strokeStyle = poly.stroke
             ctx.lineWidth = poly.lineWidth ?? 1
             ctx.stroke()
         }
+
+        if (poly.clip) ctx.restore()                            // 5. stop clipping (optional)
     }
+}
+
+function tracePath(ctx: CanvasRenderingContext2D, pts: Vec2[]) {
+    ctx.beginPath()
+    ctx.moveTo(pts[0].x, pts[0].y)
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y)
+    ctx.closePath()
 }

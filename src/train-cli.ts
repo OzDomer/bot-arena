@@ -14,7 +14,7 @@ import { ENCODING_VERSION, inputsFor } from "./evo/encode"
 
 const updates = Number(process.argv[2] ?? 200)
 const batch = Number(process.argv[3] ?? 500)
-const lr = Number(process.argv[4] ?? 0.01)
+const lr = Number(process.argv[4] ?? 1)
 const seed = Number(process.argv[5] ?? 1790266907455)
 const mode = process.argv[6] ?? 'fitness'
 if (mode !== 'fitness' && mode !== 'dense') throw new Error(`unknown mode: ${mode}`)

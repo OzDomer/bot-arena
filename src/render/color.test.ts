@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { shade } from "./color"
+import { hslToHex, shade } from "./color"
 
 describe('shade', () => {
     it('factor 1 leaves the color unchanged', () => {
@@ -20,4 +20,16 @@ describe('shade', () => {
         expect(shade('#ffffff', 2)).toBe('#ffffff')
 
     })
+})
+
+
+it('primaries land on the hue axes', () => {
+    expect(hslToHex(0, 1, 0.5)).toBe('#ff0000')
+    expect(hslToHex(120, 1, 0.5)).toBe('#00ff00')
+    expect(hslToHex(240, 1, 0.5)).toBe('#0000ff')
+})
+
+it('lightness extremes are white and black regardless of hue', () => {
+    expect(hslToHex(0, 0, 1)).toBe('#ffffff')
+    expect(hslToHex(0, 0, 0)).toBe('#000000')
 })

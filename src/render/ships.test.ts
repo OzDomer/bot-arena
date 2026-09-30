@@ -76,4 +76,14 @@ describe('buildShips', () => {
         expect(tip.z).toBeCloseTo(SHIP_H)
 
     })
+    
+    it('no two ships share a color', () => {
+        const w = world(
+            Array.from({ length: 9 }, (_, i) => ship({ id: i + 1, position: { x: i, y: 5 } }))
+        )
+        const polys = buildShips(w)
+        const fills = w.ships.map((_, i) => polys[i * 6].fill)
+        expect(new Set(fills).size).toBe(9)
+    })
+
 })

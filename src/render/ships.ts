@@ -1,9 +1,11 @@
 import { DELTAS, type World } from "../types"
-import { shade } from "./color"
+import { hslToHex, shade } from "./color"
 import type { Poly } from "./paint"
 
-const COLORS = ['#e63946', '#457b9d', '#2a9d8f', '#f4a261', '#8338ec']
-export const DEAD = '#999'
+const SEAT_S = 0.65, SEAT_L = 0.5
+export const seatColor = (id: number, count: number) =>
+    hslToHex((id - 1) * 360 / count, SEAT_S, SEAT_L)
+
 const INSET = 0.15   // gap between ship and tile edge, in tiles
 export const SHIP_H = 0.6    // live ship height, in tiles
 export const WRECK_H = 0.1   // sunk: a low hull at water level
@@ -18,8 +20,8 @@ export function buildShips(world: World): Poly[] {
     const polys: Poly[] = []
     for (const ship of world.ships) {
         const h = ship.hp > 0 ? SHIP_H : WRECK_H
-        const seatColor = COLORS[ship.id % COLORS.length]
-        const color = ship.hp > 0 ? seatColor : shade(seatColor, 0.45)
+        const shipColor = seatColor(ship.id, world.ships.length)
+        const color = ship.hp > 0 ? shipColor : shade(shipColor, 0.45)
         const { x, y } = ship.position
         const anchor = { x: x + 0.5, y: y + 0.5, z: 0 }
         const x0 = x + INSET

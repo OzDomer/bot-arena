@@ -17,6 +17,7 @@ Each entry: what we decided, why, and what it would take to revisit.
 - **Rules presets.** `PRESETS` in `sim/presets.ts` is a `Record<PresetName, Rules>`, each spreading `DEFAULT_RULES` and overriding only what changes. CLI takes the name as argv[4]; `runTournament` threads it to `makeMatch`. Presets are data, not functions — no derivation of storm timing from map size (rejected, see findings: startTurn barely matters, so there's nothing worth deriving). Presets are the experiment record: don't overwrite one with another.
 - **Renderer is build → paint.** Builders are pure `World → Poly[]` in world space; `paint(ctx, cam, polys)` does all projection, culling and styling. Builders are tested without a canvas; paint is checked by eye. Same split as sim/render.
 - **`main` owns the DOM.** It finds elements, sizes the canvas and wires events. `Player` only draws into the ctx and element it's handed; `setCamera` swaps the view on the current frame without touching layout.
+- **Renderer may read `evo/`, never `sim/` internals.** The intent overlay needs a brain's weights (`NetBrain.weights` is `public readonly`); a getter interface waits for a second inspectable brain type. Everything else the renderer shows is derived from `World`/`Hit` data it already has — no sim rule is re-implemented in `render/`.
 
 ## Rules (v1)
 - **Chebyshev distance** for vision and attack — matches 8-direction movement. (Manhattan caused diagonal chasers to swap tiles forever.)
@@ -39,6 +40,8 @@ Each entry: what we decided, why, and what it would take to revisit.
 - Damage RNG (luck, not skill). Move-XOR-attack (kills the RTS feel). Bracing (rewards camping). Bot "retry" on blocked move (breaks the GM model; bots can see the tile is taken). Coward v2 with storm awareness (its problem is the flee trigger, not the storm — deferred until heals — see roadmap). Capping `damageDealt` at remaining HP (needs an arbitrary overkill split).
 - Deriving storm timing from map size (`startTurn` barely matters on 20×20; nothing worth deriving — presets stay plain data).
 - `?view=` URL param for the camera mode — a reload reseeds the match (`Date.now()`), so the two views could never be compared on the same match. Replaced by a toggle button.
+- Storm tint on ships and a ring pulse on phase change — the floor tint already shows both; a per-tick storm damage number carries information the floor doesn't.
+- Random seat colors — unstable across reloads and not guaranteed distinct. Hue spread by id instead.
 
 ## Roadmap
 1. ~~Storm~~ (center-fixed; randomize center later)
@@ -50,20 +53,24 @@ Each entry: what we decided, why, and what it would take to revisit.
 7. ~~Rules presets + CLI arg~~ → v2 = 20×20, shrink 5 (preset `bigmap`). Storm-timing derivation rejected. Experiments in findings.
 8. ~~Camper~~ — under v2
 9. ~~Pairwise round-robin~~ → decide if evolution is justified
-10. Heal resource
-11. Kiter — keep threats at distance 2, retreat toward center not away from threat, face-and-trade when caught (move into the adjacent enemy = bounce-turn, see findings). Deferred: kiting buys time, and time is worthless without a resource to spend it on. Needs heals first.
+10. Heal resource → moved to 20.
+11. Kiter — keep threats at distance 2, retreat toward center not away from threat, face-and-trade when caught (move into the adjacent enemy = bounce-turn see findings). Deferred: kiting buys time, and time is worthless without a resource to spend it on. Needs heals first. → moved to 20.
 12. ~~Evolution~~ — closed; beats FSMs, specializes on pool, fitness rewards passivity. See findings. Reweight and live co-evolution parked under Open. Gradient descent supersedes it for training. 
 13. ~~REINFORCE~~ — closed at 28.3 / 28.8 (v2 + dense). See docs/learning.md. Brain is now a playtester for rules changes.
-14. ~~**Isometric renderer.**~~ `project(x, y, z) → screen` owns the camera; everything draws through it; `TOP_DOWN` flag returns the old view. Floor as diamonds, storm circle as a 64-point polygon, ships as three-face boxes (top + two shaded sides), wrecks sink to a low box in a darkened seat color. Draw order: sort by `x + y` ascending. Text and bars at `project(x, y, h)` in screen space. Renderer only — sim untouched. Note: one camera for iso/top, boxes with signed-area culling, wrecks sink, facing nose, labels, clipped ring). Add clip to the Renderer section under Culling ("Poly.clip limits drawing to a projected polygon; only the ring uses it
-15. ~~**Brain intent overlay.**~~ For every `NetBrain` seat, eight arrows from the ship top with length = softmax probability of that move, dot for STAY, per frame. Uses `encode` → `forward` → `softmax`  on the frame's observation; no new sim state. Toggle in the controls. Output: a README GIF.
-16. **Match readability.** HP bars, bot name over the ship, attacker→target flash on the hit tick, storm-damage tint, storm ring pulse on phase change. All in projected space, so it's drawn once.
-17. Storm center randomization — first rules change checked against a retrained brain with the overlay on.
-18. Movement: momentum + turn rate + ramming, and a Rammer bot 
-19. Heal resource, Kiter (as before, deferred until 17 says what the meta looks like).15. Port step() to Rust — was "to learn Rust, not for speed"; at 25k matches/gen it's both.
-20. RTS: momentum physics, continuous positions, islands, ramming, disembarking; re-evolve
+14. ~~**Isometric renderer.**~~ One camera (`iso`/`top`) with `project`/`depth`; every drawable is a `Poly` in world space, culled by signed area. Boxes are 5 faces from the footprint edge-walk; wrecks sink to a low box in a darkened seat color; facing nose; labels; 64-point ring clipped to the map. Sim untouched. See Renderer (v1 design).
+15. ~~**Brain intent overlay.**~~ Spokes per direction from `observe → encode → forward → softmax`, length relative to the argmax, STAY as a square, toggle in controls. Found the trained policy is near one-hot (see Policy gradient › Open). README GIF pending zoom.
+16. **Match readability.** ~~Segmented HP bars~~, ~~name plates~~, ~~hit flash with damage number at pre-move positions~~, ~~storm damage numbers~~ (tint and pulse rejected). Open: short display names (`Entrant.short`), hull footprint (body + bow pentagon, inside the tile), hue exclusion near the storm blue.
+17. **Zoom and pan.** Camera gains `zoom` and `pan`; canvas becomes a fixed viewport with fit-to-view; drag to pan, wheel to zoom toward the cursor. Listeners in `main`, `Player.setCamera` as now. Order: camera math + tests → viewport → drag → wheel. Every open readability problem is the 40px roof.
+18. **Storm center randomization** — first rules change checked against a retrained brain with the overlay on.
+19. **Movement**: momentum + turn rate + ramming, and a Rammer bot. Hull footprint from 16 becomes a rotated shape here.
+20. Heal resource, then Kiter (deferred until 18 says what the meta looks like).
+15. Port step() to Rust — was "to learn Rust, not for speed"; at 25k matches/gen it's both.
+21. RTS: momentum physics, continuous positions, islands, ramming, disembarking; re-train
 
 ## Open
-- Item 18 movement "rework" thoughts how should ships interact with eachother. once displacement is a thing that can be affected by outside sources step() machinery doesnt account for that kind of thing yet. 
+- Item 18 movement "rework" thoughts how should ships interact with eachother. once displacement is a thing that can be affected by outside sources step() machinery doesnt account for that kind of thing yet.
+- React shell: only `main.ts` (and `Player`'s `turnEl` → an `onFrame` callback) would change. Trigger is the first real panel (lineup picker, match browser), not the canvas.
+- Bot DSL + compiler to `Brain` — parked; after the arena is showable. 
 
 ## Tournament findings
 - Identical-stat shooters always draw 1v1 → needed asymmetry → facing.
@@ -319,6 +326,7 @@ one fifth of a 100-gen evolution run.
 
 ### Culling
 - `signedArea` is the shoelace formula in screen coords. Every face is authored in floor order — (i,j)→(i+1,j)→(i+1,j+1)→(i,j+1) as seen from outside — and `paint` draws only `signedArea > CULL_EPS` (1e-6). Back faces come out negative, side faces in top-down come out zero. Both projections have a positive determinant, so one sign convention works in both modes; no per-mode geometry.
+- `Poly.clip` limits a poly's drawing to a projected polygon (`save → clip → draw → restore`). Only the ring uses it, to stay inside the map diamond.
 
 ### Storm
 - Drawn as a floor tint from `inCircle(tile index, center, radius)`, the exact call `step` makes. A continuous ring, when added, is decoration only.
@@ -326,10 +334,26 @@ one fifth of a 100-gen evolution run.
 - Frame T shows `stormAt(T)`: the ring the next step applies, which is what bots observe at T. Damage already visible in frame T came from `stormAt(T−1)`.
 
 ### Draw order
-- Layers: floor → ring → bodies sorted by `cam.depth` → screen-space labels. iso depth = x + y; top depth = 0 (stable sort keeps builder order).
-- Painter's sort by x + y is valid only because every body has a 1×1 footprint. Revisit: continuous positions or multi-tile hulls (roadmap 18/19).
+- One `paint` call per layer: floor → ring → ships + intent (one sorted list). Then screen space: HP bars → hit lines and numbers → storm numbers → labels. Screen-space things are never occluded by boxes.
+- `paint` sorts a copy by `cam.depth(anchor)`; polys without an anchor count as 0. iso depth = x + y; top depth = 0 (stable sort keeps builder order). Every face of one ship shares the tile-center anchor, so a ship is atomic in the sort and its faces keep push order (top, sides, nose, intent).
+- Painter's sort by x + y is valid only because every body has a 1×1 footprint. Revisit: continuous positions or multi-tile hulls (roadmap 19/22).
+
+### Ships
+- Box = footprint (inset 0.15) lifted to `h`, plus one side per footprint edge in floor order; culling leaves top+E+S in iso, top only in top-down. Sides shaded by `shade(color, SIDE_SHADE[k])`.
+- Live: `SHIP_H` 0.6, seat color. Wreck: `WRECK_H` 0.1, `shade(seat, 0.45)`. Same builder, two numbers.
+- Seat color = `hslToHex((id−1)·360/n, .65, .5)`: deterministic, evenly spread for any lineup size.
+- Facing nose: flat triangle on the roof along the normalized `DELTAS[facing]`, pushed after the top face.
+
+### Plate and marks (screen space)
+- Name over a segmented HP bar (one cell per HP) at `project(roofCenter) − lift`. Names come from a `Record<id, string>` built in `main` from the lineup (ship id = index + 1; shuffled matches must use the seating).
+- `Frame = { world, hits }`; `main` records one per step. Hit lines are drawn at **previous-frame** positions (attacks resolve pre-move), width `1 + amount`, damage number right of the target.
+- Storm damage number per ship = `prev.hp − cur.hp − min(prev.hp, Σ hits on it)`: derived from what happened, exact under overkill, no copy of `stormAt` in the renderer. Stopgap until `step` emits events (same revisit as stats attribution). Drawn left of the ship in storm blue.
+- All text goes through `outlinedText` (black stroke, then fill) so it reads on any background.
+
+### Files
+- One file per mechanic, not per function: `floor`, `ships`, `storm` (ring + damage numbers), `combat` (hit marks), `plate` (labels + bars), `intent`; `camera`/`paint`/`color` are infrastructure; `render.ts` composes.
 
 ### Intent overlay
-- Per live NetBrain seat: `observe → encode → forward → softmax` on the frame, same calls the brain makes. One thin arrow per direction from the roof center, a square for STAY, argmax in yellow. Sorted with its ship (same anchor).
+- Per live NetBrain seat: `observe → encode → forward → softmax` on the frame, same calls the brain makes. One tapered spoke (base ±0.07, point at the tip), a square for STAY, argmax in yellow. Sorted with its ship (same anchor). Spoke winding was wrong at first and culled every arrow; intent.test pins 9 visible in both modes.
 - Arrow length is relative to the argmax move (`p / max(p)`): the overlay shows preference order, not calibrated confidence. Absolute lengths were unreadable because the trained policy is near one-hot (see Policy gradient findings).
 - Renderer imports `evo/` for this. Not a sim dependency.

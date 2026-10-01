@@ -13,6 +13,7 @@ npm run dev
 ```
 
 Open http://localhost:5173/ (the default) to watch a single match replayed on the grid.
+Controls: play / pause / step. **Toggle view** switches isometric ↔ top-down on the same match. **Intent** shows the learned brains' move preferences each turn.
 
 ```bash
 npm run tournament <matches> <preset> <seed>
@@ -41,6 +42,7 @@ Trains the same linear brain with policy gradient (REINFORCE) instead of evoluti
 - **Rules presets** — every tunable lives in one `Rules` object. Presets are named `Rules` values; the CLI picks one. Experiments are run by swapping presets, never by editing constants, so the preset file is the record of what was tested.
 - **Learning pipeline** — `encode()` turns an observation into a fixed-size input vector: nearest three ships, own HP and facing, storm offset and radius, and (v2) distance to the storm edge. Encodings are versioned; a brain infers its version from its weight shape, so old saved brains keep working next to new ones. `NetBrain` is a linear net: inputs → 9 move logits → argmax → direction; attack is hardcoded to nearest-in-range. Plain arrays, no libraries.
 - **Two trainers, one brain.** `evolve()` runs a population of 50, keeps the top 10, refills by mutation. `train` runs REINFORCE: a `PolicyBrain` samples moves from a softmax over the same logits, records every decision, and the loop takes one gradient step per batch of matches — closed-form gradient of the log-probability, no autograd. Either one produces a `NetBrain`.
+- **Renderer** (`render/`) — one camera (`project`, `depth`) and a `paint` that projects, culls back-faces by signed area, and sorts by depth. Everything on the map is a polygon in world coordinates built by pure functions from a `World`, so the isometric and top-down views are the same code with a different basis, and the builders are unit-tested without a canvas. Hits, storm damage, HP and names are drawn in screen space on top.
 
 ## Rules (v1 → v2)
 
@@ -98,6 +100,12 @@ Each entry is one change to the rules or bots, what the tally said, and what I c
 
 **One input.** A linear net can't compute "am I inside the storm" from center offset and radius — that's a square root. Adding it as a 19th input did nothing for the survival objective (the net survived more, wins didn't move) and fixed the damage objective: 28.3% and 28.8% at 2.5M, spread 0.5 points. The weak seed had never learned to dodge the storm; hand it the edge distance and both seeds converge. The variance was a missing input. → Learning chapter closed; the brain is now a playtester for rules changes. Full write-up in `docs/learning.md`.
 
+## Reading a match
+
+- Boxes are ships; the dark wedge on the roof is the facing (rear hits do ×2). Wrecks sink and keep a darkened seat color.
+- Blue floor is storm. Red lines are hits, thicker for rear hits, with the damage next to the target; blue numbers are storm damage that turn.
+- With **Intent** on, the learned brains show a spoke per direction, scaled to their softmax preference, the chosen move in yellow. The trained REINFORCE brain is near one-hot; the evolved ones hedge. That overlay is how I found out.
+
 ## Roadmap
 
 - ~~**Storm**~~ — a closing zone to encourage fighting.
@@ -106,9 +114,10 @@ Each entry is one change to the rules or bots, what the tally said, and what I c
 - ~~**Opponent pool**~~ — storm-aware Chaser, Camper.
 - ~~**Evolution**~~ — beats every FSM; learns the pool, not the game.
 - ~~**Policy gradient**~~ — same brain, REINFORCE, dense reward, one engineered input: 28.3 / 28.8 on the held-out. Closed; see `docs/learning.md`.
-- **Isometric renderer** — 2.5D projection, ships as boxes, renderer-only.
-- **Brain intent overlay** — draw the net's move probabilities as arrows each turn.
-- **Match readability** — HP bars, names, hit flashes, storm tint.
+- ~~**Isometric renderer**~~ — 2.5D projection, ships as boxes, renderer-only.
+- ~~**Brain intent overlay**~~ — draw the net's move probabilities as arrows each turn.
+- ~~**Match readability**~~ — HP bars, names, hit flashes, storm tint.
+- **Zoom and pan** — the roof is 40px; everything readable needs more.
 - **Storm center randomization** — first rules change checked against a retrained brain.
 - **Resources** — heal first, then the Kiter (it needs time to be worth something).
 - **Rust/WASM** — I want to learn Rust. Was "for learning, not speed"; at 2.5M matches a run, it's both. After the rules settle.

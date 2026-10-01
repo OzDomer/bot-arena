@@ -14,8 +14,7 @@ export function world(ships: Ship[], turn: number = 0, rules: Rules = DEFAULT_RU
     return { turn, rules, ships, storm: { center: mapCenter(rules) } }
 }
 
-export function testCamera(mode: ViewMode): Camera {
+export function testCamera(mode: ViewMode, view?: View): Camera {
     const size = naturalSize(mode, PRESETS.bigmap)
-    const view = fitView(mode, PRESETS.bigmap, size.width, size.height)
-    return makeCamera(mode, view)
+    return makeCamera(mode, view ?? fitView(mode, PRESETS.bigmap, size.width, size.height))
 }

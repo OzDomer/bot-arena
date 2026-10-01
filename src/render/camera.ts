@@ -1,4 +1,4 @@
-// render/camera.ts
+import { clamp } from '../sim/geometry';
 import type { Rules } from '../types'
 
 export type Vec3 = { x: number; y: number; z: number }
@@ -18,6 +18,8 @@ const TH = 32   // isometric tile height in pixels
 const ZH = 32   // pixels upward per world unit of z
 const T = 40    // top-down tile size in pixels
 const MARGIN = 16
+export const ZOOM_MIN = 0.25
+export const ZOOM_MAX = 4
 
 const PROJECTIONS: Record<ViewMode, Projection> = {
     iso: {
@@ -86,4 +88,19 @@ export function fitView(mode: ViewMode, rules: Rules, vw: number, vh: number, pa
 
     return { zoom, pan: { x: vw / 2 - midX * zoom, y: vh / 2 - midY * zoom } }
 
+}
+
+export function zoomAt(view: View, at: Vec2, factor: number): View {
+    const next = clamp(view.zoom * factor, ZOOM_MIN, ZOOM_MAX)
+    const bx = (at.x - view.pan.x) / view.zoom
+    const by = (at.y - view.pan.y) / view.zoom
+    const panX = at.x - bx * next
+    const panY = at.y - by * next
+    return { zoom: next, pan: { x: panX, y: panY } }
+}
+
+export function panBy(view: View, dx: number, dy: number): View {
+    const px = view.pan.x + dx
+    const py = view.pan.y + dy
+    return { zoom: view.zoom, pan: { x: px, y: py } }
 }

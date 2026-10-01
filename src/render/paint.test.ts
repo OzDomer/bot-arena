@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { signedArea } from "./paint"
-import { makeCamera, type Vec2, type Vec3 } from "./camera"
-import { PRESETS } from "../sim/presets"
+import { type Vec2, type Vec3 } from "./camera"
+import { testCamera } from "../test/fixtures"
 
 describe('signedArea', () => {
     it('floor order positive', () => {
@@ -26,7 +26,7 @@ describe('signedArea', () => {
     })
 
     it('side face is flat in top', () => {
-        const cam = makeCamera('top', PRESETS.bigmap)
+        const cam = testCamera('top')
         const face: Vec3[] = [
             { x: 1, y: 0, z: 0 },
             { x: 1, y: 1, z: 0 },
@@ -39,8 +39,8 @@ describe('signedArea', () => {
     })
 
     it('floor tile is front-facing in both modes', () => {
-        const topCam = makeCamera('top', PRESETS.bigmap)
-        const isoCam = makeCamera('iso', PRESETS.bigmap)
+        const topCam = testCamera('iso')
+        const isoCam = testCamera('top')
         const tile: Vec3[] = [
             { x: 0, y: 0, z: 0 },
             { x: 1, y: 0, z: 0 },

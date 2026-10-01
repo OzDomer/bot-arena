@@ -38,20 +38,16 @@ export type Camera = {
     depth(p: Vec3): number        // unchanged: world-space, view-independent
 }
 
-
-export function makeCamera(mode: ViewMode, rules: Rules): Camera {
+export function makeCamera(mode: ViewMode, view: View): Camera {
     const proj = PROJECTIONS[mode]
-    const { minX, minY } = contentBounds(mode, rules)
-    const originX = MARGIN - minX
-    const originY = MARGIN - minY
+
     return {
         mode,
         project: p => {
             const raw = proj.basis(p)
-            return { x: raw.x + originX, y: raw.y + originY }
+            return { x: raw.x * view.zoom + view.pan.x, y: raw.y * view.zoom + view.pan.y }
         },
         depth: proj.depth
-
     }
 }
 

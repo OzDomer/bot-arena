@@ -1,16 +1,17 @@
 import { describe, expect, it } from "vitest"
-import { contentBounds, fitView, makeCamera, naturalSize } from "./camera"
+import { contentBounds, fitView, naturalSize } from "./camera"
 import { PRESETS } from "../sim/presets"
+import { testCamera } from "../test/fixtures"
 
 describe('makeCamera', () => {
 
     it('iso origin camera init', () => {
-        const cam = makeCamera('iso', PRESETS.bigmap)
-        expect(cam.project({ x: 0, y: 20, z: 0 })).toEqual({ x: 16, y: 368 })
+        const isoCam = testCamera('iso')
+        expect(isoCam.project({ x: 0, y: 20, z: 0 })).toEqual({ x: 16, y: 368 })
     })
     it('top origin camera init', () => {
-        const cam = makeCamera('top', PRESETS.bigmap)
-        expect(cam.project({ x: 0, y: 20, z: 1 })).toEqual(cam.project({ x: 0, y: 20, z: 0 }))
+        const topCam = testCamera('top')
+        expect(topCam.project({ x: 0, y: 20, z: 1 })).toEqual(topCam.project({ x: 0, y: 20, z: 0 }))
 
     })
 })

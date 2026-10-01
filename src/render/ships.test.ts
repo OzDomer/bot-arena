@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest"
-import { ship, world } from "../test/fixtures"
+import { ship, testCamera, world } from "../test/fixtures"
 import { buildShips, SHIP_H, WRECK_H } from "./ships"
 import { CULL_EPS, signedArea, type Poly } from "./paint"
-import { makeCamera, type Camera } from "./camera"
-import { PRESETS } from "../sim/presets"
+import { type Camera } from "./camera"
 
 const visibleCount = (polys: Poly[], cam: Camera) =>
     polys.filter(face => signedArea(face.pts.map(p => cam.project(p))) > CULL_EPS).length
@@ -29,8 +28,8 @@ describe('buildShips', () => {
         const w = world([
             ship({ id: 1, position: { x: 3, y: 4 }, hp: 10 }),])
         const polys = buildShips(w)
-        const isoCam = makeCamera("iso", PRESETS.bigmap)
-        const topCam = makeCamera("top", PRESETS.bigmap)
+        const isoCam = testCamera('iso')
+        const topCam = testCamera('top')
         expect(visibleCount(polys, isoCam)).toBe(4)
         expect(visibleCount(polys, topCam)).toBe(2)
 
@@ -38,7 +37,7 @@ describe('buildShips', () => {
 
     it('wreck top sits at WRECK_H', () => {
         const w = world([
-            ship({ id: 1, position: { x: 5, y: 5 }, hp: 0 })
+            ship({ id: 1, position: { x: 5, y: 5 }, hp: 0 }),
         ])
         const polys = buildShips(w)
         expect(polys[0].pts.every(p => p.z === WRECK_H)).toBe(true)
@@ -76,7 +75,7 @@ describe('buildShips', () => {
         expect(tip.z).toBeCloseTo(SHIP_H)
 
     })
-    
+
     it('no two ships share a color', () => {
         const w = world(
             Array.from({ length: 9 }, (_, i) => ship({ id: i + 1, position: { x: i, y: 5 } }))

@@ -1,5 +1,6 @@
+import type { Weights } from "../types"
 import type { Rng } from "../util/random"
-import { OUTPUTS, type Weights } from "./net"
+import { OUTPUTS } from "./net"
 
 export function softmax(logits: number[]): number[] {
     const maxLogit = Math.max(...logits)

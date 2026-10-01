@@ -1,8 +1,8 @@
 import { chebyshev } from "../sim/geometry";
-import { type Brain, type Observation, type Action, DIRECTIONS } from "../types";
+import { type Brain, type Observation, type Action, DIRECTIONS, type Weights } from "../types";
 import type { Rng } from "../util/random";
 import { encode, versionFor } from "./encode";
-import { OUTPUTS, type Weights, forward } from "./net";
+import { OUTPUTS, forward } from "./net";
 import { sample, softmax } from "./policy";
 
 export type Decision = { x: number[]; a: number; probs: number[] }

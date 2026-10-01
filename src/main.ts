@@ -1,11 +1,10 @@
-import type { Frame, Ship, World } from './types'
+import type { Frame, Ship, Weights} from './types'
 import { runMatch } from './sim/match'
 import { Player } from './render/Player'
 import { makeMatch } from './sim/setup'
 import { showcase } from './bots/lineups'
 import { PRESETS } from './sim/presets'
 import { makeCamera, type Camera, type ViewMode } from './render/camera'
-import type { Weights } from './evo/net'
 import { NetBrain } from './evo/NetBrain'
 
 

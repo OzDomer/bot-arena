@@ -1,8 +1,7 @@
 import { PRESETS } from "../sim/presets";
 import { runTournament } from "../sim/tournament";
-import type { Entrant } from "../types";
+import type { Entrant, Weights } from "../types";
 import { fitness } from "./fitness";
-import type { Weights } from "./net";
 import { NetBrain } from "./NetBrain";
 import { trainingPool } from "../bots/lineups";
 

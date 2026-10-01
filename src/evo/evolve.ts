@@ -1,7 +1,8 @@
+import type { Weights } from "../types";
 import { deriveSeed, makeRng } from "../util/random";
 import { inputsFor, ENCODING_VERSION } from "./encode";
 import { evaluate } from "./evaluate";
-import { mutate, randomWeights, type Weights } from "./net";
+import { mutate, randomWeights } from "./net";
 
 type Candidate = {
     weights: Weights,

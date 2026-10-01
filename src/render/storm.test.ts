@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
-import { world } from "../test/fixtures"
-import { buildRing } from "./ring"
+import { ship, world } from "../test/fixtures"
+import { buildRing, buildStormMarks } from "./storm"
+import { step } from "../sim/step"
+import { roofCenter } from "./ships"
+import { resolveAttacks } from "../sim/combat"
+import type { Ship, Action } from "../types"
 
 describe('buildRing', () => {
     it('64 points, starting due east of the center', () => {
@@ -21,5 +25,41 @@ describe('buildRing', () => {
 
     it('no ring once the storm covers the map', () => {
         expect(buildRing(world([], 199))).toEqual([])
+    })
+})
+
+describe('buildStormMarks', () => {
+    it('corner ship at turn 40 takes 3', () => {
+        const prev = world([ship({ id: 1, position: { x: 0, y: 0 } })], 40)
+        const cur = step(prev, { 1: { move: 'STAY' } })
+        expect(buildStormMarks(prev, cur, [])).toEqual([{ at: roofCenter({ x: 0, y: 0 }), amount: 3 }])
+    })
+
+    it('two ships outside storm produce two storm hits', () => {
+        const prev = world([
+            ship({ id: 1, position: { x: 0, y: 0 } }),
+            ship({ id: 2, position: { x: 1, y: 0 } })
+        ], 70)
+        const actions: Record<Ship['id'], Action> = { 1: { move: 'STAY' }, 2: { move: 'STAY' } }
+        const cur = step(prev, actions)
+        const marks = buildStormMarks(prev, cur, [])
+        expect(marks.length).toBe(2)
+    })
+
+    it('hit and storm split correctly', () => {
+        const prev = world([ship({ id: 1, position: { x: 0, y: 0 } }),
+        ship({ id: 2, position: { x: 1, y: 0 } })
+        ], 40)
+        const actions: Record<Ship['id'], Action> = { 1: { move: 'STAY' }, 2: { move: 'STAY', attack: 1 } }
+        const cur = step(prev, actions)
+        const hits = resolveAttacks(prev, actions)
+        const marks = buildStormMarks(prev, cur, hits)
+        expect(marks.find(m => m.at.x === 0.5)?.amount).toBe(3)
+    })
+
+    it('overkill shows what was lost, not the phase damage', () => {
+        const prev = world([ship({ id: 1, position: { x: 0, y: 0 }, hp: 1 })], 40)
+        const cur = step(prev, { 1: { move: 'STAY' } })
+        expect(buildStormMarks(prev, cur, [])[0].amount).toBe(1)
     })
 })

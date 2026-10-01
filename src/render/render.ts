@@ -7,7 +7,7 @@ import { buildIntent } from "./intent";
 import { paint } from "./paint"
 import { buildShips } from "./ships";
 import { buildHpBars, buildLabels, type Label, type HpBar } from "./plate";
-import { buildRing } from "./storm";
+import { buildRing, buildStormMarks, STORM_TEXT, type StormMark } from "./storm";
 
 const BAR_W = 30
 const BAR_H = 6
@@ -16,7 +16,10 @@ const BAR_LIFT = 8
 const LABEL_LIFT = BAR_LIFT + BAR_H + 3    // name sits 3px above the bar
 const HIT = '#ff3b3b'
 
-
+function outlinedText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, fill: string) {
+    ctx.lineWidth = 3; ctx.strokeStyle = '#000'; ctx.strokeText(text, x, y)
+    ctx.fillStyle = fill; ctx.fillText(text, x, y)
+}
 
 
 export function drawWorld(ctx: CanvasRenderingContext2D, cam: Camera, frame: Frame, prev: World, opts: SceneOpts) {
@@ -28,6 +31,7 @@ export function drawWorld(ctx: CanvasRenderingContext2D, cam: Camera, frame: Fra
     paint(ctx, cam, [...buildShips(world), ...buildIntent(world, opts.intent)])
     drawBars(ctx, cam, buildHpBars(world))
     drawHits(ctx, cam, buildHits(prev, hits))
+    drawStormMarks(ctx, cam, buildStormMarks(prev, world, hits))
     drawLabels(ctx, cam, buildLabels(world, opts.names))
     ctx.restore()
 }
@@ -36,15 +40,9 @@ export function drawLabels(ctx: CanvasRenderingContext2D, cam: Camera, labels: L
     ctx.font = '12px monospace'
     ctx.textAlign = 'center'       // x is the text's middle
     ctx.textBaseline = 'bottom'    // y is the text's bottom edge
-    ctx.lineWidth = 3
-    ctx.strokeStyle = '#000'
-    ctx.fillStyle = '#fff'
-
     for (const label of labels) {
         const p = cam.project(label.at)
-        const y = p.y - LABEL_LIFT
-        ctx.strokeText(label.text, p.x, y)
-        ctx.fillText(label.text, p.x, y)
+        outlinedText(ctx, label.text, p.x, p.y - LABEL_LIFT, '#fff')
     }
 
 }
@@ -79,9 +77,17 @@ function drawHits(ctx: CanvasRenderingContext2D, cam: Camera, marks: HitMark[]) 
     }
     for (const m of marks) {
         const b = cam.project(m.to)
-        const y = b.y - LABEL_LIFT - 14
-        const text = `-${m.amount}`
-        ctx.lineWidth = 3; ctx.strokeStyle = '#000'; ctx.strokeText(text, b.x, y)
-        ctx.fillStyle = '#fff', ctx.fillText(text, b.x, y)
+        outlinedText(ctx, `-${m.amount}`, b.x + 10, b.y - 2, '#fff')
+    }
+}
+
+
+function drawStormMarks(ctx: CanvasRenderingContext2D, cam: Camera, marks: StormMark[]) {
+    ctx.font = 'bold 12px monospace'
+    ctx.textAlign = 'right'
+    ctx.textBaseline = 'bottom'
+    for (const m of marks) {
+        const b = cam.project(m.at)
+        outlinedText(ctx, `-${m.amount}`, b.x - 10, b.y - 2, STORM_TEXT)
     }
 }

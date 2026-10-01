@@ -1,10 +1,13 @@
 import { stormAt } from "../sim/storm"
-import type { World } from "../types"
+import type { Hit, World } from "../types"
 import type { Vec3 } from "./camera"
 import type { Poly } from "./paint"
+import { roofCenter } from "./ships"
 
 const SEGMENTS = 64
 const RING = '#4040c0'
+export const STORM_TEXT = '#7070ff'
+
 
 export function buildRing(world: World): Poly[] {
     const radius = stormAt(world.turn, world.rules).radius
@@ -20,4 +23,23 @@ export function buildRing(world: World): Poly[] {
     }
 
     return [{ pts, stroke: RING, lineWidth: 2, clip }]
+}
+
+
+export type StormMark = { at: Vec3; amount: number }
+
+
+export function buildStormMarks(prev: World, cur: World, hits: Hit[]): StormMark[] {
+    const marks: StormMark[] = []
+    for (const ship of prev.ships) {
+        if (ship.hp <= 0) continue
+            const now = cur.ships.find(s => s.id === ship.id)
+            if (!now) continue
+            const lost = ship.hp - now.hp
+            const hitSum = hits.filter(h => h.target === ship.id).reduce((sum, h) => sum + h.amount, 0)
+            const fromHits = Math.min(ship.hp, hitSum)
+            const storm = lost - fromHits
+            if (storm > 0) marks.push({ at: roofCenter(now.position), amount: storm })   
+    }
+    return marks
 }

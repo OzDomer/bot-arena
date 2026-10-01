@@ -38,7 +38,7 @@ describe('buildShips', () => {
 
     it('wreck top sits at WRECK_H', () => {
         const w = world([
-            ship({ id: 1, position: { x: 5, y: 5 }, hp: 0 }),
+            ship({ id: 1, position: { x: 5, y: 5 }, hp: 0 })
         ])
         const polys = buildShips(w)
         expect(polys[0].pts.every(p => p.z === WRECK_H)).toBe(true)

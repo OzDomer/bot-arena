@@ -76,6 +76,18 @@ export function contentBounds(mode: ViewMode, rules: Rules): Bounds {
 }
 
 export function naturalSize(mode: ViewMode, rules: Rules, pad = MARGIN): { width: number; height: number } {
-const b = contentBounds(mode, rules)
-return { width: b.maxX - b.minX + 2 * pad, height: b.maxY - b.minY + 2 * pad }
+    const b = contentBounds(mode, rules)
+    return { width: b.maxX - b.minX + 2 * pad, height: b.maxY - b.minY + 2 * pad }
+}
+
+export function fitView(mode: ViewMode, rules: Rules, vw: number, vh: number, pad = MARGIN): View {
+    const bounds = contentBounds(mode, rules)
+    const zoomX = (vw - 2 * pad) / (bounds.maxX - bounds.minX)
+    const zoomY = (vh - 2 * pad) / (bounds.maxY - bounds.minY)
+    const zoom = Math.min(zoomX, zoomY)
+    const midX = (bounds.minX + bounds.maxX) / 2
+    const midY = (bounds.minY + bounds.maxY) / 2
+
+    return { zoom, pan: { x: vw / 2 - midX * zoom, y: vh / 2 - midY * zoom } }
+
 }

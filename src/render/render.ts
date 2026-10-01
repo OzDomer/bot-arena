@@ -25,7 +25,7 @@ function outlinedText(ctx: CanvasRenderingContext2D, text: string, x: number, y:
 export function drawWorld(ctx: CanvasRenderingContext2D, cam: Camera, frame: Frame, prev: World, opts: SceneOpts) {
     const { world, hits } = frame
     ctx.save()
-    ctx.clearRect(0, 0, cam.width, cam.height)
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
     paint(ctx, cam, buildFloor(world))
     paint(ctx, cam, buildRing(world))
     paint(ctx, cam, [...buildShips(world), ...buildIntent(world, opts.intent)])

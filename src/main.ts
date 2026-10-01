@@ -1,10 +1,10 @@
-import type { Frame, Ship, Weights} from './types'
+import type { Frame, Ship, Weights } from './types'
 import { runMatch } from './sim/match'
 import { Player } from './render/Player'
 import { makeMatch } from './sim/setup'
 import { showcase } from './bots/lineups'
 import { PRESETS } from './sim/presets'
-import { makeCamera, type Camera, type ViewMode } from './render/camera'
+import { makeCamera, naturalSize, type ViewMode } from './render/camera'
 import { NetBrain } from './evo/NetBrain'
 
 
@@ -41,13 +41,14 @@ const final = runMatch(world, brains, (w, hits) => history.push({ world: w, hits
 
 console.log('done at turn', final.turn, 'alive:', final.ships.filter(s => s.hp > 0).map(s => s.id));
 
-canvas.width = cam.width
-canvas.height = cam.height
 
-const fitCanvas = (cam: Camera) => {
-  canvas.width = cam.width
-  canvas.height = cam.height
+const fitCanvas = (mode: ViewMode) => {
+  const { width, height } = naturalSize(mode, world.rules)
+  canvas.width = width
+  canvas.height = height
 }
+
+fitCanvas(mode)
 
 const names: Record<Ship['id'], string> = {}
 showcase.forEach((e, i) => { names[i + 1] = e.name })
@@ -65,7 +66,6 @@ document.getElementById('stepForward')!.onclick = () => player.stepForward()
 document.getElementById('view')!.onclick = () => {
   mode = mode === 'iso' ? 'top' : 'iso'
   const camera = makeCamera(mode, world.rules)
-  fitCanvas(camera)
   player.setCamera(camera)
 }
 document.getElementById('intent')!.onclick = () => player.toggleIntent()

@@ -49,7 +49,7 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 - Known limit: the server could grind secrets for an outcome it likes. Not a concern under parimutuel with play money; a client seed would close it.
 
 ### Open
-- **Sim versioning.** Determinism only holds for identical code; any behavior change to `step` or a bot changes old replays. Need: what `simVersion` is (manual bump on behavior change vs git hash), and what happens to old matches. Cheapest: always store the result (settlement never depends on re-simulation) and offer replays only when the version matches the current one.
+- **Sim versioning.** Determinism only holds for identical code; any behavior change to `step` or a bot changes old replays. Need: what `simVersion` is (manual bump on behavior change vs git hash), and what happens to old matches. Cheapest: always store the result (settlement never depends on re-simulation) and offer replays only when the version matches the current one. version 0.1.0 in /sim/package.json tbd if it will be used
 
 
 ## Match lifecycle

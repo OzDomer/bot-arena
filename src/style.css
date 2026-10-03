@@ -5,12 +5,11 @@
     color-scheme: light dark
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg: #141418;
-        --fg: #e6e6e6;
-        --panel: #1f1f26;
-    }
+:root[data-theme="dark"] {
+
+    --bg: #141418;
+    --fg: #e6e6e6;
+    --panel: #1f1f26;
 }
 
 html,
@@ -37,4 +36,3 @@ body {
     min-height: 0;
     flex: 1
 }
-

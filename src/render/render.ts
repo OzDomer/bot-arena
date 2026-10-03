@@ -14,7 +14,6 @@ const BAR_H = 6
 const BAR_GAP = 1
 const BAR_LIFT = 8
 const LABEL_LIFT = BAR_LIFT + BAR_H + 3    // name sits 3px above the bar
-const HIT = '#ff3b3b'
 
 export type SceneOpts = { names: Record<Ship['id'], string>; intent: Record<Ship['id'], Weights>; theme: Theme }
 

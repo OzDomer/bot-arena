@@ -7,7 +7,7 @@ import { showcase } from './bots/lineups'
 import { PRESETS } from './sim/presets'
 import { fitView, makeCamera, panBy, zoomAt, type ViewMode } from './render/camera'
 import { NetBrain } from './evo/NetBrain'
-import { LIGHT } from './render/theme'
+import { LIGHT, DARK, type Theme } from './render/theme'
 
 const canvas = document.querySelector<HTMLCanvasElement>('#gameCanvas')
 if (!canvas) throw new Error('no canvas')
@@ -18,6 +18,8 @@ if (!turnCounter) throw new Error('turnCounter')
 const ctx = canvas.getContext('2d')
 if (!ctx) throw new Error('no 2d context')
 
+const dark = window.matchMedia('(prefers-color-scheme: dark)')
+let theme = dark.matches ? DARK : LIGHT
 
 let mode: ViewMode = 'iso'
 
@@ -63,7 +65,7 @@ const intent: Record<Ship['id'], Weights> = {}
 for (const [id, brain] of Object.entries(brains))
   if (brain instanceof NetBrain) intent[Number(id)] = brain.weights
 
-const player = new Player(ctx, cam, history, turnCounter, names, intent, LIGHT)
+const player = new Player(ctx, cam, history, turnCounter, names, intent, theme)
 
 const refit = () => {
   fitCanvas()
@@ -81,6 +83,12 @@ document.getElementById('view')!.onclick = () => {
 }
 document.getElementById('intent')!.onclick = () => player.toggleIntent()
 
+const applyTheme = (t: Theme) => {
+  theme = t
+  document.documentElement.dataset.theme = t === DARK ? 'dark' : 'light'
+  player.setTheme(t)
+}
+applyTheme(theme)
 
 let dragging = false
 let last = {
@@ -114,4 +122,11 @@ canvas.addEventListener('wheel', e => {
   view = zoomAt(view, at, factor)
   player.setCamera(makeCamera(mode, view))
 }, { passive: false })
+
+dark.addEventListener('change', e => applyTheme(e.matches ? DARK : LIGHT))
+
+document.getElementById('mode')!.onclick = () => {
+  applyTheme(theme === DARK ? LIGHT : DARK)
+  player.setTheme(theme)
+}
 

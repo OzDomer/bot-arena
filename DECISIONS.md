@@ -345,7 +345,7 @@ one fifth of a 100-gen evolution run.
 - Box = footprint (inset 0.15) lifted to `h`, plus one side per footprint edge in floor order; culling leaves top+E+S in iso, top only in top-down. Sides shaded by `shade(color, SIDE_SHADE[k])`.
 - Live: `SHIP_H` 0.6, seat color. Wreck: `WRECK_H` 0.1, `shade(seat, 0.45)`. Same builder, two numbers.
 - Seat color = `hslToHex((id−1)·360/n, .65, .5)`: deterministic, evenly spread for any lineup size.
-- Facing nose: flat triangle on the roof along the normalized `DELTAS[facing]`, pushed after the top face.
+- hull is a pentagon footprint rotated by facing, sides shaded by outward normal (LIGHT from NW), and the painter's x+y sort still holds because the footprint stays inside the tile.
 
 ### Plate and marks (screen space)
 - Name over a segmented HP bar (one cell per HP) at `project(roofCenter) − lift`. Names come from a `Record<id, string>` built in `main` from the lineup (ship id = index + 1; shuffled matches must use the seating).

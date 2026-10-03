@@ -82,7 +82,7 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 - **Duplicate entrant names in betting lineups.** See Freeze.
 
 ## Roadmap
-1. **Hull.** Body + bow pentagon inside the tile, replacing the nose. Builder-only, tested like `buildShips`. *Done when* facing reads from the shape alone.
+1. ~~**Hull.**~~ Body + bow pentagon inside the tile, replacing the nose. Builder-only, tested like `buildShips`. *Done when* facing reads from the shape alone.
 2. **Dark mode.** CSS variables for the page; a `Theme` object for the canvas (`FLOOR`, ring, storm text, label fill) passed through `drawWorld` opts. Default from `prefers-color-scheme`. *Done when* it's usable at night.
 3. **Workspace split.** `sim/`, `frontend/`, `backend/` as npm workspaces; both apps import `@arena/sim`. *Done when* `npm test` and `npm run dev` work from the root and no app imports the other.
 4. **React shell.** `main.ts` → `App` + `<Arena>` owning the canvas via a ref and constructing `Player`; `Player.turnEl` → `onFrame(turn)`. `render/` and `sim/` unchanged. Ships controls, winner toast, theme toggle, playback speed, **seed/preset in the URL with a copy link**. *Done when* a pasted link replays the same match.

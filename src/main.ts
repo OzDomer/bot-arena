@@ -52,7 +52,7 @@ const fitCanvas = () => {
 
 
 fitCanvas()
-let view = fitView(mode, world.rules, canvas.width, canvas.height)
+let view = fitView(mode, world.rules, canvas.clientWidth, canvas.clientHeight)
 const cam = makeCamera(mode, view)
 
 const names: Record<Ship['id'], string> = {}
@@ -64,17 +64,6 @@ for (const [id, brain] of Object.entries(brains))
   if (brain instanceof NetBrain) intent[Number(id)] = brain.weights
 
 const player = new Player(ctx, cam, history, turnCounter, names, intent)
-document.getElementById('play')!.onclick = () => player.play()
-document.getElementById('pause')!.onclick = () => player.pause()
-document.getElementById('stepBack')!.onclick = () => player.stepBack()
-document.getElementById('stepForward')!.onclick = () => player.stepForward()
-document.getElementById('view')!.onclick = () => {
-  mode = mode === 'iso' ? 'top' : 'iso'
-  fitCanvas()
-  view = fitView(mode, world.rules, canvas.width, canvas.height)
-  player.setCamera(makeCamera(mode, view))
-}
-document.getElementById('intent')!.onclick = () => player.toggleIntent()
 
 const refit = () => {
   fitCanvas()
@@ -82,6 +71,16 @@ const refit = () => {
   player.setCamera(makeCamera(mode, view))
 }
 window.addEventListener('resize', refit)
+document.getElementById('play')!.onclick = () => player.play()
+document.getElementById('pause')!.onclick = () => player.pause()
+document.getElementById('stepBack')!.onclick = () => player.stepBack()
+document.getElementById('stepForward')!.onclick = () => player.stepForward()
+document.getElementById('view')!.onclick = () => {
+  mode = mode === 'iso' ? 'top' : 'iso'
+  refit()
+}
+document.getElementById('intent')!.onclick = () => player.toggleIntent()
+
 
 let dragging = false
 let last = {

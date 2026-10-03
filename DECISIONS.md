@@ -71,7 +71,6 @@ Each entry: what we decided, why, and what it would take to revisit.
 
 ## Open
 - Item 18 movement "rework" thoughts how should ships interact with eachother. once displacement is a thing that can be affected by outside sources step() machinery doesnt account for that kind of thing yet.
-- React shell: only `main.ts` (and `Player`'s `turnEl` → an `onFrame` callback) would change. Trigger is the first real panel (lineup picker, match browser), not the canvas.
 - Bot DSL + compiler to `Brain` — parked; after the arena is showable. 
 
 ## Tournament findings

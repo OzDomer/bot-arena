@@ -1,4 +1,4 @@
-import { clamp } from "../sim/geometry"
+import { clamp } from "../index"
 
 export function shade(hex: string, factor: number): string {
     const channels = [hex.slice(1, 3), hex.slice(3, 5), hex.slice(5, 7)].map(s => parseInt(s, 16))

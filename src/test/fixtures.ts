@@ -1,6 +1,4 @@
-import { fitView, makeCamera, naturalSize, type Camera, type View, type ViewMode } from "../render/camera";
 import { mapCenter } from "../sim/geometry";
-import { PRESETS } from "../sim/presets";
 import { DEFAULT_RULES, type Rules, type Ship, type World } from "../types";
 
 export function ship(over: Partial<Ship> & { id: number }): Ship {
@@ -14,7 +12,3 @@ export function world(ships: Ship[], turn: number = 0, rules: Rules = DEFAULT_RU
     return { turn, rules, ships, storm: { center: mapCenter(rules) } }
 }
 
-export function testCamera(mode: ViewMode, view?: View): Camera {
-    const size = naturalSize(mode, PRESETS.bigmap)
-    return makeCamera(mode, view ?? fitView(mode, PRESETS.bigmap, size.width, size.height))
-}

@@ -1,6 +1,6 @@
-import type { World, Ship } from "../types";
-import type { Vec3 } from "./camera";
-import { roofCenter, seatColor } from "./ships";
+import type { World, Ship } from "../index"
+import type { Vec3 } from "./camera"
+import { roofCenter, seatColor } from "./ships"
 
 export type Label = { at: Vec3; text: string }
 

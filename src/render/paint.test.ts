@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { signedArea } from "./paint"
 import { type Vec2, type Vec3 } from "./camera"
-import { testCamera } from "../test/fixtures"
+import { testCamera } from "./fixtures"
 
 describe('signedArea', () => {
     it('floor order positive', () => {
@@ -39,8 +39,8 @@ describe('signedArea', () => {
     })
 
     it('floor tile is front-facing in both modes', () => {
-        const topCam = testCamera('iso')
-        const isoCam = testCamera('top')
+        const isoCam = testCamera('iso')
+        const topCam = testCamera('top')
         const tile: Vec3[] = [
             { x: 0, y: 0, z: 0 },
             { x: 1, y: 0, z: 0 },

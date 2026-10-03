@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest"
-import { ship, testCamera, world } from "../test/fixtures"
+import { ship, world } from "../test/fixtures"
 import { buildIntent } from "./intent"
 import { type Camera } from "./camera"
 import { type Poly, signedArea, CULL_EPS } from "./paint"
+import { testCamera } from "./fixtures"
 
 const visibleCount = (polys: Poly[], cam: Camera) =>
     polys.filter(face => signedArea(face.pts.map(p => cam.project(p))) > CULL_EPS).length

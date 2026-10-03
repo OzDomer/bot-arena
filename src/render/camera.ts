@@ -1,5 +1,5 @@
-import { clamp } from '../sim/geometry';
-import type { Rules } from '../types'
+import type { Rules } from '../index'
+import { clamp } from '../index'
 
 export type Vec3 = { x: number; y: number; z: number }
 export type Vec2 = { x: number; y: number }

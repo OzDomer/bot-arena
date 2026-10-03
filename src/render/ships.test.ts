@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest"
-import { ship, testCamera, world } from "../test/fixtures"
+import { ship, world } from "../test/fixtures"
 import { buildShips, HULL_T, hullFootprint, SHIP_H, sideShade, WRECK_H } from "./ships"
 import { CULL_EPS, signedArea, type Poly } from "./paint"
 import { ZOOM_MAX, ZOOM_MIN, type Camera } from "./camera"
-import { FACING } from "../types"
+import { FACING } from "../index"
 import { LIGHT } from "./theme"
+import { testCamera } from "./fixtures"
 
 
 const visibleCount = (polys: Poly[], cam: Camera) =>

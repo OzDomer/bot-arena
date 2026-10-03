@@ -1,12 +1,7 @@
 import './style.css'
-import type { Frame, Ship, Weights } from './types'
-import { runMatch } from './sim/match'
+import { NetBrain, runMatch, showcase, type Frame, type Ship, type Weights, makeMatch, PRESETS } from './index'
 import { Player } from './render/Player'
-import { makeMatch } from './sim/setup'
-import { showcase } from './bots/lineups'
-import { PRESETS } from './sim/presets'
 import { fitView, makeCamera, panBy, zoomAt, type ViewMode } from './render/camera'
-import { NetBrain } from './evo/NetBrain'
 import { LIGHT, DARK, type Theme } from './render/theme'
 
 const canvas = document.querySelector<HTMLCanvasElement>('#gameCanvas')

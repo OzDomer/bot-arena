@@ -1,4 +1,4 @@
-import type { World, Hit } from "../types";
+import type { World, Hit } from "../index";
 import type { Vec3 } from "./camera";
 import { roofCenter } from "./ships";
 

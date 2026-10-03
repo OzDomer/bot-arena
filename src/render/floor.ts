@@ -1,6 +1,6 @@
-import { inCircle } from "../sim/geometry";
-import { stormAt } from "../sim/storm";
-import type { World } from "../types";
+import { inCircle } from "../index";
+import { stormAt } from "../index";
+import type { World } from "../index";
 import { type Poly } from "./paint";
 import type { Theme } from './theme'
 

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest"
 import { ship, world } from "../test/fixtures"
 import { buildRing, buildStormMarks } from "./storm"
-import { step } from "../sim/step"
+import { step } from "../index"
 import { roofCenter } from "./ships"
-import { resolveAttacks } from "../sim/combat"
-import type { Ship, Action } from "../types"
+import { resolveAttacks } from "../index"
+import type { Ship, Action } from "../index"
 import { LIGHT } from "./theme"
 
 describe('buildRing', () => {

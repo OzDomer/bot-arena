@@ -1,8 +1,8 @@
-import { clamp } from '../sim/geometry';
-import type { Frame, Ship, Weights } from '../types';
-import type { Camera } from './camera';
-import { drawWorld } from './render';
-import type { Theme } from './theme';
+import { clamp } from '../index'
+import type { Frame, Ship, Weights } from '../index'
+import type { Camera } from './camera'
+import { drawWorld } from './render'
+import type { Theme } from './theme'
 
 export class Player {
     private i = 0;

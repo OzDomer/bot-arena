@@ -1,5 +1,5 @@
-import { stormAt } from "../sim/storm"
-import type { Hit, World } from "../types"
+import { stormAt } from "../index"
+import type { Hit, World } from "../index"
 import type { Vec3 } from "./camera"
 import type { Poly } from "./paint"
 import { roofCenter } from "./ships"

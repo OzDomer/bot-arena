@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { contentBounds, fitView, makeCamera, naturalSize, panBy, ZOOM_MAX, ZOOM_MIN, zoomAt } from "./camera"
-import { PRESETS } from "../sim/presets"
-import { testCamera } from "../test/fixtures"
+import { PRESETS } from "../index"
+import { testCamera } from "./fixtures"
 
 const size = naturalSize('iso', PRESETS.bigmap)
 const view = fitView('iso', PRESETS.bigmap, size.width, size.height)

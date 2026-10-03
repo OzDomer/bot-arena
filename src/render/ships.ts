@@ -1,4 +1,4 @@
-import { DELTAS, type Facing, type Position, type World } from "../types"
+import { DELTAS, type Facing, type Position, type World } from "../index"
 import type { Vec3 } from "./camera"
 import { hslToHex, shade } from "./color"
 import type { Poly } from "./paint"

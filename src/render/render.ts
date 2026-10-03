@@ -1,4 +1,4 @@
-import { type Frame, type Ship, type Weights, type World } from "../types"
+import { type Frame, type Ship, type Weights, type World } from "../index"
 import type { Camera } from "./camera"
 import { buildFloor } from "./floor"
 import { buildHits, type HitMark } from "./combat";

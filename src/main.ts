@@ -5,7 +5,7 @@ import { Player } from './render/Player'
 import { makeMatch } from './sim/setup'
 import { showcase } from './bots/lineups'
 import { PRESETS } from './sim/presets'
-import { fitView, makeCamera, type ViewMode } from './render/camera'
+import { fitView, makeCamera, panBy, type ViewMode } from './render/camera'
 import { NetBrain } from './evo/NetBrain'
 
 
@@ -82,3 +82,27 @@ const refit = () => {
   player.setCamera(makeCamera(mode, view))
 }
 window.addEventListener('resize', refit)
+
+let dragging = false
+let last = {
+  x: 0, y: 0
+
+}
+
+canvas.addEventListener('pointerdown', e => {
+  canvas.setPointerCapture(e.pointerId)
+  dragging = true
+  last = { x: e.clientX, y: e.clientY }
+})
+
+canvas.addEventListener('pointermove', e => {
+  if (!dragging) return
+  view = panBy(view, e.clientX - last.x, e.clientY - last.y)
+  last = { x: e.clientX, y: e.clientY }
+  player.setCamera(makeCamera(mode, view))
+})
+
+canvas.addEventListener('pointerup', () => {
+  dragging = false  
+})
+

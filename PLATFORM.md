@@ -52,7 +52,7 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
   | phase | on entry | published |
   |---|---|---|
   | `scheduled` | row created: lineup picked, `secret` generated, `commitHash` stored | nothing |
-  | `open` | at `opensAt` | lineup, preset, odds, `commitHash`, `closesAt`; bets accepted |
+  | `open` | at `opensAt` | lineup, preset, simVersion, odds, `commitHash`, `closesAt`; bets accepted |
   | `closed` | at `closesAt` | bets refused; pool frozen |
   | `revealed` | immediately after close | `secret`, derived `seed`, `startAt = now + lead`; clients replay |
   | `settled` | server runs `playMatch`, pays out in one transaction | `winner`, payouts |

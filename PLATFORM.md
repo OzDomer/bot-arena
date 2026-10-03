@@ -86,7 +86,7 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 ## Schema
 - **users** `id, name UNIQUE, password_hash, credits INT, created_at`
 - **lineups** `id, name, preset, entrants JSON, odds JSON, computed_at`
-- **matches** `id, lineup_id, phase, commit_hash, secret, seed, opens_at, closes_at, start_at, winner, settled_at`
+- **matches** `id, lineup_id, phase, commit_hash, secret, seed, opens_at, closes_at, start_at, winner, settled_at, sim_version`
 - **bets** `id, match_id, user_id, entrant, amount INT, payout INT NULL, created_at`, `UNIQUE(match_id, user_id)`, index on `match_id`
 - Credits, amounts and payouts are integers. Never float money.
 - `secret` and `seed` are stored from creation and **never leave the snapshot builder before `revealed`**. That rule lives in one place.

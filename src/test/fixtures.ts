@@ -1,4 +1,4 @@
-import { fitView, makeCamera, naturalSize, type Camera, type ViewMode } from "../render/camera";
+import { fitView, makeCamera, naturalSize, type Camera, type View, type ViewMode } from "../render/camera";
 import { mapCenter } from "../sim/geometry";
 import { PRESETS } from "../sim/presets";
 import { DEFAULT_RULES, type Rules, type Ship, type World } from "../types";

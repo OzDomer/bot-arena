@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest"
 import { ship, testCamera, world } from "../test/fixtures"
 import { buildShips, SHIP_H, WRECK_H } from "./ships"
 import { CULL_EPS, signedArea, type Poly } from "./paint"
-import { fitView, naturalSize, ZOOM_MAX, ZOOM_MIN, type Camera } from "./camera"
-import { PRESETS } from "../sim/presets"
+import { ZOOM_MAX, ZOOM_MIN, type Camera } from "./camera"
+
 
 const visibleCount = (polys: Poly[], cam: Camera) =>
     polys.filter(face => signedArea(face.pts.map(p => cam.project(p))) > CULL_EPS).length
@@ -95,10 +95,6 @@ describe('buildShips', () => {
         const topCam = testCamera('top', view)
         expect(visibleCount(polys, isoCam)).toBe(4)
         expect(visibleCount(polys, topCam)).toBe(2)
-        // same single ship as 'Culling shows the right faces'
-        // view = { zoom, pan: { x: 0, y: 0 } }
-        // isoCam = testCamera('iso', view), topCam = testCamera('top', view)
-        // visibleCount: 4 iso, 2 top
     })
 
 })

@@ -1,3 +1,5 @@
+Platform decisions: PLATFORM.md
+
 # Decisions
 
 Each entry: what we decided, why, and what it would take to revisit.
@@ -59,7 +61,7 @@ Each entry: what we decided, why, and what it would take to revisit.
 13. ~~REINFORCE~~ — closed at 28.3 / 28.8 (v2 + dense). See docs/learning.md. Brain is now a playtester for rules changes.
 14. ~~**Isometric renderer.**~~ One camera (`iso`/`top`) with `project`/`depth`; every drawable is a `Poly` in world space, culled by signed area. Boxes are 5 faces from the footprint edge-walk; wrecks sink to a low box in a darkened seat color; facing nose; labels; 64-point ring clipped to the map. Sim untouched. See Renderer (v1 design).
 15. ~~**Brain intent overlay.**~~ Spokes per direction from `observe → encode → forward → softmax`, length relative to the argmax, STAY as a square, toggle in controls. Found the trained policy is near one-hot (see Policy gradient › Open). README GIF pending zoom.
-16. **Match readability.** ~~Segmented HP bars~~, ~~name plates~~, ~~hit flash with damage number at pre-move positions~~, ~~storm damage numbers~~ (tint and pulse rejected). Open: short display names (`Entrant.short`), hull footprint (body + bow pentagon, inside the tile), hue exclusion near the storm blue.
+16. ~~ **Match readability.**~~ ~~Segmented HP bars~~, ~~name plates~~, ~~hit flash with damage number at pre-move positions~~, ~~storm damage numbers~~ (tint and pulse rejected). Open: short display names (`Entrant.short`), hull footprint (body + bow pentagon, inside the tile), hue exclusion near the storm blue.
 17. **Zoom and pan.** Camera gains `zoom` and `pan`; canvas becomes a fixed viewport with fit-to-view; drag to pan, wheel to zoom toward the cursor. Listeners in `main`, `Player.setCamera` as now. Order: camera math + tests → viewport → drag → wheel. Every open readability problem is the 40px roof.
 18. **Storm center randomization** — first rules change checked against a retrained brain with the overlay on.
 19. **Movement**: momentum + turn rate + ramming, and a Rammer bot. Hull footprint from 16 becomes a rotated shape here.

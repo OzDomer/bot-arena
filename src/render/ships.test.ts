@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest"
 import { ship, testCamera, world } from "../test/fixtures"
-import { buildShips, HULL_T, hullFootprint, SHIP_H, WRECK_H } from "./ships"
+import { buildShips, HULL_T, hullFootprint, SHIP_H, sideShade, WRECK_H } from "./ships"
 import { CULL_EPS, signedArea, type Poly } from "./paint"
 import { ZOOM_MAX, ZOOM_MIN, type Camera } from "./camera"
 import { FACING } from "../types"
-import test from "node:test"
 
 
 const visibleCount = (polys: Poly[], cam: Camera) =>
@@ -24,7 +23,7 @@ describe('buildShips', () => {
             ship({ id: 3, position: { x: 6, y: 9 }, hp: 0 })
         ])
         const polys = buildShips(w)
-        expect(polys.length).toBe(5)
+        expect(polys.length).toBe(6)
     })
 
     it('Culling shows the right faces', () => {
@@ -34,7 +33,7 @@ describe('buildShips', () => {
         const isoCam = testCamera('iso')
         const topCam = testCamera('top')
         expect(visibleCount(polys, isoCam)).toBe(4)
-        expect(visibleCount(polys, topCam)).toBe(2)
+        expect(visibleCount(polys, topCam)).toBe(1)
 
     })
 
@@ -67,13 +66,13 @@ describe('buildShips', () => {
         for (const face of buildShips(w)) expect(face.anchor).toEqual({ x: 3.5, y: 4.5, z: 0 })
     })
 
-    it('nose tip points along the facing', () => {
+    it('roof tip points along the facing', () => {
         const w = world([
             ship({ id: 1, position: { x: 3, y: 4 }, facing: 'E' }),
         ])
         const polys = buildShips(w)
-        const tip = polys[polys.length - 1].pts[0]
-        expect(tip.x).toBeCloseTo(3.8)
+        const tip = polys[0].pts[2]
+        expect(tip.x).toBeCloseTo(3.85)
         expect(tip.y).toBeCloseTo(4.5)
         expect(tip.z).toBeCloseTo(SHIP_H)
 
@@ -96,7 +95,7 @@ describe('buildShips', () => {
         const isoCam = testCamera('iso', view)
         const topCam = testCamera('top', view)
         expect(visibleCount(polys, isoCam)).toBe(4)
-        expect(visibleCount(polys, topCam)).toBe(2)
+        expect(visibleCount(polys, topCam)).toBe(1)
     })
 
 })
@@ -123,6 +122,17 @@ describe('hullFootprint', () => {
     it.each(FACING)('winding is positive facing %s', facing => {
         const pts = hullFootprint({ x: 3.5, y: 4.5 }, facing)
         const camera = testCamera('top')
-        expect(signedArea(pts.map(p=> camera.project(p)))).toBeGreaterThan(0)
+        expect(signedArea(pts.map(p => camera.project(p)))).toBeGreaterThan(0)
+    })
+})
+
+
+describe('sideShade', () => {
+    it('north edge is lit', () => {
+        expect(sideShade({ x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 0 })).toBeCloseTo(0.85, 1)
+    })
+
+    it('south edge is shaded', () => {
+        expect(sideShade({ x: 1, y: 1, z: 0 }, { x: 0, y: 1, z: 0 })).toBeCloseTo(0.59, 1)
     })
 })

@@ -13,12 +13,6 @@ export const seatColor = (id: number, count: number) =>
 const INSET = 0.15   // gap between ship and tile edge, in tiles
 export const SHIP_H = 0.6    // live ship height, in tiles
 export const WRECK_H = 0.1   // sunk: a low hull at water level
-const SIDE_SHADE = [0.9, 0.75, 0.55, 0.9]   // N, E, S, W — E and S are the ones iso shows
-const NOSE = '#222'
-const NOSE_TIP = 0.3    // center → tip, along the facing
-const NOSE_BACK = 0.15  // center → back edge, against the facing
-const NOSE_HALF = 0.15  // back edge half-width, sideways
-
 
 export function buildShips(world: World): Poly[] {
     const polys: Poly[] = []
@@ -32,48 +26,26 @@ export function buildShips(world: World): Poly[] {
         const x1 = x + 1 - INSET
         const y0 = y + INSET
         const y1 = y + 1 - INSET
-        const foot = [
-            { x: x0, y: y0, z: 0 },
-            { x: x1, y: y0, z: 0 },
-            { x: x1, y: y1, z: 0 },
-            { x: x0, y: y1, z: 0 },
-        ]
+        const foot = hullFootprint(anchor, ship.facing)
         polys.push({
             pts: foot.map(p => ({ ...p, z: h })),
             fill: color,
             stroke: '#333',
             anchor,
         })
-        for (let k = 0; k < 4; k++) {
+        for (let k = 0; k < foot.length; k++) {
             const a = foot[k]
-            const b = foot[(k + 1) % 4]
+            const b = foot[(k + 1) % foot.length]
             polys.push({
                 pts: [a, b, { ...b, z: h }, { ...a, z: h }],
-                fill: shade(color, SIDE_SHADE[k]),
+                fill: shade(color, sideShade(a, b)),
                 stroke: '#333',
                 anchor,
             })
         }
-        if (ship.hp > 0) {
-            const { dx, dy } = DELTAS[ship.facing]
-            const len = Math.hypot(dx, dy)
-            const ux = dx / len
-            const uy = dy / len
-            const sx = -uy
-            const sy = ux
-
-            const tip = { x: anchor.x + ux * NOSE_TIP, y: anchor.y + uy * NOSE_TIP, z: h }
-
-            const bx = anchor.x - ux * NOSE_BACK      // helper: middle of the back edge
-            const by = anchor.y - uy * NOSE_BACK
-
-            const corner1 = { x: bx + sx * NOSE_HALF, y: by + sy * NOSE_HALF, z: h }
-            const corner2 = { x: bx - sx * NOSE_HALF, y: by - sy * NOSE_HALF, z: h }
-
-            polys.push({ pts: [tip, corner1, corner2], fill: NOSE, anchor })
-        }
     }
     return polys
+
 }
 
 const HULL_W = 0.2
@@ -87,4 +59,15 @@ export function hullFootprint(center: Position, facing: Facing): Vec3[] {
     const angle = Math.atan2(dy, dx)
     const c = Math.cos(angle), s = Math.sin(angle)
     return LOCAL.map(([lx, ly]) => ({ x: center.x + lx * c - ly * s, y: center.y + lx * s + ly * c, z: 0 }))
+}
+
+export function sideShade(a: Vec3, b: Vec3): number {
+    const LIGHT = { x: -Math.SQRT1_2, y: -Math.SQRT1_2 }
+    const ex = b.x - a.x
+    const ey = b.y - a.y
+    const length = Math.sqrt(ex * ex + ey * ey)
+    const nx = ey / length
+    const ny = -ex / length
+    return 0.72 + 0.18 * (nx * LIGHT.x + ny * LIGHT.y)
+
 }

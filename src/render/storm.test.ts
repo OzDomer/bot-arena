@@ -5,11 +5,12 @@ import { step } from "../sim/step"
 import { roofCenter } from "./ships"
 import { resolveAttacks } from "../sim/combat"
 import type { Ship, Action } from "../types"
+import { LIGHT } from "./theme"
 
 describe('buildRing', () => {
     it('64 points, starting due east of the center', () => {
         const w = world([], 40)
-        const polys = buildRing(w)
+        const polys = buildRing(w, LIGHT)
         expect(polys[0].pts.length).toBe(64)
         const p0 = polys[0].pts[0]
         expect(p0.x).toBeCloseTo(12.5)
@@ -19,12 +20,12 @@ describe('buildRing', () => {
 
     it('every point is exactly the radius from the center', () => {
         const w = world([], 40)
-        const [ring] = buildRing(w)
+        const [ring] = buildRing(w, LIGHT)
         for (const p of ring.pts) expect(Math.hypot(p.x - 5.5, p.y - 5.5)).toBeCloseTo(7)
     })
 
     it('no ring once the storm covers the map', () => {
-        expect(buildRing(world([], 199))).toEqual([])
+        expect(buildRing(world([], 199), LIGHT)).toEqual([])
     })
 })
 

@@ -3,13 +3,13 @@ import type { Hit, World } from "../types"
 import type { Vec3 } from "./camera"
 import type { Poly } from "./paint"
 import { roofCenter } from "./ships"
+import type { Theme } from './theme'
+
 
 const SEGMENTS = 64
-const RING = '#4040c0'
-export const STORM_TEXT = '#7070ff'
 
 
-export function buildRing(world: World): Poly[] {
+export function buildRing(world: World, theme: Theme): Poly[] {
     const radius = stormAt(world.turn, world.rules).radius
     if (radius < 0) return []
     const { width: W, height: H } = world.rules
@@ -22,7 +22,7 @@ export function buildRing(world: World): Poly[] {
         pts.push({ x: cx + radius * Math.cos(theta), y: cy + radius * Math.sin(theta), z: 0 })
     }
 
-    return [{ pts, stroke: RING, lineWidth: 2, clip }]
+    return [{ pts, stroke: theme.ring, lineWidth: 2, clip }]
 }
 
 

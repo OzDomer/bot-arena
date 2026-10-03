@@ -7,7 +7,7 @@ import { showcase } from './bots/lineups'
 import { PRESETS } from './sim/presets'
 import { fitView, makeCamera, panBy, zoomAt, type ViewMode } from './render/camera'
 import { NetBrain } from './evo/NetBrain'
-
+import { LIGHT } from './render/theme'
 
 const canvas = document.querySelector<HTMLCanvasElement>('#gameCanvas')
 if (!canvas) throw new Error('no canvas')
@@ -63,7 +63,7 @@ const intent: Record<Ship['id'], Weights> = {}
 for (const [id, brain] of Object.entries(brains))
   if (brain instanceof NetBrain) intent[Number(id)] = brain.weights
 
-const player = new Player(ctx, cam, history, turnCounter, names, intent)
+const player = new Player(ctx, cam, history, turnCounter, names, intent, LIGHT)
 
 const refit = () => {
   fitCanvas()

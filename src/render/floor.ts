@@ -2,10 +2,10 @@ import { inCircle } from "../sim/geometry";
 import { stormAt } from "../sim/storm";
 import type { World } from "../types";
 import { type Poly } from "./paint";
+import type { Theme } from './theme'
 
-export const FLOOR = { safe: '#ccc', storm: '#8a8ad0', line: '#999' }
 
-export function buildFloor(world: World): Poly[] {
+export function buildFloor(world: World, theme: Theme): Poly[] {
     const polys: Poly[] = []
     const { radius } = stormAt(world.turn, world.rules)
     for (let i = 0; i < world.rules.width; i++) {
@@ -18,7 +18,8 @@ export function buildFloor(world: World): Poly[] {
                     { x: i + 1, y: j + 1, z: 0 },
                     { x: i, y: j + 1, z: 0 }
 
-                ], fill: inStorm ? FLOOR.storm : FLOOR.safe, stroke: FLOOR.line 
+                ], fill: inStorm ? theme.floorStorm : theme.floorSafe,
+                stroke: theme.floorLine
             })
         }
     }

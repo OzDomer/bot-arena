@@ -4,6 +4,7 @@ import { buildShips, HULL_T, hullFootprint, SHIP_H, sideShade, WRECK_H } from ".
 import { CULL_EPS, signedArea, type Poly } from "./paint"
 import { ZOOM_MAX, ZOOM_MIN, type Camera } from "./camera"
 import { FACING } from "../types"
+import { LIGHT } from "./theme"
 
 
 const visibleCount = (polys: Poly[], cam: Camera) =>
@@ -14,7 +15,7 @@ describe('buildShips', () => {
         const w = world([
             ship({ id: 1, position: { x: 5, y: 5 }, hp: 10 }),
         ])
-        const polys = buildShips(w)
+        const polys = buildShips(w, LIGHT)
         expect(polys.length).toBe(6)
     })
 
@@ -22,14 +23,14 @@ describe('buildShips', () => {
         const w = world([
             ship({ id: 3, position: { x: 6, y: 9 }, hp: 0 })
         ])
-        const polys = buildShips(w)
+        const polys = buildShips(w, LIGHT)
         expect(polys.length).toBe(6)
     })
 
     it('Culling shows the right faces', () => {
         const w = world([
             ship({ id: 1, position: { x: 3, y: 4 }, hp: 10 }),])
-        const polys = buildShips(w)
+        const polys = buildShips(w, LIGHT)
         const isoCam = testCamera('iso')
         const topCam = testCamera('top')
         expect(visibleCount(polys, isoCam)).toBe(4)
@@ -41,7 +42,7 @@ describe('buildShips', () => {
         const w = world([
             ship({ id: 1, position: { x: 5, y: 5 }, hp: 0 }),
         ])
-        const polys = buildShips(w)
+        const polys = buildShips(w, LIGHT)
         expect(polys[0].pts.every(p => p.z === WRECK_H)).toBe(true)
     })
 
@@ -49,7 +50,7 @@ describe('buildShips', () => {
         const w = world([
             ship({ id: 1, position: { x: 5, y: 5 }, hp: 10 }),
         ])
-        const polys = buildShips(w)
+        const polys = buildShips(w, LIGHT)
         expect(polys[0].pts.every(p => p.z === SHIP_H)).toBe(true)
     })
 
@@ -57,20 +58,20 @@ describe('buildShips', () => {
         const w = world([
             ship({ id: 1, position: { x: 3, y: 4 }, hp: 10 }),
         ])
-        const polys = buildShips(w)
+        const polys = buildShips(w, LIGHT)
         expect(polys.flatMap(p => p.pts).every(p => p.x > 3 && p.x < 4 && p.y > 4 && p.y < 5 && p.z >= 0 && p.z <= SHIP_H)).toBe(true)
     })
 
     it('every face shares the tile-center anchor', () => {
         const w = world([ship({ id: 1, position: { x: 3, y: 4 } })])
-        for (const face of buildShips(w)) expect(face.anchor).toEqual({ x: 3.5, y: 4.5, z: 0 })
+        for (const face of buildShips(w, LIGHT)) expect(face.anchor).toEqual({ x: 3.5, y: 4.5, z: 0 })
     })
 
     it('roof tip points along the facing', () => {
         const w = world([
             ship({ id: 1, position: { x: 3, y: 4 }, facing: 'E' }),
         ])
-        const polys = buildShips(w)
+        const polys = buildShips(w, LIGHT)
         const tip = polys[0].pts[2]
         expect(tip.x).toBeCloseTo(3.85)
         expect(tip.y).toBeCloseTo(4.5)
@@ -82,7 +83,7 @@ describe('buildShips', () => {
         const w = world(
             Array.from({ length: 9 }, (_, i) => ship({ id: i + 1, position: { x: i, y: 5 } }))
         )
-        const polys = buildShips(w)
+        const polys = buildShips(w, LIGHT)
         const fills = w.ships.map((_, i) => polys[i * 6].fill)
         expect(new Set(fills).size).toBe(9)
     })
@@ -90,7 +91,7 @@ describe('buildShips', () => {
     it.each([ZOOM_MIN, ZOOM_MAX])('culling holds at zoom %s', zoom => {
         const w = world([
             ship({ id: 1, position: { x: 3, y: 4 }, hp: 10 }),])
-        const polys = buildShips(w)
+        const polys = buildShips(w, LIGHT)
         const view = { zoom, pan: { x: 0, y: 0 } }
         const isoCam = testCamera('iso', view)
         const topCam = testCamera('top', view)

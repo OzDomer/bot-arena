@@ -323,6 +323,7 @@ one fifth of a 100-gen evolution run.
 - iso: sx = (x − y)·32, sy = (x + y)·16 − z·32. top: (x·40, y·40), z ignored.
 - Canvas size and origin come from the 8 projected corners of [0,W]×[0,H]×[0,Z_MAX] plus a 16px margin. 20×20: iso 1312×704, top 832×832.
 - In iso, tile (0,0) is the top of the diamond; north points up-right, east down-right.
+- project is basis · zoom + pan. fitView(), zoomAt() and panBy() are pure helper functions.
 
 ### Culling
 - `signedArea` is the shoelace formula in screen coords. Every face is authored in floor order — (i,j)→(i+1,j)→(i+1,j+1)→(i,j+1) as seen from outside — and `paint` draws only `signedArea > CULL_EPS` (1e-6). Back faces come out negative, side faces in top-down come out zero. Both projections have a positive determinant, so one sign convention works in both modes; no per-mode geometry.
@@ -357,3 +358,6 @@ one fifth of a 100-gen evolution run.
 - Per live NetBrain seat: `observe → encode → forward → softmax` on the frame, same calls the brain makes. One tapered spoke (base ±0.07, point at the tip), a square for STAY, argmax in yellow. Sorted with its ship (same anchor). Spoke winding was wrong at first and culled every arrow; intent.test pins 9 visible in both modes.
 - Arrow length is relative to the argmax move (`p / max(p)`): the overlay shows preference order, not calibrated confidence. Absolute lengths were unreadable because the trained policy is near one-hot (see Policy gradient findings).
 - Renderer imports `evo/` for this. Not a sim dependency.
+
+### Viewport
+- Canvas backing size = CSS size, read back by main. CSS owns layout; fitCanvas copies clientWidth/Height into canvas.width/height so drawing stays 1:1. Not ctx.scale and not CSS-stretching a fixed backing size, because text and line widths must stay crisp at any zoom. setCamera always follows fitCanvas because resizing clears the canvas.

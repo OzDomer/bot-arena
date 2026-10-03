@@ -45,8 +45,9 @@ console.log('done at turn', final.turn, 'alive:', final.ships.filter(s => s.hp >
 
 
 const fitCanvas = () => {
-  canvas.width = canvas.clientWidth
-  canvas.height = canvas.clientHeight
+  const dpr = window.devicePixelRatio
+  canvas.width = canvas.clientWidth * dpr
+  canvas.height = canvas.clientHeight * dpr
 }
 
 
@@ -77,7 +78,7 @@ document.getElementById('intent')!.onclick = () => player.toggleIntent()
 
 const refit = () => {
   fitCanvas()
-  view = fitView(mode, world.rules, canvas.width, canvas.height)
+  view = fitView(mode, world.rules, canvas.clientWidth, canvas.clientHeight)
   player.setCamera(makeCamera(mode, view))
 }
 window.addEventListener('resize', refit)

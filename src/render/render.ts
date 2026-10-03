@@ -26,6 +26,7 @@ export function drawWorld(ctx: CanvasRenderingContext2D, cam: Camera, frame: Fra
     const { world, hits } = frame
     ctx.save()
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+    ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0)
     paint(ctx, cam, buildFloor(world))
     paint(ctx, cam, buildRing(world))
     paint(ctx, cam, [...buildShips(world), ...buildIntent(world, opts.intent)])

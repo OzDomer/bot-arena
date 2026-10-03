@@ -19,6 +19,39 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 - Chosen to match the course stack (jb-45800-5 betterx backend) so the platform reads as standard full-stack work. Deviations are called out where they happen (Auth, Realtime); nothing else is clever on purpose.
 - Postgres over MySQL: better JSON columns for `entrants`/`odds`, and the more common default in Node stacks. Through Sequelize it's a dialect string; swapping is cheap if ever wanted.
 
+## System design
+
+### Pieces
+- **`@arena/sim`**: pure library. Rules, `step`, bots, brains. No I/O, no clock, no DOM, no network. Depends on nothing else in the repo.
+- **`backend`**: the authority. Runs matches for real, persists anything that must be trusted.
+- **`frontend`**: the viewer. Replays matches and owns everything that's only for display.
+- Dependencies point one way: apps → sim. Never sim → app, never app ↔ app. Enforced by the sim's `exports` map (no deep imports resolve) and the sim's tsconfig having no `DOM` lib.
+
+### Contracts
+1. **Sim public API**: `@arena/sim` (types, rules, presets, `step`, `observe`, `encode`/`forward`/`softmax`, `makeMatch`/`runMatch`), `@arena/sim/bots` (lineups, bots, `NetBrain`, brain files), `@arena/sim/testing` (fixtures, tests only). Adding an export is free; changing or removing one breaks both apps.
+2. **Backend ↔ frontend**: HTTP for request/response, SSE for server → client pushes (schedule, seed reveal, result). No WebSockets. Shapes TBD at roadmap 5.
+
+### Ownership
+- Backend: seeds (secret until bets close), results, bets, balances, schedule, bot registry.
+- Frontend: camera, theme, playback, URL state.
+- The server's run of a match **is** the result. A browser replay is a display of it; nothing the frontend computes is trusted.
+
+### Match descriptor
+`{ seed, lineup, preset, simVersion }`, where the lineup names bots pinned to a specific version (a brain file, not just "reinforceV2").
+- It fully determines the match because there are no live inputs; bots decide everything. So no frames go over the wire: the browser re-runs the match (~1 ms) and gets the identical history.
+- The server sends the descriptor plus its stored result; the browser compares. A mismatch means version drift and is shown as an error, not silently replayed.
+- No in-play betting, by design. It's what keeps the descriptor sufficient. Revisit: any live input (a human-controlled ship, mid-match events) moves to server-authoritative snapshots.
+
+### Commit-reveal
+- At `open`: the server generates a 32-byte crypto-random `secret` and publishes `sha256(secret)`. After `closed`: it publishes `secret`. Anyone can check the hash and re-run the match.
+- Sim seed = first 4 bytes of `secret`, big-endian, unsigned, via `seedFromSecret` in `@arena/sim`, so backend and browser derive it identically. Hashing stays out of the sim (Node `crypto` vs async Web Crypto).
+- The 32-bit seed is never committed directly: 2³² hashes is brute-forceable before the window closes.
+- Known limit: the server could grind secrets for an outcome it likes. Not a concern under parimutuel with play money; a client seed would close it.
+
+### Open
+- **Sim versioning.** Determinism only holds for identical code; any behavior change to `step` or a bot changes old replays. Need: what `simVersion` is (manual bump on behavior change vs git hash), and what happens to old matches. Cheapest: always store the result (settlement never depends on re-simulation) and offer replays only when the version matches the current one.
+
+
 ## Match lifecycle
 - One match at a time, driven by a scheduler in the backend process:
 

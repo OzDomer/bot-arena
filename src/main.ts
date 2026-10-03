@@ -1,10 +1,11 @@
+import './style.css'
 import type { Frame, Ship, Weights } from './types'
 import { runMatch } from './sim/match'
 import { Player } from './render/Player'
 import { makeMatch } from './sim/setup'
 import { showcase } from './bots/lineups'
 import { PRESETS } from './sim/presets'
-import { fitView, makeCamera, naturalSize, type ViewMode } from './render/camera'
+import { fitView, makeCamera, type ViewMode } from './render/camera'
 import { NetBrain } from './evo/NetBrain'
 
 
@@ -40,13 +41,16 @@ const final = runMatch(world, brains, (w, hits) => history.push({ world: w, hits
 console.log('done at turn', final.turn, 'alive:', final.ships.filter(s => s.hp > 0).map(s => s.id));
 
 
-const fitCanvas = (mode: ViewMode) => {
-  const { width, height } = naturalSize(mode, world.rules)
-  canvas.width = width
-  canvas.height = height
+
+
+
+const fitCanvas = () => {
+  canvas.width = canvas.clientWidth
+  canvas.height = canvas.clientHeight
 }
 
-fitCanvas(mode)
+
+fitCanvas()
 let view = fitView(mode, world.rules, canvas.width, canvas.height)
 const cam = makeCamera(mode, view)
 
@@ -65,9 +69,15 @@ document.getElementById('stepBack')!.onclick = () => player.stepBack()
 document.getElementById('stepForward')!.onclick = () => player.stepForward()
 document.getElementById('view')!.onclick = () => {
   mode = mode === 'iso' ? 'top' : 'iso'
-  fitCanvas(mode)
+  fitCanvas()
   view = fitView(mode, world.rules, canvas.width, canvas.height)
   player.setCamera(makeCamera(mode, view))
 }
 document.getElementById('intent')!.onclick = () => player.toggleIntent()
 
+const refit = () => {
+  fitCanvas()
+  view = fitView(mode, world.rules, canvas.width, canvas.height)
+  player.setCamera(makeCamera(mode, view))
+}
+window.addEventListener('resize', refit)

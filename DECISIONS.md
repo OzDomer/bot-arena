@@ -5,7 +5,7 @@ Platform decisions: PLATFORM.md
 Each entry: what we decided, why, and what it would take to revisit.
 
 ## Architecture
-- **Pure sim, separate renderer.** `step(world, actions) → world`, no DOM, no mutation. Enables replay, headless tournaments, tests, and any future renderer (3D, Node, another language). Revisit: never.
+- **Pure sim, separate renderer.** `step(world, actions) → world`, no DOM, no mutation. Enables replay, headless tournaments, tests, and any future renderer (3D, Node, another language). Enforced since the split: the sim's tsconfig has no DOM lib.
 - **Brain interface.** `decide(Readonly<Observation>) → Action`. The one slot every bot type plugs into. Bots get copies, never world references. `Readonly<>` is documentation; the copies in `observe` are the guarantee.
 - **Worlds are immutable after creation.** Unmoved ships share position objects across frames; that's fine only because nothing writes into them. Never mutate a world.
 - **Rules object.** All tunables in `Rules`; `World.rules` points at it. Per-match randomized setup (storm center) lives on `World`; anything derivable from turn + rules is a function, not state.
@@ -16,10 +16,10 @@ Each entry: what we decided, why, and what it would take to revisit.
 - **Stats are raw sums.** `damageDealt` is uncapped (no overkill split, which would need a turn-order rule); averages are computed at print time. Kill credit is shared by every attacker who hit on the death tick; a storm finish still credits the attackers. Revisit with `resolveStorm`.
 - **Kills/match > deaths/match.** Shared kill credit on the death tick inflates the count (7.7 on a 7-ship map with max 6 deaths). Fine as a relative measure across rulesets; don't read the absolute number. Fix when comparing bots, not rules.
 - **Sample size.** 1k matches → identical bots spread ±2pp; 10k → ±0.6pp. Balance claims need 10k. Headless: 10k matches ≈ 4 s in Node (~2,500 matches/s, ~500k `step()`/s).
-- **Rules presets.** `PRESETS` in `sim/src/sim/presets.t` is a `Record<PresetName, Rules>`, each spreading `DEFAULT_RULES` and overriding only what changes. CLI takes the name as argv[3]; `runTournament` threads it to `makeMatch`. Presets are data, not functions — no derivation of storm timing from map size (rejected, see findings: startTurn barely matters, so there's nothing worth deriving). Presets are the experiment record: don't overwrite one with another.
+- **Rules presets.** `PRESETS` in `sim/src/sim/presets.ts` is a `Record<PresetName, Rules>`, each spreading `DEFAULT_RULES` and overriding only what changes. CLI takes the name as argv[3]; `runTournament` threads it to `makeMatch`. Presets are data, not functions — no derivation of storm timing from map size (rejected, see findings: startTurn barely matters, so there's nothing worth deriving). Presets are the experiment record: don't overwrite one with another.
 - **Renderer is build → paint.** Builders are pure `World → Poly[]` in world space; `paint(ctx, cam, polys)` does all projection, culling and styling. Builders are tested without a canvas; paint is checked by eye. Same split as sim/render.
 - **`main` owns the DOM.** It finds elements, sizes the canvas and wires events. `Player` only draws into the ctx and element it's handed; `setCamera` swaps the view on the current frame without touching layout.
-- **The renderer reads the sim only through `@arena/sim`.** Since the workspace split (PLATFORM roadmap 3) the frontend is its own package; the sim's `exports` map is the boundary and deep imports don't resolve. The intent overlay gets `observe`/`encode`/`forward`/`softmax` from the core entry and `NetBrain` (`public readonly weights`) from `./bots`; a getter interface waits for a second inspectable brain type. Everything else the renderer shows is derived from `World`/`Hit` data; no sim rule is re-implemented in `render/`.**Revisit**: never. Enforced since the split: the sim's tsconfig has no DOM lib.
+- **The renderer reads the sim only through `@arena/sim`.** Since the workspace split (PLATFORM roadmap 3) the frontend is its own package; the sim's `exports` map is the boundary and deep imports don't resolve. The intent overlay gets `observe`/`encode`/`forward`/`softmax` from the core entry and `NetBrain` (`public readonly weights`) from `./bots`; a getter interface waits for a second inspectable brain type. Everything else the renderer shows is derived from `World`/`Hit` data; no sim rule is re-implemented in `render/`.
 
 ## Rules (v1)
 - **Chebyshev distance** for vision and attack — matches 8-direction movement. (Manhattan caused diagonal chasers to swap tiles forever.)
@@ -65,7 +65,7 @@ Each entry: what we decided, why, and what it would take to revisit.
 17. ~~**Zoom and pan.**~~ See Renderer › Viewport.
 17b. **Camera rotation** (parked). Rotation goes before the basis. Shading is free (`sideShade` works off world normals, light stays NW), depth is not: iso depth = x + y is only valid at 0°, so `depth` must take the rotation.
 18. **Storm center randomization** — first rules change checked against a retrained brain with the overlay on.
-19. **Movement**: momentum + turn rate + ramming, and a Rammer bot. Hull footprint from 16 becomes a rotated shape here.The hull already rotates with facing (16); here it gets a continuous heading, which ends the 1×1 painter's-sort assumption (see Draw order).
+19. **Movement**: momentum + turn rate + ramming, and a Rammer bot. The hull already rotates with facing (16); here it gets a continuous heading, which ends the 1×1 painter's-sort assumption (see Draw order).
 20. Heal resource, then Kiter (deferred until 18 says what the meta looks like).
 21. Port step() to Rust — was "to learn Rust, not for speed"; at 25k matches/gen it's both.
 22. RTS: momentum physics, continuous positions, islands, ramming, disembarking; re-train
@@ -359,7 +359,7 @@ one fifth of a 100-gen evolution run.
 ### Intent overlay
 - Per live NetBrain seat: `observe → encode → forward → softmax` on the frame, same calls the brain makes. One tapered spoke (base ±0.07, point at the tip), a square for STAY, argmax in yellow. Sorted with its ship (same anchor). Spoke winding was wrong at first and culled every arrow; intent.test pins 9 visible in both modes.
 - Arrow length is relative to the argmax move (`p / max(p)`): the overlay shows preference order, not calibrated confidence. Absolute lengths were unreadable because the trained policy is near one-hot (see Policy gradient findings).
-- Renderer Gets these from `@arena/sim`; they're sim code, but nothing in the sim depends on the overlay.
+- Gets these from `@arena/sim`; they're sim code, but nothing in the sim depends on the overlay.
 
 ### Viewport
 - The canvas is a fixed viewport. CSS lays it out (flex column, `overflow: hidden`); `fitCanvas` in main copies `clientWidth/Height × devicePixelRatio` into the backing size, read fresh each time so monitor switches work; `drawWorld` applies the dpr as the one `setTransform`, per frame, after the clear. `fitView`, `zoomAt` and pointer math stay in CSS px. Rejected: zoom via `ctx.scale` (text and line widths would scale) and CSS-stretching a fixed backing size (blurry).

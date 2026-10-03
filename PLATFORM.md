@@ -3,14 +3,14 @@
 The full-stack wrapper around the sim: a prediction market on bot matches. Same format as `DECISIONS.md` (what, why, what it takes to revisit). Sim and renderer decisions stay in `DECISIONS.md`; this file never changes a sim rule.
 
 ## Freeze
-- **The sim is a dependency, not code the platform edits.** The contract is `sim/`'s exports: `Entrant`, `Rules`, `PRESETS`, `playMatch`, `runMatch`, `runTournament`, `deriveSeed`, `makeRng`, and the `World`/`Hit`/`Frame` types. The backend and frontend import those and nothing else from `sim/`.
-- Rules work (DECISIONS roadmap 18+) continues in `DECISIONS.md`. A change that touches an *export* gets a line in both files.
+- **The sim is a dependency, not code the platform edits.** The apps reach it only through its package entries; see System design › Contracts.
+- Rules work (DECISIONS roadmap 18+) continues in `DECISIONS.md`. 
 - The sim seed stays 32-bit. The platform derives it from its own 256-bit secret (see Fairness); `makeRng`/`deriveSeed` are unchanged.
 - Betting lineups use distinct entrant names (`showcase`-style, not `heldout`-style). A bet is on an entrant; duplicate names would make "chaserV2 wins" mean any of three seats. Revisit if a lineup needs duplicates: bet by name with aggregated odds.
 
 ## Architecture
-- **One repo, three workspace packages:** `sim/` (sim, evo, CLIs, brains), `frontend/` (React shell + `render/`), `backend/` (Express). Both apps depend on `@arena/sim`; nothing depends on an app. Moving `src/sim` and `src/evo` into the package is its own commit, before the React wrap.
-- **The server never streams a match.** A match is `(seed, lineup, preset, startAt)`. Every client runs the sim locally and plays back by wall clock: `frame = (now − startAt) / FRAME_MS`. Everyone sees the same frame at the same instant, late joiners land on the right frame, and the server's cost per viewer is one idle connection. This is what determinism buys and it's the headline.
+- **One repo, npm workspaces:** `sim/` (`@arena/sim`: sim, evo, bots, CLIs, brains), `frontend/` (the Vite app; React shell from roadmap 4), `backend/` (Express; joins as a workspace at roadmap 5). Both apps depend on `@arena/sim`; nothing depends on an app.
+- **The server never streams a match.** It publishes a match descriptor (System design › Match descriptor) and every client runs the sim locally, playing back by wall clock: `frame = (now − startAt) / FRAME_MS`. Everyone sees the same frame at the same instant, late joiners land on the right frame, and the server's cost per viewer is one idle connection. This is what determinism buys and it's the headline.
 - **The renderer is the audit tool.** Anyone can take a revealed seed, replay the match in the browser, and check the published result. No separate "verify" feature; the frontend already is one.
 - **One backend process is the whole backend:** HTTP, SSE fan-out, and the match scheduler. Scaling past one process is under Open.
 
@@ -28,7 +28,7 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 - Dependencies point one way: apps → sim. Never sim → app, never app ↔ app. Enforced by the sim's `exports` map (no deep imports resolve) and the sim's tsconfig having no `DOM` lib.
 
 ### Contracts
-1. **Sim public API**: `@arena/sim` (types, rules, presets, `step`, `observe`, `encode`/`forward`/`softmax`, `makeMatch`/`runMatch`), `@arena/sim/bots` (lineups, bots, `NetBrain`, brain files), `@arena/sim/testing` (fixtures, tests only). Adding an export is free; changing or removing one breaks both apps.
+1. **Sim public API**: the entries in `sim/package.json` `exports` — `@arena/sim` (core), `@arena/sim/bots` (lineups, bots, brains), `@arena/sim/testing` (fixtures, tests only). The barrel files (`sim/src/index.ts`, `sim/src/roster.ts`) *are* the contract; this file never copies their contents. Anything not exported can't be imported. Adding an export is free; changing or removing one breaks both apps and gets a line here and in `DECISIONS.md`.
 2. **Backend ↔ frontend**: HTTP for request/response, SSE for server → client pushes (schedule, seed reveal, result). No WebSockets. Shapes TBD at roadmap 5.
 
 ### Ownership
@@ -37,19 +37,13 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 - The server's run of a match **is** the result. A browser replay is a display of it; nothing the frontend computes is trusted.
 
 ### Match descriptor
-`{ seed, lineup, preset, simVersion }`, where the lineup names bots pinned to a specific version (a brain file, not just "reinforceV2").
+`{ seed, lineup, preset, startAt, simVersion }`. `seed` is derived from the revealed secret (Fairness); `startAt` is the wall-clock time of frame 0 (Match lifecycle); the lineup names bots pinned to a specific version (a brain file, not just "reinforceV2").
 - It fully determines the match because there are no live inputs; bots decide everything. So no frames go over the wire: the browser re-runs the match (~1 ms) and gets the identical history.
 - The server sends the descriptor plus its stored result; the browser compares. A mismatch means version drift and is shown as an error, not silently replayed.
 - No in-play betting, by design. It's what keeps the descriptor sufficient. Revisit: any live input (a human-controlled ship, mid-match events) moves to server-authoritative snapshots.
 
-### Commit-reveal
-- At `open`: the server generates a 32-byte crypto-random `secret` and publishes `sha256(secret)`. After `closed`: it publishes `secret`. Anyone can check the hash and re-run the match.
-- Sim seed = first 4 bytes of `secret`, big-endian, unsigned, via `seedFromSecret` in `@arena/sim`, so backend and browser derive it identically. Hashing stays out of the sim (Node `crypto` vs async Web Crypto).
-- The 32-bit seed is never committed directly: 2³² hashes is brute-forceable before the window closes.
-- Known limit: the server could grind secrets for an outcome it likes. Not a concern under parimutuel with play money; a client seed would close it.
-
 ### Open
-- **Sim versioning.** Determinism only holds for identical code; any behavior change to `step` or a bot changes old replays. Need: what `simVersion` is (manual bump on behavior change vs git hash), and what happens to old matches. Cheapest: always store the result (settlement never depends on re-simulation) and offer replays only when the version matches the current one. version 0.1.0 in /sim/package.json tbd if it will be used
+- **Sim versioning.** Determinism only holds for identical code; any behavior change to `step` or a bot changes old replays. Need: what `simVersion` is (manual bump on behavior change vs git hash), and what happens to old matches. Cheapest: always store the result (settlement never depends on re-simulation) and offer replays only when the version matches the current one. Candidate: version in sim/package.json (now 0.1.0), bumped by hand on behavior change.
 
 
 ## Match lifecycle
@@ -70,15 +64,18 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 
 ## Fairness
 - **Commit-reveal.** At `scheduled` the server generates `secret = randomBytes(32)` and stores `commitHash = sha256(secret)`. The hash is public from `open`. After `closed` the secret is published; clients check `sha256(secret) === commitHash` and derive the same seed.
+- Sim seed = first 4 bytes of `secret`, big-endian, unsigned, via `seedFromSecret` in `@arena/sim`, so backend and browser derive it identically. Hashing stays out of the sim (Node `crypto` vs async Web Crypto).
 - **Why 32 bytes and not the sim's 32-bit seed.** `makeRng` takes 32 bits. Committing `sha256(seed)` of a 32-bit value is brute-forceable (4 billion hashes) before bets close. The secret has 256 bits of entropy; the sim seed is derived from it (first 4 bytes). No salt, no key: salting protects low-entropy inputs, and this one isn't.
 - **Nothing seed-dependent is public before `revealed`.** Seating is shuffled from the seed, so it's unknown during betting; only the lineup, preset and odds are.
 - **No in-play betting, by construction.** The match is fully determined the moment the seed is public, so any market open during playback is free money for anyone who runs the sim. The architecture forbids it; this isn't a feature left for later. Dynamic odds still exist: the parimutuel pool moves with every bet during `open`.
 - The winner toast appearing after playback is UI politeness. A client with devtools open knows the winner at reveal and can do nothing with it.
+- Known limit: the server could grind secrets for an outcome it likes. Not a concern under parimutuel with play money; a client seed would close it.
+
 
 ## Realtime
 - **SSE, not WebSockets.** Traffic is one-directional: the server announces, clients listen. A bet is a normal `POST`. WebSockets add a dependency and an upgrade handshake for a client channel that doesn't exist.
 - **One event type, `state`, carrying the full snapshot**, sent on connect and on every phase transition. A reconnecting or late client gets everything in one message; there is no delta replay and no "did I miss `closed`?" logic. Plus a lighter `pool` event on each accepted bet.
-- Snapshot: `{ matchId, phase, lineup, preset, odds, commitHash, opensAt, closesAt, pool: { total, byEntrant }, secret?, seed?, startAt?, winner? }`. Optional fields appear from `revealed` / `settled`. One function builds it; routes never assemble match state themselves.
+- Snapshot: `{ matchId, phase, lineup, preset, simVersion, odds, commitHash, opensAt, closesAt, pool: { total, byEntrant }, secret?, seed?, startAt?, winner? }`. Optional fields appear from `revealed` / `settled`. One function builds it; routes never assemble match state themselves.
 - Implementation: `Content-Type: text/event-stream`, a `Set<Response>` of open streams, `res.write` per message, a comment line every ~20 s as heartbeat, proxy buffering off for `/stream`. The broadcaster is one function; if socket.io is ever wanted it's a one-file swap.
 
 ## Auth
@@ -102,7 +99,7 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 - Fixed odds from the 10k stats is the alternative if parimutuel feels thin with few bettors. Under Open.
 
 ## Deployment
-- `docker compose up`: `postgres`, `backend`, `frontend`. Frontend is the course's multi-stage build: `node:alpine` builds `dist/`, `nginx:alpine` serves it. Matches the course layout exactly.
+- `docker compose up`: `postgres`, `backend`, `frontend`. Frontend is the course's multi-stage build: `node:alpine` builds `dist/`, `nginx:alpine` serves it. One deviation from the course: both images build with the **repo root as context** (`context: .`, `dockerfile: frontend/Dockerfile`), because each needs `sim/`; inside, `npm ci -w <app>` installs only that app's share. The frontend image carries no sim at runtime (Vite bundles it into the JS); the backend image does.
 - **nginx is the front door.** It serves the SPA (`try_files $uri /index.html`) and proxies `/api/*` to the backend container, so the browser sees one origin. `cors()` is dev-only (Vite on one port, Express on another).
 - **`/api/stream` needs `proxy_buffering off` and a long `proxy_read_timeout`** in the nginx config. nginx buffers proxied responses by default, which turns SSE into "nothing until the connection closes". This is the one place the realtime choice touches ops.
 - `NODE_ENV=compose` config as in the course; `sequelize.sync()` on boot for now.
@@ -117,15 +114,15 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 ## Roadmap
 1. ~~**Hull.**~~ Body + bow pentagon inside the tile, replacing the nose. Builder-only, tested like `buildShips`. *Done when* facing reads from the shape alone.
 2. ~~**Dark mode.**~~ CSS variables for the page; a `Theme` object for the canvas (`FLOOR`, ring, storm text, label fill) passed through `drawWorld` opts. Default from `prefers-color-scheme`. *Done when* it's usable at night.
-3. **Workspace split.** `sim/`, `frontend/`, `backend/` as npm workspaces; both apps import `@arena/sim`. *Done when* `npm test` and `npm run dev` work from the root and no app imports the other.
+3. ~~**Workspace split.**~~ `sim/` and `frontend/` as npm workspaces; `@arena/sim` with entries `.`, `./bots`, `./testing`; shared `tsconfig.base.json`, sim without `DOM`; Vitest projects at the root. `backend/` joins at 5.
 4. **React shell.** `main.ts` → `App` + `<Arena>` owning the canvas via a ref and constructing `Player`; `Player.turnEl` → `onFrame(turn)`. `render/` and `sim/` unchanged. Ships controls, winner toast, theme toggle, playback speed, **seed/preset in the URL with a copy link**. *Done when* a pasted link replays the same match.
-5. **Backend: lobby.** Express + Postgres + compose. `GET /lineups`, `GET /matches/:id`, `GET /stream`; the scheduler running the lifecycle; odds precomputed on lineup insert. No accounts. *Done when* the client shows "next match in m:ss", then the match, from the stream alone.
+5. **Backend: lobby.** Express + Postgres + compose. `GET /lineups`, `GET /matches/:id`, `GET /stream`; the scheduler running the lifecycle; odds precomputed on lineup insert. No accounts. *Done when* the client shows "next match in m:ss", then the match, from the stream alone. Adds what the backend needs to the core entry: `runTournament` (odds), `seedFromSecret`, and whatever the scheduler calls.
 6. **Auth.** register/login/JWT, `authEnforce` per router, `/me`. *Done when* a token gates `/bets` and nothing else.
 7. **Predictions.** `POST /bets`, pool totals over SSE, settlement on reveal. *Done when* a bet placed before close pays out after the replay, and one placed after is refused.
    **→ Demo line.** Everything below is a second product.
 8. **User bots.** A bot DSL compiled to `Brain`; never user code on the server. Bots are rows owned by users; a lineup can include them.
 9. **User vs user.** A user-created lineup is a match whose entrants belong to users; credits on the line through the same settlement.
-10. **Sim in Rust/WASM** (sim-side item; `DECISIONS.md` 15). One implementation shared by browser and server; training speed is the motive. The platform gains nothing it needs, only speed.
+10. **Sim in Rust/WASM** (sim-side item; `DECISIONS.md` 21). One implementation shared by browser and server; training speed is the motive. The platform gains nothing it needs, only speed.
 
 ## Open
 - Fixed odds vs parimutuel, once there's bettor data.

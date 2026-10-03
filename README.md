@@ -16,7 +16,7 @@ Open http://localhost:5173/ (the default) to watch a single match replayed on th
 Controls: play / pause / step. **Toggle view** switches isometric ↔ top-down on the same match. **Intent** shows the learned brains' move preferences each turn.
 
 ```bash
-npm run tournament <matches> <preset> <seed>
+npm run tournament -- <matches> <preset> <seed>
 ```
 
 Runs a headless tournament in Node and prints the win tally and per-seat stats. Presets are `default` (10×10), `bigmap` (20×20, faster storm — the current ruleset), plus the experiment presets that produced it. 10,000 matches take a few seconds.
@@ -25,17 +25,26 @@ Runs a headless tournament in Node and prints the win tally and per-seat stats. 
 npm run evolve -- <generations> <seed> <step> 
 ```
 
-Evolves a linear-net brain against a fixed pool of hand-written bots and writes the best weights to `best.json`. Seat it in the tournament lineup as `evolved` to measure it against everything else.
+Evolves a linear-net brain against a fixed pool of hand-written bots and writes the best weights to `sim/best.json`. Seat it in the tournament lineup as `evolved` to measure it against everything else.
 
 ```bash
 npm run train -- <updates> <batch> <lr> <seed> <fitness|dense>
 ```
 
-Trains the same linear brain with policy gradient (REINFORCE) instead of evolution, against the same pool, and runs the 10k held-out check at the end. `dense` is the current objective; 5000 updates take ~25 minutes. Weights land in `runs/`; the ones worth keeping are in `brains/`.
+Trains the same linear brain with policy gradient (REINFORCE) instead of evolution, against the same pool, and runs the 10k held-out check at the end. `dense` is the current objective; 5000 updates take ~25 minutes. Weights land in `sim/runs/`; the ones worth keeping are in `sim/brains/`.
+
+   ## Repo layout
+
+```
+   sim/        @arena/sim — rules, bots, learned brains, CLIs. Pure TS, no DOM.
+   frontend/   the Vite app — canvas renderer; reaches the sim only through @arena/sim
+```
+
+   npm workspaces: one `npm install` at the root sets up both, and every command below runs from the root.
 
 ## How it works
 
-- **Pure sim** (`step`, `observe`) — the renderer is a separate consumer. The `sim/` folder contains all the engine-like features the game needs; for example `chebyshev()` gives each player its square-shaped range. Because nothing in the sim knows about the browser, the same code runs the canvas replay, the headless tournament, and evolution.
+- **Pure sim** (`step`, `observe`) — the renderer is a separate consumer. The @arena/sim package (sim/) contains all the engine-like features; for example `chebyshev()` gives each player its square-shaped range. Because nothing in the sim knows about the browser, the same code runs the canvas replay, the headless tournament, and evolution.
 - **Brain interface** — the one slot everything plugs into. `observe()` produces all the information a player gets each turn (own HP, visible ships, storm state), and the brain returns an `Action`: a move, plus an optional attack. Hand-written bots and the neural net implement the same interface; the sim can't tell them apart.
 - **Seeded RNG** — every match is reproducible. `random.ts` builds a seeded generator, with a separate stream for the world, the seating, and each bot, so any result can be replayed.
 - **Per-seat stats** — every match logs wins, survival turns, damage dealt/taken and kills per entrant, with random seating so no bot is stuck with a lucky or unlucky slot.

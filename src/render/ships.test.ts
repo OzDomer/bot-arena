@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest"
 import { ship, testCamera, world } from "../test/fixtures"
-import { buildShips, SHIP_H, WRECK_H } from "./ships"
+import { buildShips, HULL_T, hullFootprint, SHIP_H, WRECK_H } from "./ships"
 import { CULL_EPS, signedArea, type Poly } from "./paint"
 import { ZOOM_MAX, ZOOM_MIN, type Camera } from "./camera"
+import { FACING } from "../types"
+import test from "node:test"
 
 
 const visibleCount = (polys: Poly[], cam: Camera) =>
@@ -97,4 +99,30 @@ describe('buildShips', () => {
         expect(visibleCount(polys, topCam)).toBe(2)
     })
 
+})
+
+describe('hullFootprint', () => {
+    it('returns five points on the floor', () => {
+        const pts = hullFootprint({ x: 3.5, y: 4.5 }, 'E')
+        expect(pts.length).toBe(5)
+        expect(pts.every(p => p.z === 0)).toBe(true)
+
+    })
+
+    it('tip points along the facing', () => {
+        const pts = hullFootprint({ x: 3.5, y: 4.5 }, 'E')
+        expect(pts[2].x).toBeCloseTo(3.5 + HULL_T)
+        expect(pts[2].y).toBeCloseTo(4.5)
+    })
+
+    it.each(FACING)('Stays inside the tile at %s facing direction', facing => {
+        const pts = hullFootprint({ x: 3.5, y: 4.5 }, facing)
+        for (const p of pts) expect(Math.hypot(p.x - 3.5, p.y - 4.5)).toBeLessThanOrEqual(0.35 + 1e-9)
+    })
+
+    it.each(FACING)('winding is positive facing %s', facing => {
+        const pts = hullFootprint({ x: 3.5, y: 4.5 }, facing)
+        const camera = testCamera('top')
+        expect(signedArea(pts.map(p=> camera.project(p)))).toBeGreaterThan(0)
+    })
 })

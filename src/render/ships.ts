@@ -1,4 +1,4 @@
-import { DELTAS, type Position, type World } from "../types"
+import { DELTAS, type Facing, type Position, type World } from "../types"
 import type { Vec3 } from "./camera"
 import { hslToHex, shade } from "./color"
 import type { Poly } from "./paint"
@@ -74,4 +74,17 @@ export function buildShips(world: World): Poly[] {
         }
     }
     return polys
+}
+
+const HULL_W = 0.2
+const HULL_B = 0.25
+const HULL_F = 0.1
+export const HULL_T = 0.35
+const LOCAL: [number, number][] = [[-HULL_B, -HULL_W], [HULL_F, -HULL_W], [HULL_T, 0], [HULL_F, HULL_W], [-HULL_B, HULL_W]]
+
+export function hullFootprint(center: Position, facing: Facing): Vec3[] {
+    const { dx, dy } = DELTAS[facing]
+    const angle = Math.atan2(dy, dx)
+    const c = Math.cos(angle), s = Math.sin(angle)
+    return LOCAL.map(([lx, ly]) => ({ x: center.x + lx * c - ly * s, y: center.y + lx * s + ly * c, z: 0 }))
 }

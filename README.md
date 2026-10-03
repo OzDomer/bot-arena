@@ -40,7 +40,7 @@ Trains the same linear brain with policy gradient (REINFORCE) instead of evoluti
    frontend/   the Vite app — canvas renderer; reaches the sim only through @arena/sim
 ```
 
-   npm workspaces: one `npm install` at the root sets up both, and every command below runs from the root.
+   npm workspaces: one `npm install` at the root sets up both, and every command above runs from the root.
 
 ## How it works
 

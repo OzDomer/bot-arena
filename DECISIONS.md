@@ -5,7 +5,7 @@ Platform decisions: PLATFORM.md
 Each entry: what we decided, why, and what it would take to revisit.
 
 ## Architecture
-- **Pure sim, separate renderer.** `step(world, actions) → world`, no DOM, no mutation. Enables replay, headless tournaments, tests, and any future renderer (3D, Node, another language). Enforced since the split: the sim's tsconfig has no DOM lib.
+- **Pure sim, separate renderer.** `step(world, actions) → world`, no DOM, no mutation. Enables replay, headless tournaments, tests, and any future renderer (3D, Node, another language). Enforced since the split: the sim's tsconfig has no DOM lib. Revisit: never.
 - **Brain interface.** `decide(Readonly<Observation>) → Action`. The one slot every bot type plugs into. Bots get copies, never world references. `Readonly<>` is documentation; the copies in `observe` are the guarantee.
 - **Worlds are immutable after creation.** Unmoved ships share position objects across frames; that's fine only because nothing writes into them. Never mutate a world.
 - **Rules object.** All tunables in `Rules`; `World.rules` points at it. Per-match randomized setup (storm center) lives on `World`; anything derivable from turn + rules is a function, not state.

@@ -5,7 +5,7 @@ import { Player } from './render/Player'
 import { makeMatch } from './sim/setup'
 import { showcase } from './bots/lineups'
 import { PRESETS } from './sim/presets'
-import { fitView, makeCamera, panBy, type ViewMode } from './render/camera'
+import { fitView, makeCamera, panBy, zoomAt, type ViewMode } from './render/camera'
 import { NetBrain } from './evo/NetBrain'
 
 
@@ -103,6 +103,16 @@ canvas.addEventListener('pointermove', e => {
 })
 
 canvas.addEventListener('pointerup', () => {
-  dragging = false  
+  dragging = false
 })
+
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault()
+  const r = canvas.getBoundingClientRect()
+  const at = { x: e.clientX - r.left, y: e.clientY - r.top }
+  const factor = e.deltaY < 0 ? 1.25 : 0.8
+  view = zoomAt(view, at, factor)
+  player.setCamera(makeCamera(mode, view))
+}, { passive: false })
 

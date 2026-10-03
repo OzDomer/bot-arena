@@ -10,7 +10,6 @@ const SEAT_S = 0.65, SEAT_L = 0.5
 export const seatColor = (id: number, count: number) =>
     hslToHex((id - 1) * 360 / count, SEAT_S, SEAT_L)
 
-const INSET = 0.15   // gap between ship and tile edge, in tiles
 export const SHIP_H = 0.6    // live ship height, in tiles
 export const WRECK_H = 0.1   // sunk: a low hull at water level
 

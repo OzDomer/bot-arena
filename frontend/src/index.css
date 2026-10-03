@@ -2,7 +2,15 @@
     --bg: #f4f4f2;
     --fg: #1a1a1a;
     --panel: #e4e4e0;
-    color-scheme: light dark
+    color-scheme: light dark;
+
+}
+
+#root {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 :root[data-theme="dark"] {
@@ -18,12 +26,6 @@ body {
     color: var(--fg);
     height: 100%;
     margin: 0;
-}
-
-body {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
 }
 
 #controls {

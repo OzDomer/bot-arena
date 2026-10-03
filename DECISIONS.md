@@ -61,13 +61,13 @@ Each entry: what we decided, why, and what it would take to revisit.
 13. ~~REINFORCE~~ — closed at 28.3 / 28.8 (v2 + dense). See docs/learning.md. Brain is now a playtester for rules changes.
 14. ~~**Isometric renderer.**~~ One camera (`iso`/`top`) with `project`/`depth`; every drawable is a `Poly` in world space, culled by signed area. Boxes are 5 faces from the footprint edge-walk; wrecks sink to a low box in a darkened seat color; facing nose; labels; 64-point ring clipped to the map. Sim untouched. See Renderer (v1 design).
 15. ~~**Brain intent overlay.**~~ Spokes per direction from `observe → encode → forward → softmax`, length relative to the argmax, STAY as a square, toggle in controls. Found the trained policy is near one-hot (see Policy gradient › Open). README GIF pending zoom.
-16. ~~ **Match readability.**~~ ~~Segmented HP bars~~, ~~name plates~~, ~~hit flash with damage number at pre-move positions~~, ~~storm damage numbers~~ (tint and pulse rejected). Open: short display names (`Entrant.short`), hull footprint (body + bow pentagon, inside the tile), hue exclusion near the storm blue.
+16. ~~ **Match readability.**~~ ~~Segmented HP bars~~, ~~name plates~~, ~~hit flash with damage number at pre-move positions~~, ~~storm damage numbers~~ (tint and pulse rejected). Open: short display names (`Entrant.short`), ~~hull footprint~~ (body + bow pentagon, inside the tile), hue exclusion near the storm blue.
 17. **Zoom and pan.** Camera gains `zoom` and `pan`; canvas becomes a fixed viewport with fit-to-view; drag to pan, wheel to zoom toward the cursor. Listeners in `main`, `Player.setCamera` as now. Order: camera math + tests → viewport → drag → wheel. Every open readability problem is the 40px roof.
 18. **Storm center randomization** — first rules change checked against a retrained brain with the overlay on.
 19. **Movement**: momentum + turn rate + ramming, and a Rammer bot. Hull footprint from 16 becomes a rotated shape here.
 20. Heal resource, then Kiter (deferred until 18 says what the meta looks like).
-15. Port step() to Rust — was "to learn Rust, not for speed"; at 25k matches/gen it's both.
-21. RTS: momentum physics, continuous positions, islands, ramming, disembarking; re-train
+21. Port step() to Rust — was "to learn Rust, not for speed"; at 25k matches/gen it's both.
+22. RTS: momentum physics, continuous positions, islands, ramming, disembarking; re-train
 
 ## Open
 - Item 18 movement "rework" thoughts how should ships interact with eachother. once displacement is a thing that can be affected by outside sources step() machinery doesnt account for that kind of thing yet.
@@ -321,11 +321,11 @@ one fifth of a 100-gen evolution run.
 - World units are tiles. Tile (i, j) spans [i, i+1] × [j, j+1]; centers at +0.5; z up, in tiles.
 
 ### Camera
-- `makeCamera(mode, rules) → { mode, project, depth, width, height }`. Per-mode basis and depth live in a `VIEWS` table (`Record<ViewMode, View>`), so a missing mode is a compile error.
+- `makeCamera(mode, view) → { mode, project, depth }`, `View = { zoom, pan }`. Per-mode basis and depth live in a `PROJECTIONS` table (`Record<ViewMode, Projection>`), so a missing mode is a compile error.
 - iso: sx = (x − y)·32, sy = (x + y)·16 − z·32. top: (x·40, y·40), z ignored.
-- Canvas size and origin come from the 8 projected corners of [0,W]×[0,H]×[0,Z_MAX] plus a 16px margin. 20×20: iso 1312×704, top 832×832.
+- `project = basis(p) · zoom + pan`, per axis. Zoom and pan are post-basis, so screen-space text and line widths never scale, and 17b rotation slots in before the basis without touching them.
+- `contentBounds(mode, rules)` is the 8-corner extent of [0,W]×[0,H]×[0,Z_MAX] in basis space; `naturalSize` adds the 16px margin; `fitView(mode, rules, vw, vh)` fits the content into a viewport (tight axis sets zoom, content centred). At `naturalSize` it reproduces the old fixed camera — iso 1312×704, top 832×832, `{0,20,0}` → `{16,368}` — which is the regression test. `zoomAt(view, at, factor)` is cursor-anchored and clamps *before* deriving pan so the anchor holds at `ZOOM_MIN/MAX` (0.25/4); `panBy` shifts in screen px. All pure, all tested.
 - In iso, tile (0,0) is the top of the diamond; north points up-right, east down-right.
-- project is basis · zoom + pan. fitView(), zoomAt() and panBy() are pure helper functions.
 
 ### Culling
 - `signedArea` is the shoelace formula in screen coords. Every face is authored in floor order — (i,j)→(i+1,j)→(i+1,j+1)→(i,j+1) as seen from outside — and `paint` draws only `signedArea > CULL_EPS` (1e-6). Back faces come out negative, side faces in top-down come out zero. Both projections have a positive determinant, so one sign convention works in both modes; no per-mode geometry.
@@ -338,23 +338,23 @@ one fifth of a 100-gen evolution run.
 
 ### Draw order
 - One `paint` call per layer: floor → ring → ships + intent (one sorted list). Then screen space: HP bars → hit lines and numbers → storm numbers → labels. Screen-space things are never occluded by boxes.
-- `paint` sorts a copy by `cam.depth(anchor)`; polys without an anchor count as 0. iso depth = x + y; top depth = 0 (stable sort keeps builder order). Every face of one ship shares the tile-center anchor, so a ship is atomic in the sort and its faces keep push order (top, sides, nose, intent).
+- `paint` sorts a copy by `cam.depth(anchor)`; polys without an anchor count as 0. iso depth = x + y; top depth = 0 (stable sort keeps builder order). Every face of one ship shares the tile-center anchor, so a ship is atomic in the sort and its faces keep push order (top, sides, intent).
 - Painter's sort by x + y is valid only because every body has a 1×1 footprint. Revisit: continuous positions or multi-tile hulls (roadmap 19/22).
 
 ### Ships
-- Box = footprint (inset 0.15) lifted to `h`, plus one side per footprint edge in floor order; culling leaves top+E+S in iso, top only in top-down. Sides shaded by `shade(color, SIDE_SHADE[k])`.
+- Hull = `hullFootprint(center, facing)`: a pentagon in local coords (`W .2, B .25, F .1, T .35`) rotated by the facing, every vertex within 0.35 of the tile centre so it stays inside the tile at any rotation. Roof is the footprint lifted to `h`; one side per footprint edge in floor order (any edge count). Sides shaded by `sideShade(a, b)`: outward normal of the edge vs `LIGHT` (NW), `0.72 + 0.18·dot`, so rotation gets shading for free. Winding and containment are pinned for all 8 facings. No nose; the facing is the shape.
 - Live: `SHIP_H` 0.6, seat color. Wreck: `WRECK_H` 0.1, `shade(seat, 0.45)`. Same builder, two numbers.
 - Seat color = `hslToHex((id−1)·360/n, .65, .5)`: deterministic, evenly spread for any lineup size.
-- hull is a pentagon footprint rotated by facing, sides shaded by outward normal (LIGHT from NW), and the painter's x+y sort still holds because the footprint stays inside the tile.
 
 ### Plate and marks (screen space)
 - Name over a segmented HP bar (one cell per HP) at `project(roofCenter) − lift`. Names come from a `Record<id, string>` built in `main` from the lineup (ship id = index + 1; shuffled matches must use the seating).
 - `Frame = { world, hits }`; `main` records one per step. Hit lines are drawn at **previous-frame** positions (attacks resolve pre-move), width `1 + amount`, damage number right of the target.
 - Storm damage number per ship = `prev.hp − cur.hp − min(prev.hp, Σ hits on it)`: derived from what happened, exact under overkill, no copy of `stormAt` in the renderer. Stopgap until `step` emits events (same revisit as stats attribution). Drawn left of the ship in storm blue.
-- All text goes through `outlinedText` (black stroke, then fill) so it reads on any background.
+- All text goes through `outlinedText` (theme.outline stroke, then fill) so it reads on any background.
 
 ### Files
 - One file per mechanic, not per function: `floor`, `ships`, `storm` (ring + damage numbers), `combat` (hit marks), `plate` (labels + bars), `intent`; `camera`/`paint`/`color` are infrastructure; `render.ts` composes.
+- Colours are a `Theme` (`render/theme.ts`: `LIGHT` = the original values, `DARK`), passed through `drawWorld` opts to every builder and draw function; no colour literals outside that file. `SceneOpts` lives in `render.ts` so `types.ts` never imports a render type. main's `applyTheme` is the only thing that sets `data-theme` on `:root` and calls `Player.setTheme`.
 
 ### Intent overlay
 - Per live NetBrain seat: `observe → encode → forward → softmax` on the frame, same calls the brain makes. One tapered spoke (base ±0.07, point at the tip), a square for STAY, argmax in yellow. Sorted with its ship (same anchor). Spoke winding was wrong at first and culled every arrow; intent.test pins 9 visible in both modes.
@@ -362,5 +362,5 @@ one fifth of a 100-gen evolution run.
 - Renderer imports `evo/` for this. Not a sim dependency.
 
 ### Viewport
-- Canvas backing size = CSS size, read back by main. CSS owns layout; fitCanvas copies clientWidth/Height into canvas.width/height so drawing stays 1:1. Not ctx.scale and not CSS-stretching a fixed backing size, because text and line widths must stay crisp at any zoom. setCamera always follows fitCanvas because resizing clears the canvas.
-- Backing size = CSS size × devicePixelRatio, read fresh each fitCanvas so monitor switches work. The dpr is the one context transform, applied per frame; zoom still goes through the camera.
+- The canvas is a fixed viewport. CSS lays it out (flex column, `overflow: hidden`); `fitCanvas` in main copies `clientWidth/Height × devicePixelRatio` into the backing size, read fresh each time so monitor switches work; `drawWorld` applies the dpr as the one `setTransform`, per frame, after the clear. `fitView`, `zoomAt` and pointer math stay in CSS px. Rejected: zoom via `ctx.scale` (text and line widths would scale) and CSS-stretching a fixed backing size (blurry).
+- `refit()` = fitCanvas → fitView → setCamera, on mode toggle and window resize; it resets any pan/zoom, by design. Startup does the same three lines inline because `Player` doesn't exist yet. Drag: pointer events with capture, `panBy` on the delta since the last move. Wheel: `zoomAt` at the cursor, factor 1.25/0.8 by the sign of `deltaY` only, `passive: false`. Resizing clears the canvas, so `setCamera` always follows `fitCanvas`.

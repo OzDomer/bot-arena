@@ -1,0 +1,19 @@
+{
+  "name": "@arena/sim",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./bots": "./src/roster.ts",
+    "./testing": "./src/test/fixtures.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2"
+  },
+  "scripts": {
+    "tournament": "tsx src/cli.ts",
+    "evolve": "tsx src/evolve-cli.ts",
+    "train": "tsx src/train-cli.ts"
+  },
+  "version": "0.1.0"
+}

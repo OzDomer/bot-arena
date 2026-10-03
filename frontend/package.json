@@ -1,0 +1,16 @@
+{
+  "name": "@arena/frontend",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "vite": "^8.3.0"
+  },
+  "dependencies": {
+    "@arena/sim": "*"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  }
+}

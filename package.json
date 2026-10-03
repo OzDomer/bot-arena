@@ -1,22 +1,23 @@
 {
-  "name": "game",
+  "name": "bot-arena",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
+    "dev": "npm run dev -w @arena/frontend",
+    "build": "npm run build -w @arena/frontend",
+    "preview": "npm run preview -w @arena/frontend",
     "test": "vitest",
-    "tournament": "tsx src/cli.ts",
-    "evolve": "tsx src/evolve-cli.ts",
-    "train": "tsx src/train-cli.ts"
+    "tournament": "npm run tournament -w @arena/sim --",
+    "evolve": "npm run evolve -w @arena/sim --",
+    "train": "npm run train -w @arena/sim --"
   },
   "devDependencies": {
-    "@types/node": "^26.6.2",
     "tsx": "^4.23.15",
     "typescript": "~6.0.2",
-    "vite": "^8.3.0",
     "vitest": "^4.1.11"
-  }
+  },
+  "workspaces": [
+    "sim",
+    "frontend"
+  ]
 }

@@ -361,3 +361,4 @@ one fifth of a 100-gen evolution run.
 
 ### Viewport
 - Canvas backing size = CSS size, read back by main. CSS owns layout; fitCanvas copies clientWidth/Height into canvas.width/height so drawing stays 1:1. Not ctx.scale and not CSS-stretching a fixed backing size, because text and line widths must stay crisp at any zoom. setCamera always follows fitCanvas because resizing clears the canvas.
+- Backing size = CSS size × devicePixelRatio, read fresh each fitCanvas so monitor switches work. The dpr is the one context transform, applied per frame; zoom still goes through the camera.

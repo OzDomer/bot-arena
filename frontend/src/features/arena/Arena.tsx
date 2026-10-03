@@ -4,7 +4,7 @@ import { NetBrain, showcase } from '@arena/sim/bots'
 import { Player } from '../../render/Player'
 import { DARK, LIGHT, type Theme } from '../../render/theme'
 import { type ViewMode, fitView, makeCamera, panBy, zoomAt } from '../../render/camera'
-
+const unused = 1
 function Arena() {
     useEffect(() => {
         const canvas = document.querySelector<HTMLCanvasElement>('#gameCanvas')

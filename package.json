@@ -9,7 +9,8 @@
     "test": "vitest",
     "tournament": "npm run tournament -w @arena/sim --",
     "evolve": "npm run evolve -w @arena/sim --",
-    "train": "npm run train -w @arena/sim --"
+    "train": "npm run train -w @arena/sim --",
+    "lint": "npm run lint -w @arena/frontend"
   },
   "devDependencies": {
     "tsx": "^4.23.15",

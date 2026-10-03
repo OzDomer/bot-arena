@@ -22,10 +22,6 @@ export function buildShips(world: World): Poly[] {
         const color = ship.hp > 0 ? shipColor : shade(shipColor, 0.45)
         const { x, y } = ship.position
         const anchor = { x: x + 0.5, y: y + 0.5, z: 0 }
-        const x0 = x + INSET
-        const x1 = x + 1 - INSET
-        const y0 = y + INSET
-        const y1 = y + 1 - INSET
         const foot = hullFootprint(anchor, ship.facing)
         polys.push({
             pts: foot.map(p => ({ ...p, z: h })),

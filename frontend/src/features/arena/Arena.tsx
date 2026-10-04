@@ -10,6 +10,7 @@ function Arena() {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const playerRef = useRef<Player>(null)
     const [turn, setTurn] = useState(0)
+    const [viewMode, setViewMode] = useState<ViewMode>('iso')
 
     useEffect(() => {
         const canvas = canvasRef.current
@@ -18,10 +19,11 @@ function Arena() {
         const ctx = canvas.getContext('2d')
         if (!ctx) throw new Error('no 2d context')
 
+
+
         const dark = window.matchMedia('(prefers-color-scheme: dark)')
         let theme = dark.matches ? DARK : LIGHT
 
-        let mode: ViewMode = 'iso'
 
         const seed = Date.now();
         // const seed = 1790266907455;
@@ -38,16 +40,6 @@ function Arena() {
 
         console.log('done at turn', final.turn, 'alive:', final.ships.filter(s => s.hp > 0).map(s => s.id));
 
-        const fitCanvas = () => {
-            const dpr = window.devicePixelRatio
-            canvas.width = canvas.clientWidth * dpr
-            canvas.height = canvas.clientHeight * dpr
-        }
-
-        fitCanvas()
-        let view = fitView(mode, world.rules, canvas.clientWidth, canvas.clientHeight)
-        const cam = makeCamera(mode, view)
-
         const names: Record<Ship['id'], string> = {}
         showcase.forEach((e, i) => { names[i + 1] = e.name })
 
@@ -56,20 +48,10 @@ function Arena() {
         for (const [id, brain] of Object.entries(brains))
             if (brain instanceof NetBrain) intent[Number(id)] = brain.weights
 
+        const cam = makeCamera('iso', fitView('iso', world.rules, canvas.clientWidth, canvas.clientHeight))
         const player = new Player(ctx, cam, history, setTurn, names, intent, theme)
         playerRef.current = player
 
-        const refit = () => {
-            fitCanvas()
-            view = fitView(mode, world.rules, canvas.clientWidth, canvas.clientHeight)
-            player.setCamera(makeCamera(mode, view))
-        }
-        const ro = new ResizeObserver(refit)
-        ro.observe(canvas)
-        document.getElementById('view')!.onclick = () => {
-            mode = mode === 'iso' ? 'top' : 'iso'
-            refit()
-        }
 
         const applyTheme = (t: Theme) => {
             theme = t
@@ -77,6 +59,51 @@ function Arena() {
             player.setTheme(t)
         }
         applyTheme(theme)
+
+        const onSchemeChange = (e: MediaQueryListEvent) => {
+            applyTheme(e.matches ? DARK : LIGHT)
+        }
+        dark.addEventListener('change', onSchemeChange)
+
+        document.getElementById('mode')!.onclick = () => {
+            applyTheme(theme === DARK ? LIGHT : DARK)
+        }
+
+
+        return () => {
+            console.log('clean up isle 4')
+            player.pause()
+            dark.removeEventListener('change', onSchemeChange)
+            playerRef.current = null
+
+        }
+
+    },
+        [])
+    useEffect(() => {
+        const canvas = canvasRef.current
+        const player = playerRef.current
+        if (!canvas || !player) return
+
+        const rules = PRESETS.bigmap
+
+        const refit = () => {
+            fitCanvas()
+            view = fitView(viewMode, rules, canvas.clientWidth, canvas.clientHeight)
+            player.setCamera(makeCamera(viewMode, view))
+        }
+
+        const ro = new ResizeObserver(refit)
+        ro.observe(canvas)
+        const fitCanvas = () => {
+            const dpr = window.devicePixelRatio
+            canvas.width = canvas.clientWidth * dpr
+            canvas.height = canvas.clientHeight * dpr
+        }
+
+        fitCanvas()
+        let view = fitView(viewMode, rules, canvas.clientWidth, canvas.clientHeight)
+
 
         let dragging = false
         let last = {
@@ -95,7 +122,7 @@ function Arena() {
             if (!dragging) return
             view = panBy(view, e.clientX - last.x, e.clientY - last.y)
             last = { x: e.clientX, y: e.clientY }
-            player.setCamera(makeCamera(mode, view))
+            player.setCamera(makeCamera(viewMode, view))
         }
         canvas.addEventListener('pointermove', onPointerMove)
 
@@ -110,35 +137,23 @@ function Arena() {
             const at = { x: e.clientX - r.left, y: e.clientY - r.top }
             const factor = e.deltaY < 0 ? 1.25 : 0.8
             view = zoomAt(view, at, factor)
-            player.setCamera(makeCamera(mode, view))
+            player.setCamera(makeCamera(viewMode, view))
         }
         canvas.addEventListener('wheel', onWheel, { passive: false })
 
 
-        const onSchemeChange = (e: MediaQueryListEvent) => {
-            applyTheme(e.matches ? DARK : LIGHT)
-        }
-        dark.addEventListener('change', onSchemeChange)
 
-        document.getElementById('mode')!.onclick = () => {
-            applyTheme(theme === DARK ? LIGHT : DARK)
-        }
+
         return () => {
-            console.log('clean up isle 4')
-            window.removeEventListener('resize', refit)
             canvas.removeEventListener('wheel', onWheel)
             canvas.removeEventListener('pointerdown', onPointerDown)
             canvas.removeEventListener('pointerup', onPointerUp)
             canvas.removeEventListener('pointermove', onPointerMove)
-            dark.removeEventListener('change', onSchemeChange)
             ro.disconnect()
-            player.pause()
-            playerRef.current = null
 
         }
 
-    },
-        [])
+    }, [viewMode])
     return (
         <>
             <div id="controls">
@@ -146,7 +161,7 @@ function Arena() {
                 <button onClick={() => playerRef.current?.pause()}>Pause</button>
                 <button onClick={() => playerRef.current?.stepBack()}>Back</button>
                 <button onClick={() => playerRef.current?.stepForward()}>Forward</button>
-                <button id="view">View</button>
+                <button onClick={() => setViewMode(viewMode === 'iso' ? 'top' : 'iso')}>View</button>
                 <button onClick={() => playerRef.current?.toggleIntent()} >Intent</button>
                 <button id="mode">dark/light</button>
                 <span>Turn: <span id="turnCounter">{turn}</span></span>

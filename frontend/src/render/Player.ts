@@ -4,6 +4,8 @@ import type { Camera } from './camera'
 import { drawWorld } from './render'
 import type { Theme } from './theme'
 
+export const FRAME_MS = 150
+
 export class Player {
     private i = 0;
     private timer: ReturnType<typeof setInterval> | undefined
@@ -16,6 +18,7 @@ export class Player {
     private intent: Record<Ship['id'], Weights>
     private showIntent = true
     private theme: Theme
+    private FrameMS = FRAME_MS
 
 
 
@@ -43,7 +46,7 @@ export class Player {
         this.timer = setInterval(() => {
             this.stepForward();
             if (this.i >= this.history.length - 1) this.pause();
-        }, 150);
+        }, this.FrameMS);
     }
     pause() { clearInterval(this.timer); this.timer = undefined }
     stepForward() { this.show(this.i + 1); }
@@ -62,4 +65,12 @@ export class Player {
         this.theme = theme
         this.show(this.i)
     }
+    setFrameMs(frameMS: number) {
+        this.FrameMS = frameMS
+        if (this.timer !== undefined) {
+            this.pause()
+            this.play()
+        }
+    }
 }
+

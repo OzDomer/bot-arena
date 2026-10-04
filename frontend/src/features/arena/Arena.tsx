@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { runMatch, type Frame, type Ship, type Weights, makeMatch, PRESETS } from '@arena/sim'
 import { NetBrain, showcase } from '@arena/sim/bots'
 import { Player } from '../../render/Player'
@@ -8,13 +8,11 @@ import { type ViewMode, fitView, makeCamera, panBy, zoomAt } from '../../render/
 function Arena() {
 
     const canvasRef = useRef<HTMLCanvasElement>(null)
+    const [turn, setTurn] = useState(0)
 
     useEffect(() => {
         const canvas = canvasRef.current
         if (!canvas) return
-
-        const turnCounter = document.getElementById("turnCounter")
-        if (!turnCounter) throw new Error('turnCounter')
 
         const ctx = canvas.getContext('2d')
         if (!ctx) throw new Error('no 2d context')
@@ -45,7 +43,6 @@ function Arena() {
             canvas.height = canvas.clientHeight * dpr
         }
 
-
         fitCanvas()
         let view = fitView(mode, world.rules, canvas.clientWidth, canvas.clientHeight)
         const cam = makeCamera(mode, view)
@@ -58,7 +55,7 @@ function Arena() {
         for (const [id, brain] of Object.entries(brains))
             if (brain instanceof NetBrain) intent[Number(id)] = brain.weights
 
-        const player = new Player(ctx, cam, history, turnCounter, names, intent, theme)
+        const player = new Player(ctx, cam, history, setTurn, names, intent, theme)
 
         const refit = () => {
             fitCanvas()
@@ -141,6 +138,7 @@ function Arena() {
             player.pause()
 
         }
+
     },
         [])
     return (
@@ -153,7 +151,7 @@ function Arena() {
                 <button id="view">View</button>
                 <button id="intent">Intent</button>
                 <button id="mode">dark/light</button>
-                <span>Turn: <span id="turnCounter">0</span></span>
+                <span>Turn: <span id="turnCounter">{turn}</span></span>
             </div>
             <canvas id="gameCanvas" ref={canvasRef}></canvas>
         </>

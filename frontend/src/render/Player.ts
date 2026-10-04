@@ -11,7 +11,7 @@ export class Player {
     private ctx: CanvasRenderingContext2D
     private cam: Camera
     private history: Frame[]
-    private turnEl: HTMLElement
+    private onFrame: (turn: number) => void
     private names: Record<Ship['id'], string>
     private intent: Record<Ship['id'], Weights>
     private showIntent = true
@@ -19,11 +19,11 @@ export class Player {
 
 
 
-    constructor(ctx: CanvasRenderingContext2D, cam: Camera, history: Frame[], turnEl: HTMLElement, names: Record<Ship['id'], string>, intent: Record<Ship['id'], Weights>, theme:Theme) {
+    constructor(ctx: CanvasRenderingContext2D, cam: Camera, history: Frame[], onFrame: (turn: number) => void, names: Record<Ship['id'], string>, intent: Record<Ship['id'], Weights>, theme: Theme) {
         this.ctx = ctx
         this.cam = cam
         this.history = history
-        this.turnEl = turnEl
+        this.onFrame = onFrame
         this.names = names
         this.intent = intent
         this.theme = theme
@@ -35,7 +35,7 @@ export class Player {
         const frame = this.history[this.i]
         const prev = this.history[Math.max(0, this.i - 1)].world
         drawWorld(this.ctx, this.cam, frame, prev, { names: this.names, intent: this.showIntent ? this.intent : {}, theme: this.theme })
-        this.turnEl.textContent = `${frame.world.turn}`
+        this.onFrame(frame.world.turn)
     }
 
     play() {
@@ -58,7 +58,7 @@ export class Player {
         this.show(this.i)
     }
 
-        setTheme(theme: Theme) {
+    setTheme(theme: Theme) {
         this.theme = theme
         this.show(this.i)
     }

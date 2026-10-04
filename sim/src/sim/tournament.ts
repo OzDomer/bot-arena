@@ -16,7 +16,7 @@ export function runTournament(entrants: Entrant[], matches: number, seed: number
             addStats(totals[seating[ship.id - 1]], perMatch[ship.id])
         }
         const result = outcome(final)
-        const key = result.kind === "win" ? entrants[seating[result.winner - 1]].name : result.kind 
+        const key = result.kind === "win" ? entrants[seating[result.winner - 1]].name : result.kind
         tally[key] = (tally[key] ?? 0) + 1
     }
 

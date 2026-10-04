@@ -1,14 +1,17 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { runMatch, type Frame, type Ship, type Weights, makeMatch, PRESETS } from '@arena/sim'
 import { NetBrain, showcase } from '@arena/sim/bots'
 import { Player } from '../../render/Player'
 import { DARK, LIGHT, type Theme } from '../../render/theme'
 import { type ViewMode, fitView, makeCamera, panBy, zoomAt } from '../../render/camera'
-const unused = 1
+
 function Arena() {
+
+    const canvasRef = useRef<HTMLCanvasElement>(null)
+
     useEffect(() => {
-        const canvas = document.querySelector<HTMLCanvasElement>('#gameCanvas')
-        if (!canvas) throw new Error('no canvas')
+        const canvas = canvasRef.current
+        if (!canvas) return
 
         const turnCounter = document.getElementById("turnCounter")
         if (!turnCounter) throw new Error('turnCounter')
@@ -85,41 +88,59 @@ function Arena() {
             x: 0, y: 0
 
         }
-
-        canvas.addEventListener('pointerdown', e => {
+        const onPointerDown = (e: PointerEvent) => {
             canvas.setPointerCapture(e.pointerId)
             dragging = true
             last = { x: e.clientX, y: e.clientY }
-        })
+        }
 
-        canvas.addEventListener('pointermove', e => {
+        canvas.addEventListener('pointerdown', onPointerDown)
+
+        const onPointerMove = (e: PointerEvent) => {
             if (!dragging) return
             view = panBy(view, e.clientX - last.x, e.clientY - last.y)
             last = { x: e.clientX, y: e.clientY }
             player.setCamera(makeCamera(mode, view))
-        })
+        }
+        canvas.addEventListener('pointermove', onPointerMove)
 
-        canvas.addEventListener('pointerup', () => {
+        const onPointerUp = () => {
             dragging = false
-        })
+        }
+        canvas.addEventListener('pointerup', onPointerUp)
 
-
-        canvas.addEventListener('wheel', e => {
+        const onWheel = (e: WheelEvent) => {
             e.preventDefault()
             const r = canvas.getBoundingClientRect()
             const at = { x: e.clientX - r.left, y: e.clientY - r.top }
             const factor = e.deltaY < 0 ? 1.25 : 0.8
             view = zoomAt(view, at, factor)
             player.setCamera(makeCamera(mode, view))
-        }, { passive: false })
+        }
+        canvas.addEventListener('wheel', onWheel, { passive: false })
 
-        dark.addEventListener('change', e => applyTheme(e.matches ? DARK : LIGHT))
+
+        const onSchemeChange = (e: MediaQueryListEvent) => {
+            applyTheme(e.matches ? DARK : LIGHT)
+        }
+        dark.addEventListener('change', onSchemeChange)
 
         document.getElementById('mode')!.onclick = () => {
             applyTheme(theme === DARK ? LIGHT : DARK)
         }
+        return () => {
+            console.log('clean up isle 4')
+            window.removeEventListener('resize', refit)
+            canvas.removeEventListener('wheel', onWheel)
+            canvas.removeEventListener('pointerdown', onPointerDown)
+            canvas.removeEventListener('pointerup', onPointerUp)
+            canvas.removeEventListener('pointermove', onPointerMove)
+            dark.removeEventListener('change', onSchemeChange)
+            player.pause()
 
-    }, [])
+        }
+    },
+        [])
     return (
         <>
             <div id="controls">
@@ -132,7 +153,7 @@ function Arena() {
                 <button id="mode">dark/light</button>
                 <span>Turn: <span id="turnCounter">0</span></span>
             </div>
-            <canvas id="gameCanvas"></canvas>
+            <canvas id="gameCanvas" ref={canvasRef}></canvas>
         </>
     )
 }

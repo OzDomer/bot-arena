@@ -13,6 +13,13 @@ function App() {
         window.history.replaceState(null, "", `?seed=${params.seed}&preset=${params.preset}`);
     }, [params])
 
-    return <Arena match={match} />
+    return (
+        <>
+            <button onClick={() => { navigator.clipboard.writeText(location.href) }} >copy match link</button>
+            <Arena match={match} />
+
+        </>
+    )
+
 }
 export default App

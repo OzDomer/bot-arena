@@ -1,0 +1,16 @@
+{
+  "name": "@arena/backend",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@arena/sim": "*"
+  },
+  "scripts": {
+    "dev": "tsx watch src/app.ts",
+    "start": "tsx src/app.ts"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.4"
+  }
+}

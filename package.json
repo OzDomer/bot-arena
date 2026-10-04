@@ -19,6 +19,7 @@
   },
   "workspaces": [
     "sim",
-    "frontend"
+    "frontend",
+    "backend"
   ]
 }

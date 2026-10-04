@@ -2,6 +2,8 @@ import { type PresetName, PRESETS, type Frame, playMatch, type Ship, type Weight
 import { NetBrain, showcase } from "@arena/sim/bots"
 import { useMemo } from "react"
 
+export type Match = ReturnType<typeof useMatch>
+
 export function useMatch(seed: number, preset: PresetName) {
     return useMemo(() => {
         const rules = PRESETS[preset]

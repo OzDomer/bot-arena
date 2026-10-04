@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { runMatch, type Frame, type Ship, type Weights, makeMatch, PRESETS } from '@arena/sim'
-import { NetBrain, showcase } from '@arena/sim/bots'
 import { Player } from '../../render/Player'
 import { DARK, LIGHT } from '../../render/theme'
 import { type ViewMode, fitView, makeCamera, panBy, zoomAt } from '../../render/camera'
 import useTheme from '../../shared/hooks/useTheme'
+import type { Match } from './useMatch'
 
-function Arena() {
+type ArenaProps = { match: Match }
+
+
+function Arena({ match }: ArenaProps) {
 
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const playerRef = useRef<Player>(null)
@@ -21,56 +23,32 @@ function Arena() {
         const ctx = canvas.getContext('2d')
         if (!ctx) throw new Error('no 2d context')
 
-        const seed = Date.now();
-        // const seed = 1790266907455;
 
-        console.log(`Match seed: ${seed}`);
-
-
-        const { world, brains } = makeMatch(showcase, seed, PRESETS.bigmap)
-
-        const history: Frame[] = [{ world, hits: [] }]
-
-        const final = runMatch(world, brains, (w, hits) => history.push({ world: w, hits }))
-
-
-        console.log('done at turn', final.turn, 'alive:', final.ships.filter(s => s.hp > 0).map(s => s.id));
-
-        const names: Record<Ship['id'], string> = {}
-        showcase.forEach((e, i) => { names[i + 1] = e.name })
-
-        const intent: Record<Ship['id'], Weights> = {}
-
-        for (const [id, brain] of Object.entries(brains))
-            if (brain instanceof NetBrain) intent[Number(id)] = brain.weights
-
-        const cam = makeCamera('iso', fitView('iso', world.rules, canvas.clientWidth, canvas.clientHeight))
-        const player = new Player(ctx, cam, history, setTurn, names, intent, LIGHT)
+        const cam = makeCamera('iso', fitView('iso', match.rules, canvas.clientWidth, canvas.clientHeight))
+        const player = new Player(ctx, cam, match.history, setTurn, match.names, match.intent, LIGHT)
         playerRef.current = player
 
 
         return () => {
-            console.log('clean up isle 4')
             player.pause()
             playerRef.current = null
-
         }
 
     },
-        [])
+        [match])
+
     useEffect(() => {
         const canvas = canvasRef.current
         const player = playerRef.current
         if (!canvas || !player) return
 
-        const rules = PRESETS.bigmap
 
         const refit = () => {
             fitCanvas()
-            view = fitView(viewMode, rules, canvas.clientWidth, canvas.clientHeight)
+            view = fitView(viewMode, match.rules, canvas.clientWidth, canvas.clientHeight)
             player.setCamera(makeCamera(viewMode, view))
         }
-
+        // fires once immediatly and refit sets the camera
         const ro = new ResizeObserver(refit)
         ro.observe(canvas)
         const fitCanvas = () => {
@@ -80,7 +58,7 @@ function Arena() {
         }
 
         fitCanvas()
-        let view = fitView(viewMode, rules, canvas.clientWidth, canvas.clientHeight)
+        let view = fitView(viewMode, match.rules, canvas.clientWidth, canvas.clientHeight)
 
 
         let dragging = false
@@ -131,11 +109,11 @@ function Arena() {
 
         }
 
-    }, [viewMode])
+    }, [viewMode, match])
 
     useEffect(() => {
         playerRef.current?.setTheme(theme === 'dark' ? DARK : LIGHT)
-    }, [theme])
+    }, [theme, match])
 
     return (
         <>

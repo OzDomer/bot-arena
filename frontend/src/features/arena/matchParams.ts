@@ -7,7 +7,7 @@ export function parseMatchParams(search: string): MatchParams | null {
     const params = new URLSearchParams(search)
     const seed = params.get('seed')
     const preset = params.get('preset')
-    // if (seed === null || !/^\d+$/.test(seed)) return null
+    if (seed === null || !/^\d+$/.test(seed)) return null
     const seedNum = Number(seed)
     if (seedNum > 4294967295) return null
     if (preset === null) return null

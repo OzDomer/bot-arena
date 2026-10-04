@@ -1,4 +1,4 @@
-import { type PresetName, PRESETS, type Frame, playMatch, type Ship, type Weights } from "@arena/sim"
+import { type PresetName, PRESETS, type Frame, playMatch, type Ship, type Weights, outcome } from "@arena/sim"
 import { NetBrain, showcase } from "@arena/sim/bots"
 import { useMemo } from "react"
 
@@ -9,7 +9,7 @@ export function useMatch(seed: number, preset: PresetName) {
         const rules = PRESETS[preset]
 
         const turns: Frame[] = []
-        const { initial, seating, brains } = playMatch(showcase, seed, rules, (world, hits) => turns.push({ world, hits }))
+        const { initial, seating, brains, final } = playMatch(showcase, seed, rules, (world, hits) => turns.push({ world, hits }))
         const history: Frame[] = [{ world: initial, hits: [] }, ...turns]
 
         const names: Record<Ship['id'], string> = {}
@@ -18,7 +18,7 @@ export function useMatch(seed: number, preset: PresetName) {
         const intent: Record<Ship['id'], Weights> = {}
         for (const [id, brain] of Object.entries(brains))
             if (brain instanceof NetBrain) intent[Number(id)] = brain.weights
-
-        return { history, names, intent, rules }
+        const result = outcome(final)
+        return { history, names, intent, rules, result }
     }, [seed, preset])
 }

@@ -8,6 +8,7 @@ import { type ViewMode, fitView, makeCamera, panBy, zoomAt } from '../../render/
 function Arena() {
 
     const canvasRef = useRef<HTMLCanvasElement>(null)
+    const playerRef = useRef<Player>(null)
     const [turn, setTurn] = useState(0)
 
     useEffect(() => {
@@ -56,6 +57,7 @@ function Arena() {
             if (brain instanceof NetBrain) intent[Number(id)] = brain.weights
 
         const player = new Player(ctx, cam, history, setTurn, names, intent, theme)
+        playerRef.current = player
 
         const refit = () => {
             fitCanvas()
@@ -64,15 +66,10 @@ function Arena() {
         }
         const ro = new ResizeObserver(refit)
         ro.observe(canvas)
-        document.getElementById('play')!.onclick = () => player.play()
-        document.getElementById('pause')!.onclick = () => player.pause()
-        document.getElementById('stepBack')!.onclick = () => player.stepBack()
-        document.getElementById('stepForward')!.onclick = () => player.stepForward()
         document.getElementById('view')!.onclick = () => {
             mode = mode === 'iso' ? 'top' : 'iso'
             refit()
         }
-        document.getElementById('intent')!.onclick = () => player.toggleIntent()
 
         const applyTheme = (t: Theme) => {
             theme = t
@@ -134,8 +131,9 @@ function Arena() {
             canvas.removeEventListener('pointerup', onPointerUp)
             canvas.removeEventListener('pointermove', onPointerMove)
             dark.removeEventListener('change', onSchemeChange)
-            window.removeEventListener('resize', refit)
+            ro.disconnect()
             player.pause()
+            playerRef.current = null
 
         }
 
@@ -144,12 +142,12 @@ function Arena() {
     return (
         <>
             <div id="controls">
-                <button id="play">Play</button>
-                <button id="pause">Pause</button>
-                <button id="stepBack">Back</button>
-                <button id="stepForward">Forward</button>
+                <button onClick={() => playerRef.current?.play()}>Play</button>
+                <button onClick={() => playerRef.current?.pause()}>Pause</button>
+                <button onClick={() => playerRef.current?.stepBack()}>Back</button>
+                <button onClick={() => playerRef.current?.stepForward()}>Forward</button>
                 <button id="view">View</button>
-                <button id="intent">Intent</button>
+                <button onClick={() => playerRef.current?.toggleIntent()} >Intent</button>
                 <button id="mode">dark/light</button>
                 <span>Turn: <span id="turnCounter">{turn}</span></span>
             </div>

@@ -65,7 +65,8 @@ function Arena() {
             view = fitView(mode, world.rules, canvas.clientWidth, canvas.clientHeight)
             player.setCamera(makeCamera(mode, view))
         }
-        window.addEventListener('resize', refit)
+        const ro = new ResizeObserver(refit)
+        ro.observe(canvas)
         document.getElementById('play')!.onclick = () => player.play()
         document.getElementById('pause')!.onclick = () => player.pause()
         document.getElementById('stepBack')!.onclick = () => player.stepBack()
@@ -136,6 +137,7 @@ function Arena() {
             canvas.removeEventListener('pointerup', onPointerUp)
             canvas.removeEventListener('pointermove', onPointerMove)
             dark.removeEventListener('change', onSchemeChange)
+            window.removeEventListener('resize', refit)
             player.pause()
 
         }

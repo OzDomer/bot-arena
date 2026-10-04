@@ -1,6 +1,6 @@
 export { clamp, inCircle } from './sim/geometry';
 export { stormAt } from './sim/storm'
-export { PRESETS } from './sim/presets'
+export { PRESETS, type PresetName, isPresetName } from './sim/presets'
 export { observe } from './sim/observe'
 export { step } from './sim/step'
 export { resolveAttacks } from './sim/combat'

@@ -18,7 +18,7 @@ Each entry: what we decided, why, and what it would take to revisit.
 - **Sample size.** 1k matches → identical bots spread ±2pp; 10k → ±0.6pp. Balance claims need 10k. Headless: 10k matches ≈ 4 s in Node (~2,500 matches/s, ~500k `step()`/s).
 - **Rules presets.** `PRESETS` in `sim/src/sim/presets.ts` is a `Record<PresetName, Rules>`, each spreading `DEFAULT_RULES` and overriding only what changes. CLI takes the name as argv[3]; `runTournament` threads it to `makeMatch`. Presets are data, not functions — no derivation of storm timing from map size (rejected, see findings: startTurn barely matters, so there's nothing worth deriving). Presets are the experiment record: don't overwrite one with another.
 - **Renderer is build → paint.** Builders are pure `World → Poly[]` in world space; `paint(ctx, cam, polys)` does all projection, culling and styling. Builders are tested without a canvas; paint is checked by eye. Same split as sim/render.
-- **`main` owns the DOM.** It finds elements, sizes the canvas and wires events. `Player` only draws into the ctx and element it's handed; `setCamera` swaps the view on the current frame without touching layout.
+- **React owns the DOM** Arena owns the canvas. Arena gets the canvas through a ref, sizes it and wires its listeners in effects that clean up after themselves. Player only draws into the ctx it's handed and reports the shown turn via onFrame; setCamera swaps the view on the current frame without touching layout.
 - **The renderer reads the sim only through `@arena/sim`.** Since the workspace split (PLATFORM roadmap 3) the frontend is its own package; the sim's `exports` map is the boundary and deep imports don't resolve. The intent overlay gets `observe`/`encode`/`forward`/`softmax` from the core entry and `NetBrain` (`public readonly weights`) from `./bots`; a getter interface waits for a second inspectable brain type. Everything else the renderer shows is derived from `World`/`Hit` data; no sim rule is re-implemented in `render/`.
 
 ## Rules (v1)
@@ -30,7 +30,7 @@ Each entry: what we decided, why, and what it would take to revisit.
 - **One ship per tile.** Wrecks, stayers and clamped moves claim first; movers resolve in id order (lower id wins — known bias, washed out by random seating); swaps bounce both; bounces cascade until stable. Ships are solid: no passing through each other. (Ramming later.)
 - **Facing = last move direction.** No rotate action. A bounced move still turns the ship. Rear hits ×2, side/front ×1.
 - **Storm:** circle, center fixed at map center for now (randomize per match later), radius shrinks one tile per phase after `startTurn`, damage `baseDamage × phase`, applied after moves, whole map is storm once radius goes negative (floors at −1). Bots see the storm as a player would: center, radius and phase, never the damage number.
-- **Last one standing wins.** 0 alive = draw, >1 at turn cap = timeout.
+- **Last one standing wins.** 0 alive = draw, >1 at turn cap = timeout. Implemented once as outcome(final); the tournament, the viewer and later settlement all classify through it.
 > v1 = 10×10, storm start 20 / shrink 10. Superseded by v2 (20×20, shrink 5) after the rules experiments below. All findings before "Rules experiments" were measured under v1.
 
 ## Rules (v2)
@@ -41,7 +41,7 @@ Each entry: what we decided, why, and what it would take to revisit.
 ## Rejected
 - Damage RNG (luck, not skill). Move-XOR-attack (kills the RTS feel). Bracing (rewards camping). Bot "retry" on blocked move (breaks the GM model; bots can see the tile is taken). Coward v2 with storm awareness (its problem is the flee trigger, not the storm — deferred until heals — see roadmap). Capping `damageDealt` at remaining HP (needs an arbitrary overkill split).
 - Deriving storm timing from map size (`startTurn` barely matters on 20×20; nothing worth deriving — presets stay plain data).
-- `?view=` URL param for the camera mode — a reload reseeds the match (`Date.now()`), so the two views could never be compared on the same match. Replaced by a toggle button.
+- `?view=` URL param for the camera mode — ~~a reload reseeds the match (`Date.now()`)~~. Replaced by a toggle button.
 - Storm tint on ships and a ring pulse on phase change — the floor tint already shows both; a per-tick storm damage number carries information the floor doesn't.
 - Random seat colors — unstable across reloads and not guaranteed distinct. Hue spread by id instead.
 
@@ -64,8 +64,8 @@ Each entry: what we decided, why, and what it would take to revisit.
 16. ~~ **Match readability.**~~ ~~Segmented HP bars~~, ~~name plates~~, ~~hit flash with damage number at pre-move positions~~, ~~storm damage numbers~~ (tint and pulse rejected). Open: short display names (`Entrant.short`), ~~hull footprint~~ (body + bow pentagon, inside the tile), hue exclusion near the storm blue.
 17. ~~**Zoom and pan.**~~ See Renderer › Viewport.
 17b. **Camera rotation** (parked). Rotation goes before the basis. Shading is free (`sideShade` works off world normals, light stays NW), depth is not: iso depth = x + y is only valid at 0°, so `depth` must take the rotation.
-17c. draw once per frame. Handlers only update view and request a frame with requestAnimationFrame, and the draw happens there. Done when iso dragging stays smooth with acceleration off. That's an easy test now that you know how to turn it off.
-18. **Storm center randomization** — first rules change checked against a retrained brain with the overlay on.
+17c. **draw once per frame**: Handlers only update view and request a frame with requestAnimationFrame, and the draw happens there. Done when iso dragging stays smooth in Chrome with hardware acceleration off.
+18. **Storm center randomization** — first rules change checked against a retrained brain with the overlay on. Tbd: add phones support here.
 19. **Movement**: momentum + turn rate + ramming, and a Rammer bot. The hull already rotates with facing (16); here it gets a continuous heading, which ends the 1×1 painter's-sort assumption (see Draw order).
 20. Heal resource, then Kiter (deferred until 18 says what the meta looks like).
 21. Port step() to Rust — was "to learn Rust, not for speed"; at 25k matches/gen it's both.
@@ -348,14 +348,14 @@ one fifth of a 100-gen evolution run.
 - Seat color = `hslToHex((id−1)·360/n, .65, .5)`: deterministic, evenly spread for any lineup size.
 
 ### Plate and marks (screen space)
-- Name over a segmented HP bar (one cell per HP) at `project(roofCenter) − lift`. Names come from a `Record<id, string>` built in `main` from the lineup (ship id = index + 1; shuffled matches must use the seating).
-- `Frame = { world, hits }`; `main` records one per step. Hit lines are drawn at **previous-frame** positions (attacks resolve pre-move), width `1 + amount`, damage number right of the target.
+- Name over a segmented HP bar (one cell per HP) at `project(roofCenter) − lift`. Names are a `Record<id, string>` built in useMatch from playMatch's seating.
+- `Frame = { world, hits }`; `useMatch` records one per step via `playMatch`'s `onTurn`; frame 0 is initial. Hit lines are drawn at **previous-frame** positions (attacks resolve pre-move), width `1 + amount`, damage number right of the target.
 - Storm damage number per ship = `prev.hp − cur.hp − min(prev.hp, Σ hits on it)`: derived from what happened, exact under overkill, no copy of `stormAt` in the renderer. Stopgap until `step` emits events (same revisit as stats attribution). Drawn left of the ship in storm blue.
 - All text goes through `outlinedText` (theme.outline stroke, then fill) so it reads on any background.
 
 ### Files
 - One file per mechanic, not per function: `floor`, `ships`, `storm` (ring + damage numbers), `combat` (hit marks), `plate` (labels + bars), `intent`; `camera`/`paint`/`color` are infrastructure; `render.ts` composes.
-- Colours are a `Theme` (`render/theme.ts`: `LIGHT` = the original values, `DARK`), passed through `drawWorld` opts to every builder and draw function; no colour literals outside that file. `SceneOpts` lives in `render.ts` so `types.ts` never imports a render type. main's `applyTheme` is the only thing that sets `data-theme` on `:root` and calls `Player.setTheme`.
+- Colours are a `Theme` (`render/theme.ts`: `LIGHT` = the original values, `DARK`), passed through `drawWorld` opts to every builder and draw function; no colour literals outside that file. `SceneOpts` lives in `render.ts` so `types.ts` never imports a render type. `useTheme` sets `data-theme`; `Arena`'s theme effect calls `Player.setTheme`.
 
 ### Intent overlay
 - Per live NetBrain seat: `observe → encode → forward → softmax` on the frame, same calls the brain makes. One tapered spoke (base ±0.07, point at the tip), a square for STAY, argmax in yellow. Sorted with its ship (same anchor). Spoke winding was wrong at first and culled every arrow; intent.test pins 9 visible in both modes.
@@ -363,6 +363,6 @@ one fifth of a 100-gen evolution run.
 - Gets these from `@arena/sim`; they're sim code, but nothing in the sim depends on the overlay.
 
 ### Viewport
-- The canvas is a fixed viewport. CSS lays it out (flex column, `overflow: hidden`); `fitCanvas` in main copies `clientWidth/Height × devicePixelRatio` into the backing size, read fresh each time so monitor switches work; `drawWorld` applies the dpr as the one `setTransform`, per frame, after the clear. `fitView`, `zoomAt` and pointer math stay in CSS px. Rejected: zoom via `ctx.scale` (text and line widths would scale) and CSS-stretching a fixed backing size (blurry).
-- `refit()` = fitCanvas → fitView → setCamera, on mode toggle and window resize; it resets any pan/zoom, by design. Startup does the same three lines inline because `Player` doesn't exist yet. Drag: pointer events with capture, `panBy` on the delta since the last move. Wheel: `zoomAt` at the cursor, factor 1.25/0.8 by the sign of `deltaY` only, `passive: false`. Resizing clears the canvas, so `setCamera` always follows `fitCanvas`.
+- The canvas is a fixed viewport. CSS lays it out (flex column, `overflow: hidden`); `fitCanvas` in `Arena`'s camera effect `clientWidth/Height × devicePixelRatio` into the backing size, read fresh each time so monitor switches work; `drawWorld` applies the dpr as the one `setTransform`, per frame, after the clear. `fitView`, `zoomAt` and pointer math stay in CSS px. Rejected: zoom via `ctx.scale` (text and line widths would scale) and CSS-stretching a fixed backing size (blurry).
+- `refit()` = fitCanvas → fitView → setCamera, the camera effect re-runs on viewMode/match, and a ResizeObserver on the canvas replaces the window resize listener. It resets any pan/zoom, by design. Now `Player` starts with a placeholder iso camera and the `ResizeObserver`'s first callback sets the real one.. Drag: pointer events with capture, `panBy` on the delta since the last move. Wheel: `zoomAt` at the cursor, factor 1.25/0.8 by the sign of `deltaY` only, `passive: false`. Resizing clears the canvas, so `setCamera` always follows `fitCanvas`.
 - Known limitation - Every pointer/wheel event triggers a full drawWorld. On CPU-only rendering (hardware acceleration off, low-end phones), iso drops frames while dragging; top doesn't.

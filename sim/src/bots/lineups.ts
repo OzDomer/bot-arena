@@ -12,6 +12,8 @@ export const showcase = (
         'chaserV2',
         'random',
         'cowardV1',
+        'reinforceV1Fit',
+        'reinforceV1Dense',
         'reinforceV2'
     ] as const).map(entrant)
 

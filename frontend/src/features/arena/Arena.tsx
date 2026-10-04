@@ -58,7 +58,7 @@ function Arena({ match }: ArenaProps) {
             view = fitView(viewMode, match.rules, canvas.clientWidth, canvas.clientHeight)
             player.setCamera(makeCamera(viewMode, view))
         }
-        // fires once immediatly and refit sets the camera
+        // fires once immediately and refit sets the camera
         const ro = new ResizeObserver(refit)
         ro.observe(canvas)
         const fitCanvas = () => {

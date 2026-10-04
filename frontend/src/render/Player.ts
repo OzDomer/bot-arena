@@ -18,7 +18,7 @@ export class Player {
     private intent: Record<Ship['id'], Weights>
     private showIntent = true
     private theme: Theme
-    private frameMS = FRAME_MS
+    private frameMs = FRAME_MS
 
 
 
@@ -46,7 +46,7 @@ export class Player {
         this.timer = setInterval(() => {
             this.stepForward();
             if (this.i >= this.history.length - 1) this.pause();
-        }, this.frameMS);
+        }, this.frameMs);
     }
     pause() { clearInterval(this.timer); this.timer = undefined }
     stepForward() { this.show(this.i + 1); }
@@ -66,7 +66,7 @@ export class Player {
         this.show(this.i)
     }
     setFrameMs(frameMS: number) {
-        this.frameMS = frameMS
+        this.frameMs = frameMS
         if (this.timer !== undefined) {
             this.pause()
             this.play()

@@ -1,38 +1,38 @@
-import type { Entrant } from "../types"
 import { entrant } from "./entrants"
 
 
 
-export const showcase: Entrant[] =
+export const showcase = (
     [
-        entrant('evoVulture'),
-        entrant('evo'),
-        entrant('camperV1'),
-        entrant('camperV2'),
-        entrant('chaserV1'),
-        entrant('chaserV2'),
-        entrant('random'),
-        entrant('cowardV1'),
-        entrant('reinforceV2')
-    ]
+        'evoVulture',
+        'evo',
+        'camperV1',
+        'camperV2',
+        'chaserV1',
+        'chaserV2',
+        'random',
+        'cowardV1',
+        'reinforceV2'
+    ] as const).map(entrant)
 
-
-export const heldout: Entrant[] =
+export const heldout = (
     [
-        entrant('evoVulture'),
-        entrant('evo'),
-        entrant('evoVulture'),
-        entrant('camperV2'),
-        entrant('camperV2'),
-        entrant('chaserV2'),
-        entrant('chaserV2'),
-        entrant('cowardV1')
-    ]
+        'evoVulture',
+        'evo',
+        'evoVulture',
+        'camperV2',
+        'camperV2',
+        'chaserV2',
+        'chaserV2',
+        'cowardV1'
+    ] as const).map(entrant)
 
 
-export const trainingPool: Entrant[] = [
-    entrant('chaserV2'),
-    entrant('evo'),
-    entrant('camperV2'),
-    entrant('cowardV1')
-]
+export const trainingPool = (
+    [
+        'chaserV2',
+        'evo',
+        'camperV2',
+        'cowardV1'
+    ] as const).map(entrant)
+

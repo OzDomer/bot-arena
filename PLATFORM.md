@@ -11,8 +11,8 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 ## Architecture
 - **One repo, npm workspaces:** `sim/` (`@arena/sim`: sim, evo, bots, CLIs, brains), `frontend/` (the Vite app; React shell from roadmap 4), `backend/` (Express; joins as a workspace at roadmap 5). Both apps depend on `@arena/sim`; nothing depends on an app.
 - **The server never streams a match.** It publishes a match descriptor (System design › Match descriptor) and every client runs the sim locally, playing back by wall clock: `frame = (now − startAt) / FRAME_MS`. Everyone sees the same frame at the same instant, late joiners land on the right frame, and the server's cost per viewer is one idle connection. This is what determinism buys and it's the headline.
--Live is a DVR. Viewers can pause, rewind and step; stepping forward stops at the live frame (a UX cap, not security: bets are closed by then, and anyone can run ahead in devtools). Behind live shows a Live button that snaps back. Speed > 1× only until caught up. now is the server's clock: the client derives an offset from server time and uses now + offset, or countdowns and frames drift by the user's clock error.
-- **The renderer is the audit tool.** Anyone can take a revealed seed, replay the match in the browser, and check the published result. No separate "verify" feature; the frontend already is one. `/matches/:id` serves the descriptor, the revealed secret and the stored result; the page checks sha256(secret) === commitHash, replays, and compares winners. That replaces roadmap 4's `?seed= link`, which carries no lineup or simVersion and can't be the trustless version. 
+- **Live is a DVR**. Viewers can pause, rewind and step; stepping forward stops at the live frame (a UX cap, not security: bets are closed by then, and anyone can run ahead in devtools). Behind live shows a Live button that snaps back. Speed > 1× only until caught up. now is the server's clock: the client derives an offset from server time and uses now + offset, or countdowns and frames drift by the user's clock error.
+- **The renderer is the audit tool.** Anyone can take a revealed seed, replay the match in the browser, and check the published result. No separate "verify" feature; the frontend already is one. `/matches/:id` serves the descriptor, the revealed secret and the stored result; the page checks `sha256(secret) === commitHash`, replays, and compares winners. That replaces roadmap 4's `?seed=` link, which carries no lineup or simVersion and can't be the trustless version. 
 - **One backend process is the whole backend:** HTTP, SSE fan-out, and the match scheduler. Scaling past one process is under Open.
 
 ## Stack
@@ -52,7 +52,7 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 
   | phase | on entry | published |
   |---|---|---|
-  | `scheduled` | row created: lineup picked, `secret` generated, `commitHash`, stored, `simVersion` recorded| nothing |
+  | `scheduled` | row created: lineup picked, `secret` generated, `commitHash` stored, `simVersion` recorded| nothing |
   | `open` | at `opensAt` | lineup, preset, simVersion, odds, `commitHash`, `closesAt`; bets accepted |
   | `closed` | at `closesAt` | bets refused; pool frozen |
   | `revealed` | immediately after close | `secret`, derived `seed`, `startAt = now + lead`; clients replay |
@@ -61,7 +61,7 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 - `closed → revealed` is immediate; the gap exists only so "bets are closed" and "here is the seed" are two events, never one.
 - `startAt` is a few seconds after reveal so clients can fetch and prepare before frame 0.
 - Odds are precomputed per lineup (`runTournament`, 10k matches, ~4 s) when the lineup is inserted, not per match. Lineups come from a curated table; the scheduler rotates through them.
-- `winner` is an entrant name, or `draw` / `timeout` (both refund). classified by `outcome(final)` from the core entry, the same function the tournament and the viewer use.
+- `winner` is an entrant name, or `draw` / `timeout` (both refund), classified by `outcome(final)` from the core entry, the same function the tournament and the viewer use.
 
 ## Fairness
 - **Commit-reveal.** At `scheduled` the server generates `secret = randomBytes(32)` and stores `commitHash = sha256(secret)`. The hash is public from `open`. After `closed` the secret is published; clients check `sha256(secret) === commitHash` and derive the same seed.
@@ -69,10 +69,8 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 - **Why 32 bytes and not the sim's 32-bit seed.** `makeRng` takes 32 bits. Committing `sha256(seed)` of a 32-bit value is brute-forceable (4 billion hashes) before bets close. The secret has 256 bits of entropy; the sim seed is derived from it (first 4 bytes). No salt, no key: salting protects low-entropy inputs, and this one isn't.
 - **Nothing seed-dependent is public before `revealed`.** Seating is shuffled from the seed, so it's unknown during betting; only the lineup, preset and odds are.
 - **No in-play betting, by construction.** The match is fully determined the moment the seed is public, so any market open during playback is free money for anyone who runs the sim. The architecture forbids it; this isn't a feature left for later. Dynamic odds still exist: the parimutuel pool moves with every bet during `open`.
-- The winner toast appearing after playback is UI politeness. A client with devtools open knows the winner at reveal and can do nothing with it.
-- Known limit: the server could grind secrets for an outcome it likes. Not a concern under parimutuel with play money; a client seed would close it.
-- Commit-reveal doesn't stop secret grinding. It prevents changing the secret after committing, not generating many secrets privately and committing a favorable one. Acceptable for play money. Revisit with outside entropy (a later public value, or user-contributed randomness mixed into the seed).
-
+- the result shown at the end of playback is UI politeness. A client with devtools open knows the winner at reveal and can do nothing with it.
+- Known limit: the server could grind secrets for an outcome it likes. Not a concern under parimutuel with play money; a client seed or outside entropy would close it.
 
 ## Realtime
 - **SSE, not WebSockets.** Traffic is one-directional: the server announces, clients listen. A bet is a normal `POST`. WebSockets add a dependency and an upgrade handshake for a client channel that doesn't exist.
@@ -131,4 +129,3 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 - Migrations instead of `sync()`. After first deployment.
 - Scaling past one process: Postgres is already shared; needs Redis pub/sub for SSE fan-out and a single elected scheduler. All three arrive together; none are needed for one box.
 - Replay history page (`/matches` list with winners) as the first thing after the demo line, since it's read-only and the data is already there.
-- Commit-reveal doesn't stop the server from choosing a favorable secret before committing ("secret grinding"). The fix is outside entropy.

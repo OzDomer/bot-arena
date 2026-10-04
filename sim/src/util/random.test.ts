@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { deriveSeed, makeRng, shuffle } from "./random"
+import { deriveSeed, makeRng, seedFromSecret, shuffle } from "./random"
 
 describe('shuffle', () => {
     it('deterministic shuffle works', () => {
@@ -31,6 +31,31 @@ describe('deriveSeed', () => {
     })
     it('different index different output', () => {
         expect(deriveSeed(1111, 'testing', 1)).not.toBe(deriveSeed(1111, 'testing', 2))
+    })
+})
+
+describe('seedFromSecret', () => {
+    it('reads the first four bytes big-endian', () => {
+        const bytes = new Uint8Array(32)
+        bytes.set([0x12, 0x34, 0x56, 0x78])
+        expect(seedFromSecret(bytes)).toEqual(305419896)
+    })
+
+    it('reads all-FF as max uint32', () => {
+        const bytes = new Uint8Array(32)
+        bytes.set([0xFF, 0xFF, 0xFF, 0xFF])
+        expect(seedFromSecret(bytes)).toEqual(4294967295)
+    })
+
+    it('only first 4 bytes count', () => {
+        const bytes = new Uint8Array(32)
+        bytes.set([0x12, 0x34, 0x56, 0x78, 0x69])
+        expect(seedFromSecret(bytes)).toEqual(305419896)
+    })
+
+    it('less than 32 bytes errors', () => {
+        const bytes = new Uint8Array(31)
+        expect(() => seedFromSecret(bytes)).toThrow('32 bytes')
     })
 })
 

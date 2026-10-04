@@ -36,3 +36,9 @@ export function deriveSeed(seed: number, purpose: string, index = 0): number {
     h ^= h >>> 13
     return h >>> 0
 }
+
+export function seedFromSecret(secret: Uint8Array): number {
+    if (secret.length !== 32) throw new Error(`secret must be 32 bytes, got ${secret.length}`)
+    const combined = (secret[0] << 24) | (secret[1] << 16) | (secret[2] << 8) | secret[3]
+    return combined >>> 0
+}

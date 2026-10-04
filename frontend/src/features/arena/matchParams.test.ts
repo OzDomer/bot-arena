@@ -48,4 +48,8 @@ describe('parseMatchParams', () => {
         expect(parseMatchParams('?seed=42&preset=xd')).toBeNull()
     })
 
+        it('unknown preset', () => {
+        expect(parseMatchParams('?seed=42&preset=toString')).toBeNull()
+    })
+
 })

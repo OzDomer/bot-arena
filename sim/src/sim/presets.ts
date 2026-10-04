@@ -11,7 +11,7 @@ export const PRESETS = {
 
 export type PresetName = keyof typeof PRESETS
 export function isPresetName(s: string): s is PresetName {
-    return s in PRESETS
+    return Object.hasOwn(PRESETS, s) 
 }
 
 

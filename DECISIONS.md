@@ -64,6 +64,7 @@ Each entry: what we decided, why, and what it would take to revisit.
 16. ~~ **Match readability.**~~ ~~Segmented HP bars~~, ~~name plates~~, ~~hit flash with damage number at pre-move positions~~, ~~storm damage numbers~~ (tint and pulse rejected). Open: short display names (`Entrant.short`), ~~hull footprint~~ (body + bow pentagon, inside the tile), hue exclusion near the storm blue.
 17. ~~**Zoom and pan.**~~ See Renderer › Viewport.
 17b. **Camera rotation** (parked). Rotation goes before the basis. Shading is free (`sideShade` works off world normals, light stays NW), depth is not: iso depth = x + y is only valid at 0°, so `depth` must take the rotation.
+17c. draw once per frame. Handlers only update view and request a frame with requestAnimationFrame, and the draw happens there. Done when iso dragging stays smooth with acceleration off. That's an easy test now that you know how to turn it off.
 18. **Storm center randomization** — first rules change checked against a retrained brain with the overlay on.
 19. **Movement**: momentum + turn rate + ramming, and a Rammer bot. The hull already rotates with facing (16); here it gets a continuous heading, which ends the 1×1 painter's-sort assumption (see Draw order).
 20. Heal resource, then Kiter (deferred until 18 says what the meta looks like).
@@ -364,3 +365,4 @@ one fifth of a 100-gen evolution run.
 ### Viewport
 - The canvas is a fixed viewport. CSS lays it out (flex column, `overflow: hidden`); `fitCanvas` in main copies `clientWidth/Height × devicePixelRatio` into the backing size, read fresh each time so monitor switches work; `drawWorld` applies the dpr as the one `setTransform`, per frame, after the clear. `fitView`, `zoomAt` and pointer math stay in CSS px. Rejected: zoom via `ctx.scale` (text and line widths would scale) and CSS-stretching a fixed backing size (blurry).
 - `refit()` = fitCanvas → fitView → setCamera, on mode toggle and window resize; it resets any pan/zoom, by design. Startup does the same three lines inline because `Player` doesn't exist yet. Drag: pointer events with capture, `panBy` on the delta since the last move. Wheel: `zoomAt` at the cursor, factor 1.25/0.8 by the sign of `deltaY` only, `passive: false`. Resizing clears the canvas, so `setCamera` always follows `fitCanvas`.
+- Known limitation - Every pointer/wheel event triggers a full drawWorld. On CPU-only rendering (hardware acceleration off, low-end phones), iso drops frames while dragging; top doesn't.

@@ -4,9 +4,17 @@ import { DARK, LIGHT } from '../../render/theme'
 import { type ViewMode, fitView, makeCamera, panBy, zoomAt } from '../../render/camera'
 import useTheme from '../../shared/hooks/useTheme'
 import type { Match } from './useMatch'
+import type { Outcome, Ship } from '@arena/sim'
 
 type ArenaProps = { match: Match }
 
+function resultText(result: Outcome, names: Record<Ship['id'], string>): string {
+    switch (result.kind) {
+        case 'win': return `${names[result.winner]} wins!`
+        case 'draw': return `Draw`
+        case 'timeout': return `Timeout`
+    }
+}
 
 function Arena({ match }: ArenaProps) {
 
@@ -16,6 +24,8 @@ function Arena({ match }: ArenaProps) {
     const [viewMode, setViewMode] = useState<ViewMode>('iso')
     const [speed, setSpeed] = useState(1)
     const { theme, toggleTheme } = useTheme()
+    const lastTurn = match.history.at(-1)!.world.turn
+    const finished = turn === lastTurn
 
     useEffect(() => {
         const canvas = canvasRef.current
@@ -122,6 +132,7 @@ function Arena({ match }: ArenaProps) {
     return (
         <>
             <div id="controls">
+                {finished && <span>{resultText(match.result, match.names)}</span>}
                 <button onClick={() => playerRef.current?.play()}>Play</button>
                 <button onClick={() => playerRef.current?.pause()}>Pause</button>
                 <button onClick={() => playerRef.current?.stepBack()}>Back</button>

@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { runMatch, type Frame, type Ship, type Weights, makeMatch, PRESETS } from '@arena/sim'
 import { NetBrain, showcase } from '@arena/sim/bots'
 import { Player } from '../../render/Player'
-import { DARK, LIGHT, type Theme } from '../../render/theme'
+import { DARK, LIGHT } from '../../render/theme'
 import { type ViewMode, fitView, makeCamera, panBy, zoomAt } from '../../render/camera'
+import useTheme from '../../shared/hooks/useTheme'
 
 function Arena() {
 
@@ -11,6 +12,7 @@ function Arena() {
     const playerRef = useRef<Player>(null)
     const [turn, setTurn] = useState(0)
     const [viewMode, setViewMode] = useState<ViewMode>('iso')
+    const { theme, toggleTheme } = useTheme()
 
     useEffect(() => {
         const canvas = canvasRef.current
@@ -18,12 +20,6 @@ function Arena() {
 
         const ctx = canvas.getContext('2d')
         if (!ctx) throw new Error('no 2d context')
-
-
-
-        const dark = window.matchMedia('(prefers-color-scheme: dark)')
-        let theme = dark.matches ? DARK : LIGHT
-
 
         const seed = Date.now();
         // const seed = 1790266907455;
@@ -49,31 +45,13 @@ function Arena() {
             if (brain instanceof NetBrain) intent[Number(id)] = brain.weights
 
         const cam = makeCamera('iso', fitView('iso', world.rules, canvas.clientWidth, canvas.clientHeight))
-        const player = new Player(ctx, cam, history, setTurn, names, intent, theme)
+        const player = new Player(ctx, cam, history, setTurn, names, intent, LIGHT)
         playerRef.current = player
-
-
-        const applyTheme = (t: Theme) => {
-            theme = t
-            document.documentElement.dataset.theme = t === DARK ? 'dark' : 'light'
-            player.setTheme(t)
-        }
-        applyTheme(theme)
-
-        const onSchemeChange = (e: MediaQueryListEvent) => {
-            applyTheme(e.matches ? DARK : LIGHT)
-        }
-        dark.addEventListener('change', onSchemeChange)
-
-        document.getElementById('mode')!.onclick = () => {
-            applyTheme(theme === DARK ? LIGHT : DARK)
-        }
 
 
         return () => {
             console.log('clean up isle 4')
             player.pause()
-            dark.removeEventListener('change', onSchemeChange)
             playerRef.current = null
 
         }
@@ -154,6 +132,11 @@ function Arena() {
         }
 
     }, [viewMode])
+
+    useEffect(() => {
+        playerRef.current?.setTheme(theme === 'dark' ? DARK : LIGHT)
+    }, [theme])
+
     return (
         <>
             <div id="controls">
@@ -163,8 +146,8 @@ function Arena() {
                 <button onClick={() => playerRef.current?.stepForward()}>Forward</button>
                 <button onClick={() => setViewMode(viewMode === 'iso' ? 'top' : 'iso')}>View</button>
                 <button onClick={() => playerRef.current?.toggleIntent()} >Intent</button>
-                <button id="mode">dark/light</button>
-                <span>Turn: <span id="turnCounter">{turn}</span></span>
+                <button onClick={toggleTheme}>dark/light</button>
+                <span>Turn: <span>{turn}</span></span>
             </div>
             <canvas id="gameCanvas" ref={canvasRef}></canvas>
         </>

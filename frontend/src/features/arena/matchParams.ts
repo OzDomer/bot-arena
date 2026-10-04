@@ -9,7 +9,7 @@ export function parseMatchParams(search: string): MatchParams | null {
     const preset = params.get('preset')
     if (seed === null || !/^\d+$/.test(seed)) return null
     const seedNum = Number(seed)
-    if (seedNum > 4294967295) return null
+    if (seedNum > 0xFFFFFFFF) return null
     if (preset === null) return null
     if (!isPresetName(preset)) return null
 

@@ -2,9 +2,9 @@ import { showcase } from './bots/lineups'
 import { PRESETS, isPresetName } from './sim/presets'
 import { runTournament } from './sim/tournament'
 
-export const matches = Number(process.argv[2] ?? 1000)   // default match count
-export const preset = process.argv[3] ?? 'default'
-export const seed = Number(process.argv[4] ?? 1790266907455)      // picked a fixed one
+const matches = Number(process.argv[2] ?? 1000)   // default match count
+const preset = process.argv[3] ?? 'default'
+const seed = Number(process.argv[4] ?? 1790266907455)      // picked a fixed one
 
 if (!isPresetName(preset)) throw new Error(`unknown preset: ${preset}`)
 

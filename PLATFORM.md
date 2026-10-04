@@ -129,3 +129,4 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 - Migrations instead of `sync()`. After first deployment.
 - Scaling past one process: Postgres is already shared; needs Redis pub/sub for SSE fan-out and a single elected scheduler. All three arrive together; none are needed for one box.
 - Replay history page (`/matches` list with winners) as the first thing after the demo line, since it's read-only and the data is already there.
+- Commit-reveal doesn't stop the server from choosing a favorable secret before committing ("secret grinding"). The fix is outside entropy.

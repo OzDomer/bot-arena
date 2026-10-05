@@ -1,11 +1,8 @@
-import { env } from './config/env'
-import app from './app'
-
-
-
-const server = app
+import { env } from './config/env.ts'
+import app from './app.ts'
 
 
 
 
-server.listen(env.PORT, () => console.log(`listening on port: ${env.PORT}`))
+
+app.listen(env.PORT, () => console.log(`listening on port: ${env.PORT}`))

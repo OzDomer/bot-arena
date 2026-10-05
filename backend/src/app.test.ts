@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import app from './app'
+import app from './app.ts'
 import request from 'supertest'
-import errorResponder from './middlewares/error/errorResponder'
+import errorResponder from './middlewares/error/errorResponder.ts'
 import express from 'express'
-import logError from './middlewares/error/logError'
+import logError from './middlewares/error/logError.ts'
 
 describe('GET /health', () => {
     it('should return 200 OK and a status object', async () => {

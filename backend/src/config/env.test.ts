@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseEnv } from './env'
+import { parseEnv } from './env.ts'
 
 describe('parseEnv', () => {
     it('missing port gives the default', () => {

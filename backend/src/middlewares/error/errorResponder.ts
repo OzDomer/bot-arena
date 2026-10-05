@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import HttpError from "../../errors/HttpError";
+import HttpError from "../../errors/HttpError.ts";
 
 export default function errorResponder(err: unknown, _req: Request, res: Response, _next: NextFunction) {
     if (err instanceof HttpError){

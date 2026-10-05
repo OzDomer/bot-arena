@@ -1,7 +1,7 @@
 import express from 'express'
-import logError from './middlewares/error/logError'
-import errorResponder from './middlewares/error/errorResponder'
-import notFound from './middlewares/notFound'
+import logError from './middlewares/error/logError.ts'
+import errorResponder from './middlewares/error/errorResponder.ts'
+import notFound from './middlewares/notFound.ts'
 
 
 

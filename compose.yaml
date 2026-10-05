@@ -17,5 +17,19 @@ services:
       retries: 5
       start_period: 10s
 
+
+  backend:
+    container_name: bots-arena-backend
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://user:1234@postgres:5432/bots_arena
+    build:
+      context: ./
+      dockerfile: ./backend/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   pgdata:

@@ -1,5 +1,4 @@
 import express from 'express'
-import { env } from './config/env'
 import logError from './middlewares/error/logError'
 import errorResponder from './middlewares/error/errorResponder'
 import notFound from './middlewares/notFound'

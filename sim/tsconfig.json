@@ -3,9 +3,11 @@
   "compilerOptions": {
     "lib": ["ES2023"],
     "types": ["node"],
-    "resolveJsonModule": true,
     "module": "nodenext",
-    "moduleResolution":"nodenext"
+    "moduleResolution": "nodenext",
+    "resolveJsonModule": true
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }

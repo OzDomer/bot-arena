@@ -2,11 +2,21 @@
   "name": "@arena/sim",
   "type": "module",
   "private": true,
-  "exports": {
-    ".": "./src/index.ts",
-    "./bots": "./src/roster.ts",
-    "./testing": "./src/test/fixtures.ts"
+"exports": {
+  ".": {
+    "@arena/source": "./src/index.ts",
+    "types": "./dist/index.d.ts",
+    "default": "./dist/index.js"
   },
+  "./bots": {
+    "@arena/source": "./src/roster.ts",
+    "types": "./dist/roster.d.ts",
+    "default": "./dist/roster.js"
+  },
+  "./testing": {
+    "@arena/source": "./src/test/fixtures.ts"
+  }
+},
   "devDependencies": {
     "@types/node": "^26.6.2"
   },

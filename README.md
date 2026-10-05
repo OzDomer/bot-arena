@@ -109,6 +109,8 @@ Each entry is one change to the rules or bots, what the tally said, and what I c
 
 **One input.** A linear net can't compute "am I inside the storm" from center offset and radius — that's a square root. Adding it as a 19th input did nothing for the survival objective (the net survived more, wins didn't move) and fixed the damage objective: 28.3% and 28.8% at 2.5M, spread 0.5 points. The weak seed had never learned to dodge the storm; hand it the edge distance and both seeds converge. The variance was a missing input. → Learning chapter closed; the brain is now a playtester for rules changes. Full write-up in `docs/learning.md`.
 
+**Everyone at once, 1M matches.** All eleven entrants in one lineup, one seat each. The three reinforce brains finish within 0.3 points of each other (17.75 / 17.68 / 17.45%). The coward wins 0.62% per seat, below random's 0.80%: it takes more damage than random and dies six turns sooner. Fleeing at 45% HP was already a bad trigger; against a field this strong, committing to a fight and then turning its back is worse than never committing. Draws are 12.1%: the survival-first brains outlast everyone, then die to the storm on the same tick. → For the betting platform that's one match in eight refunded. A storm-finish or tie-break rule is a later rules change.
+
 ## Reading a match
 
 - Boxes are ships; the dark wedge on the roof is the facing (rear hits do ×2). Wrecks sink and keep a darkened seat color.

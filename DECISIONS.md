@@ -16,10 +16,11 @@ Each entry: what we decided, why, and what it would take to revisit.
 - **Stats are raw sums.** `damageDealt` is uncapped (no overkill split, which would need a turn-order rule); averages are computed at print time. Kill credit is shared by every attacker who hit on the death tick; a storm finish still credits the attackers. Revisit with `resolveStorm`.
 - **Kills/match > deaths/match.** Shared kill credit on the death tick inflates the count (7.7 on a 7-ship map with max 6 deaths). Fine as a relative measure across rulesets; don't read the absolute number. Fix when comparing bots, not rules.
 - **Sample size.** 1k matches → identical bots spread ±2pp; 10k → ±0.6pp. Balance claims need 10k. Headless: 10k matches ≈ 4 s in Node (~2,500 matches/s, ~500k `step()`/s).
-- **Rules presets.** `PRESETS` in `sim/src/sim/presets.ts` is a `Record<PresetName, Rules>`, each spreading `DEFAULT_RULES` and overriding only what changes. CLI takes the name as argv[3]; `runTournament` threads it to `makeMatch`. Presets are data, not functions — no derivation of storm timing from map size (rejected, see findings: startTurn barely matters, so there's nothing worth deriving). Presets are the experiment record: don't overwrite one with another.
+- **Rules presets.** `PRESETS` in `sim/src/sim/presets.ts` is a `Record<PresetName, Rules>`, each spreading `DEFAULT_RULES` and overriding only what changes. CLI takes the name as argv[3]; `runTournament` threads it to `makeMatch`. Presets are data, not functions — no derivation of storm timing from map size (rejected, see findings: startTurn barely matters, so there's nothing worth deriving). Presets are the experiment record: don't overwrite one with another. `isPresetName` uses `Object.hasOwn`, so prototype keys are rejected: with `in`, `?preset=toString` passed `parseMatchParams` and crashed `useMatch`. A matchParams test pins it.
 - **Renderer is build → paint.** Builders are pure `World → Poly[]` in world space; `paint(ctx, cam, polys)` does all projection, culling and styling. Builders are tested without a canvas; paint is checked by eye. Same split as sim/render.
 - **React owns the DOM**. `Arena` owns the canvas. `Arena` gets the canvas through a ref, sizes it and wires its listeners in effects that clean up after themselves. `Player` only draws into the ctx it's handed and reports the shown turn via `onFrame`; `setCamera` swaps the view on the current frame without touching layout.
 - **The renderer reads the sim only through `@arena/sim`.** Since the workspace split (PLATFORM roadmap 3) the frontend is its own package; the sim's `exports` map is the boundary and deep imports don't resolve. The intent overlay gets `observe`/`encode`/`forward`/`softmax` from the core entry and `NetBrain` (`public readonly weights`) from `./bots`; a getter interface waits for a second inspectable brain type. Everything else the renderer shows is derived from `World`/`Hit` data; no sim rule is re-implemented in `render/`.
+- **The sim's exports map points at `dist`** (PLATFORM roadmap 5 step 3e, PLATFORM › Contracts). Entries resolve to compiled `.js` with a `types` condition for the `.d.ts`; a custom source condition keeps Vite, Vitest and tsc on `src/`, so nothing in dev needs a built sim. Same entries, same exports. Chosen so the backend image runs plain `node` and to learn how a production package builds; tsx everywhere and bundling the backend were the alternatives.
 
 ## Rules (v1)
 - **Chebyshev distance** for vision and attack — matches 8-direction movement. (Manhattan caused diagonal chasers to swap tiles forever.)
@@ -36,6 +37,12 @@ Each entry: what we decided, why, and what it would take to revisit.
 ## Rules (v2)
 - 20×20, `shrinkEvery` 5, everything else as v1. Chosen for strategy differentiation (V2−v1 gap 9.3pp vs 1.1pp on v1) and lower draw rate (4.7% vs 7.5%), with one knob changed from v1 instead of two. Storm closes fully before the turn cap; no timeouts.
 - Invoked as preset `bigmap`. `DEFAULT_RULES` stays v1 because `step.test.ts` positions assume 10×10; flip it (and pin the fixtures to a `RULES_V1`) when v2 is settled enough to be worth the churn.
+
+## Bots
+- **Entrant registry by name.** `sim/src/bots/entrants.ts`: `ENTRANTS = { name: make }` `satisfies Record<string, Entrant['make']>`, `EntrantName = keyof typeof ENTRANTS`, `isEntrantName` (`Object.hasOwn`), `entrant(name) → { name, make }`. Lineups are name lists mapped through `entrant`; brain JSON is imported only here. The name is what lineups, bets and DB rows refer to, so it's an identity (PLATFORM › Freeze).
+- **Renames.** `coward` → `cowardV1`; `seed2evo`/`seed2` → `evo` (`linear-500m-seed2`, the aggressive one); `defaultseedevo` → `evoVulture` (`linear-500m-seed1`). Tournament output identical at the fixed seed apart from names. Findings written before the rename use the old names.
+- **One brain per learning stage registered.** Evolution: `evo`, plus `evoVulture` because `heldout` needs it. REINFORCE: `reinforceV1Fit` (`reinforce-fitness-5000u-seed1`), `reinforceV1Dense` (`reinforce-dense-5000u-seed1`, the 30.1 seed), `reinforceV2` (`reinforce-v2-dense-5000u-seed1`). `showcase` seats all 11 entrants.
+- **Fitness training dropped as a method.** New brains train on per-turn reward. Under fitness, whatever the net learns goes into survival rather than wins (v2-encoding finding); per-turn reward converts it. `reinforceV1Fit` stays as the record of the stage. The 1M showcase puts the three stages level (findings), so this is a choice of method, not a claim that the fitness brain is weaker.
 
 
 ## Rejected
@@ -237,6 +244,27 @@ Each entry: what we decided, why, and what it would take to revisit.
   the reason the chapter was worth doing.
   `reinforce-v2-dense-5000u-seed1` joins `showcase`. `heldout` stays fixed as the
   measuring stick for whenever the chapter reopens.
+- **Showcase, 11 seats, 1M matches** (every registered entrant once; bigmap, seed 1790266907455, baseline 9.1%; survival, damage and kills per match):
+
+  | | win % | ×baseline | survival | dealt | taken | kills |
+  |---|---|---|---|---|---|---|
+  | reinforceV1Dense | 17.75 | 1.95 | 58.7 | 7.15 | 7.38 | 0.63 |
+  | reinforceV2 | 17.68 | 1.94 | 59.1 | 7.71 | 7.90 | 0.68 |
+  | reinforceV1Fit | 17.45 | 1.92 | 61.6 | 7.09 | 7.55 | 0.63 |
+  | camperV2 | 10.27 | 1.13 | 38.0 | 9.20 | 9.56 | 0.78 |
+  | camperV1 | 9.99 | 1.10 | 37.3 | 8.98 | 9.64 | 0.76 |
+  | evo | 4.79 | 0.53 | 55.0 | 6.39 | 6.56 | 0.56 |
+  | evoVulture | 4.30 | 0.47 | 56.8 | 5.99 | 6.37 | 0.55 |
+  | chaserV2 | 3.22 | 0.35 | 35.6 | 11.20 | 9.46 | 1.20 |
+  | chaserV1 | 1.00 | 0.11 | 29.0 | 12.04 | 9.27 | 1.26 |
+  | random | 0.80 | 0.09 | 43.3 | 7.01 | 7.66 | 0.52 |
+  | cowardV1 | 0.62 | 0.07 | 37.5 | 7.47 | 8.89 | 0.56 |
+  | draws | 12.13 | | | | | |
+
+- The three reinforce brains tie. V1Dense and V2 are 0.07pp apart (noise); V1Fit is 0.3pp behind, ~5σ at 1M, so real but too small to matter. On the held-out, one at a time, they were 30.1 / 28.3 / 25.3; sharing a lineup closes that to 0.3pp. Different shapes: V1Fit survives longest, V2 deals the most damage and gets the most kills of the three.
+- **cowardV1 is below random** (0.62 vs 0.80, ~15σ). It takes 1.2 more damage per match than random and dies 6 turns sooner. Same flee-trigger problem as the per-seat finding; in a field this strong, engaging and then turning its rear is worse than never committing.
+- **Draws 12.1%**, same as the v2-dense held-out (~12%), against 4.7% for the FSM-only v2 lineup. Read: survival-first brains outlast the field and die to the storm on the same tick. For the platform, about 1 match in 8 refunds (PLATFORM › Open). A storm-finish or tie-break rule is the fix, later.
+- Speed: ~1000 matches/s at 11 seats on a throttled laptop, so a 10k odds run is ~10 s, not ~4. Platform odds use 1–2k (PLATFORM › Match lifecycle).
 
 ## Evolution (v1 design)
 

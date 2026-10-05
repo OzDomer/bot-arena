@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "npm run dev -w @arena/frontend",
-    "build": "npm run build -w @arena/sim && npm run build -w @arena/frontend",
+    "build": "npm run build -w @arena/sim && npm run build -w @arena/backend && npm run build -w @arena/frontend",
     "preview": "npm run preview -w @arena/frontend",
     "test": "vitest",
     "tournament": "npm run tournament -w @arena/sim --",

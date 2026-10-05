@@ -1,10 +1,10 @@
 import type { Entrant } from "../types.ts"
 import { BOTS } from "./bots.ts"
-import evo from '../../brains/linear-500m-seed2.json' with {type: 'json'}
-import evoVulture from '../../brains/linear-500m-seed1.json' with {type: 'json'}
-import reinforceV1Fit from '../../brains/reinforce-fitness-5000u-seed1.json' with {type: 'json'}
-import reinforceV1Dense from '../../brains/reinforce-dense-5000u-seed1.json' with {type: 'json'}
-import reinforceV2 from '../../brains/reinforce-v2-dense-5000u-seed1.json' with {type: 'json'}
+import evo from '../brains/linear-500m-seed2.json' with {type: 'json'}
+import evoVulture from '../brains/linear-500m-seed1.json' with {type: 'json'}
+import reinforceV1Fit from '../brains/reinforce-fitness-5000u-seed1.json' with {type: 'json'}
+import reinforceV1Dense from '../brains/reinforce-dense-5000u-seed1.json' with {type: 'json'}
+import reinforceV2 from '../brains/reinforce-v2-dense-5000u-seed1.json' with {type: 'json'}
 
 
 export const ENTRANTS = {

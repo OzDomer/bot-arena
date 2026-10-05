@@ -20,7 +20,7 @@ Each entry: what we decided, why, and what it would take to revisit.
 - **Renderer is build → paint.** Builders are pure `World → Poly[]` in world space; `paint(ctx, cam, polys)` does all projection, culling and styling. Builders are tested without a canvas; paint is checked by eye. Same split as sim/render.
 - **React owns the DOM**. `Arena` owns the canvas. `Arena` gets the canvas through a ref, sizes it and wires its listeners in effects that clean up after themselves. `Player` only draws into the ctx it's handed and reports the shown turn via `onFrame`; `setCamera` swaps the view on the current frame without touching layout.
 - **The renderer reads the sim only through `@arena/sim`.** Since the workspace split (PLATFORM roadmap 3) the frontend is its own package; the sim's `exports` map is the boundary and deep imports don't resolve. The intent overlay gets `observe`/`encode`/`forward`/`softmax` from the core entry and `NetBrain` (`public readonly weights`) from `./bots`; a getter interface waits for a second inspectable brain type. Everything else the renderer shows is derived from `World`/`Hit` data; no sim rule is re-implemented in `render/`.
-- **The sim's exports map points at `dist`** (PLATFORM roadmap 5 step 3e, PLATFORM › Contracts). Entries resolve to compiled `.js` with a `types` condition for the `.d.ts`; a custom source condition keeps Vite, Vitest and tsc on `src/`, so nothing in dev needs a built sim. Same entries, same exports. Chosen so the backend image runs plain `node` and to learn how a production package builds; tsx everywhere and bundling the backend were the alternatives.
+- **The sim's exports map resolves to `dist`**, with an `@arena/source` condition for dev and tests; details in PLATFORM › System design › Contracts.
 
 ## Rules (v1)
 - **Chebyshev distance** for vision and attack — matches 8-direction movement. (Manhattan caused diagonal chasers to swap tiles forever.)
@@ -43,7 +43,7 @@ Each entry: what we decided, why, and what it would take to revisit.
 - **Renames.** `coward` → `cowardV1`; `seed2evo`/`seed2` → `evo` (`linear-500m-seed2`, the aggressive one); `defaultseedevo` → `evoVulture` (`linear-500m-seed1`). Tournament output identical at the fixed seed apart from names. Findings written before the rename use the old names.
 - **One brain per learning stage registered.** Evolution: `evo`, plus `evoVulture` because `heldout` needs it. REINFORCE: `reinforceV1Fit` (`reinforce-fitness-5000u-seed1`), `reinforceV1Dense` (`reinforce-dense-5000u-seed1`, the 30.1 seed), `reinforceV2` (`reinforce-v2-dense-5000u-seed1`). `showcase` seats all 11 entrants.
 - **Fitness training dropped as a method.** New brains train on per-turn reward. Under fitness, whatever the net learns goes into survival rather than wins (v2-encoding finding); per-turn reward converts it. `reinforceV1Fit` stays as the record of the stage. The 1M showcase puts the three stages level (findings), so this is a choice of method, not a claim that the fitness brain is weaker.
-
+- **Brains under `src`** (`sim/src/brains`). tsc emits imported JSON, so the build stays plain tsc with no copy script. Training output goes to `sim/runs/` (gitignored); promoting a brain = copy into `src/brains` + register in `entrants.ts`.
 
 ## Rejected
 - Damage RNG (luck, not skill). Move-XOR-attack (kills the RTS feel). Bracing (rewards camping). Bot "retry" on blocked move (breaks the GM model; bots can see the tile is taken). Coward v2 with storm awareness (its problem is the flee trigger, not the storm — deferred until heals — see roadmap). Capping `damageDealt` at remaining HP (needs an arbitrary overkill split).
@@ -332,7 +332,7 @@ brain is the greedy version of the trained one and comparable to the saved evolv
 `train-cli.ts <updates> <batch> <lr> <seed>`. Per update: clear samples; per match: clear
 buffer, `playMatch`, find own ship id via `seating`, tag every buffered decision with the
 match's `R`; then `updateWeights`. Logs mean `R` and max |Δweight| per update. Ends with
-`best-trained.json` and the 10k held-out check.
+the weights in `runs/` (`reinforce-v<encoding>-<mode>-<updates>u-seed<n>.json`) and the 10k held-out check.
 
 ### Cost
 500 matches per update vs 25k per generation for evolution. 1000 updates = 500k matches ≈

@@ -17,13 +17,18 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 - **One backend process is the whole backend:** HTTP, SSE fan-out, and the match scheduler. Scaling past one process is under Open.
 
 ## Stack
-- Express 5, Sequelize (`sequelize-typescript`) on Postgres, zod for request validation, `jsonwebtoken`, docker compose. Layout `routers/ middlewares/ models/ db/ config/ errors/`, error chain `notFound → logError → errorResponder` (System design › Errors).
+- Express 5, Drizzle (`drizzle-orm` over a node-postgres `pg` Pool) on Postgres 18, drizzle-kit for SQL migration files, zod for request validation, `jsonwebtoken`, docker compose. Layout `routers/middlewares/models/db/config/errors/`, error chain `notFound → logError → errorResponder` (System design › Errors).
 - **Config: Node env files validated by zod at boot.** `--env-file-if-exists` in dev; compose/platform inject in deployment; `parseEnv` validates once and the app reads the parsed `env`. Values come from whoever starts the process: in dev, the shell and then `backend/.env` (the file never overwrites a variable that's already set); in deployment, compose `environment:` or the platform (the image runs without the flag, so no file). zod defaults fill whatever is still unset. `NODE_ENV` only means development/production/test behavior; it never selects a file. Replaces the course's `config` package, and zod replaces Joi, so there is one validation library.
+- **`DATABASE_URL` is one connection URL**, not separate parts, because that's what hosting platforms provide. Required, no default, validated by zod as a `postgres:`/`postgresql:` URL. Passwords in it must be URL-encoded. `backend/vitest.config.ts` gives the test runner a dummy one via `test.env`.
 - **`cors` with an explicit allowed origin from env** (`CORS_ORIGIN`, validated by zod), never `*`. The browser talks to two origins, the frontend and the backend (Deployment).
-- **The sim is a compiled package** (`sim/dist`, exports → dist; a custom source condition for dev/tests). The backend is built with tsc and runs `node dist/server.js` in the image; tsx in dev only. Lands in roadmap 5 step 3e.
-- **Models always pass `DataType` explicitly.** sequelize-typescript can infer a column's type from decorator metadata, but tsx (esbuild) never emits it, so inferred columns would fail in dev even if the tsc build turned `emitDecoratorMetadata` on. Explicit types work under both.
-- Chosen to match the course stack (jb-45800-5 betterx backend) so the platform reads as standard full-stack work. Deviations are called out where they happen (config and validation above; Auth, Realtime, Deployment); nothing else is clever on purpose.
-- Postgres over MySQL: better JSON columns for `entrants`/`odds`, and the more common default in Node stacks. Through Sequelize it's a dialect string; swapping is cheap if ever wanted.
+- **The sim is a compiled package** (`sim/dist`, exports → dist; the `@arena/source` condition for dev/tests, System design › Contracts). The backend is built with tsc; `start` is `node --enable-source-maps dist/server.js` with no env file, so production env comes from whoever starts the process (Config). tsx is dev-only. Landed in roadmap 5 step 3e.
+- **Modules: NodeNext for sim and backend.** Relative imports carry `.ts`; tsc rewrites them to `.js` on emit (`rewriteRelativeImportExtensions`). JSON imports use `with { type: 'json' }`. The frontend stays on bundler resolution; `moduleResolution: bundler` is explicit in `tsconfig.base.json` and sim/backend override it. Option (c), chosen over NodeNext with `.js` imports: same strictness, but one import style repo-wide and ready for Node type-stripping. Rejected: bundler resolution for Node-run code, too lenient (a missing extension or JSON import attribute only fails at runtime). Cheap to revisit.
+- **Builds: a checker/builder tsconfig pair** in sim and backend. `tsconfig.json` type-checks everything including tests (`noEmit` from the base); `tsconfig.build.json` extends it and only adds emit settings and excludes. sim builds to `sim/dist` (`.js`, `.d.ts`, `.d.ts.map`), excluding tests, `src/test` and the CLIs (`src/*cli.ts`). backend builds to `backend/dist` (`.js` + source maps, no declarations). Every `build` script is `clean` (`node -e "fs.rmSync('dist', …)"`, because npm scripts run in cmd.exe on Windows, where `rm -rf` fails; `tsc --build --clean` was rejected because it doesn't remove stale outputs) then `tsc -p tsconfig.build.json`. Root `npm run build` is an explicit chain, sim → backend → frontend, instead of relying on the `workspaces` array order.
+- **Node 24 LTS, pinned:** LTS for production; local had been on 25. `.nvmrc` = 24, root `engines.node` = 24, `node:24-alpine` in Docker.
+- **The DB module does no I/O at import.** `src/db/client.ts` only creates the Pool and the drizzle instance. `server.ts` runs `select 1` before `listen`; on failure it logs the error and exits with code 1. `app.ts` never imports the db module, so unit tests don't need Docker.
+- Chosen to match the course stack (jb-45800-5 betterx backend) so the platform reads as standard full-stack work. Deviations are called out where they happen (config and validation above, database and ORM below; Auth, Realtime, Deployment); nothing else is clever on purpose.
+- **Postgres over MySQL** (the course used MySQL): stricter, JSONB and arrays fit the odds cache, and it's the industry default. Postgres 18, `postgres:18-alpine`, major pinned.
+- **Drizzle over Sequelize and Prisma:** SQL-close queries; schema in plain TS (no codegen, no decorators); readable SQL migrations via drizzle-kit; fits the tsc/NodeNext pipeline. Prisma was considered (a codegen step, more abstraction). Sequelize was dropped (TS bolted on, decorators).
 
 ## System design
 
@@ -35,7 +40,9 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 
 ### Contracts
 1. **Sim public API**: the entries in `sim/package.json` `exports` — `@arena/sim` (core), `@arena/sim/bots` (lineups, bots, brains), `@arena/sim/testing` (fixtures, tests only). The barrel files (`sim/src/index.ts`, `sim/src/roster.ts`) *are* the contract; this file never copies their contents. Anything not exported can't be imported. Adding an export is free; changing or removing one breaks both apps and gets a line here and in `DECISIONS.md`.
-   - **Exports map: src → dist** (roadmap 5 step 3e). Each entry resolves to compiled `sim/dist` `.js`, with a `types` condition for the `.d.ts`. A custom source condition points the same entries at `src/` for Vite, Vitest and tsc, so dev and tests never need a built sim. Entry names and exports are unchanged; only what they resolve to changes.
+   - **Exports map: src → dist** (roadmap 5 step 3e). Chosen so the backend image runs plain `node` and to learn how a production package builds; tsx everywhere and bundling the backend were the alternatives. Each subpath maps conditions in this order: `@arena/source` → `src/*.ts`, `types` → `dist/*.d.ts`, `default` → `dist/*.js`. The source condition keeps Vite, Vitest and tsc on `src/`; chosen over running `tsc -w` in dev: dev and tests never need a built sim. Entry names and exports are unchanged; only what they resolve to changed.
+   - **`./testing` is source-only** (only `@arena/source`): resolvable in dev and tests, deliberately unresolvable in production, which makes it the production guard.
+   - **Who holds the condition:** `customConditions` in `tsconfig.base.json`; `frontend/vite.config.ts` (`resolve.conditions` and `ssr.resolve.conditions`, with Vite's defaults spread in); `sim/vitest.config.ts` and `backend/vitest.config.ts` (`ssr.resolve.conditions`). Root Vitest config settings don't propagate into projects, so each project sets its own.
    - Added (free): `seedFromSecret` in core; `entrant`, `isEntrantName`, `EntrantName` in `./bots`.
 2. **Backend ↔ frontend**: HTTP for request/response, SSE for server → client pushes (schedule, seed reveal, result). No WebSockets. Shapes TBD at roadmap 5.
 
@@ -108,24 +115,28 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 
 ## Settlement
 - **Parimutuel.** The pool is split among winning bets pro-rata: `payout = floor(amount × pool / winningPool)`. No house line, no odds to set, self-balancing. The cached win rates (Match lifecycle) are shown as information next to the pool; they are not the price.
-- One `sequelize.transaction`: compute winner, write `matches.winner`, write every `bets.payout`, credit users. All or nothing.
+- One `db.transaction`: compute winner, write `matches.winner`, write every `bets.payout`, credit users. All or nothing.
 - `floor` leaves a remainder; the house keeps it. Draw and timeout refund every bet.
 - Fixed odds from the 10k stats is the alternative if parimutuel feels thin with few bettors. Under Open.
 
 ## Deployment
-- `docker compose up`: `postgres`, `backend`, `frontend`. Frontend is the course's multi-stage build: `node:alpine` builds `dist/`, `nginx:alpine` serves it. One deviation from the course: both images build with the **repo root as context** (`context: .`, `dockerfile: frontend/Dockerfile`), because each needs `sim/`; inside, `npm ci -w <app>` installs only that app's share. The frontend image carries no sim at runtime (Vite bundles it into the JS); the backend image builds `sim/dist` and `backend/dist` with tsc and runs `node dist/server.js`, no tsx at runtime.
-- **Two origins.** nginx serves the SPA only (`try_files $uri /index.html`) and doesn't proxy the API. The backend container publishes its own port in compose (dev) and gets its own subdomain later (prod). Routes are bare: `/health`, `/lineups`, `/matches/:id`, `/stream`.
+- `docker compose up` (root `compose.yaml`): `postgres` and `backend` now, `frontend` to come. Frontend is the course's multi-stage build: `node:24-alpine` builds `dist/`, `nginx:alpine` serves it. One deviation from the course: both images build with the **repo root as context** (`context: .`, `dockerfile: <app>/Dockerfile`), because each needs `sim/`. The frontend image carries no sim at runtime (Vite bundles it into the JS).
+- **`backend/Dockerfile`, multi-stage**: about 200 MB smaller, no compiler or devDependencies in the production image. Built from the repo root: `docker build -f backend/Dockerfile -t arena-backend .`. Build stage: full `npm ci`, then builds sim then backend with `-w`. Runtime stage: `NODE_ENV=production`, `npm ci --omit=dev -w @arena/sim -w @arena/backend`, `COPY --from=build` both dist folders, `USER node`, and `CMD` runs `node` directly so PID 1 receives SIGTERM.
+- **Root `.dockerignore`:** `**/node_modules`, `**/dist`, `**/.env`, `**/runs`, `.git`.
+- **Compose services.** `postgres`: named volume `pgdata` at `/var/lib/postgresql` (the Postgres 18 path), `pg_isready` healthcheck, port 5432 published. `backend`: built from the root context, `DATABASE_URL` with host `postgres`, `depends_on` with `condition: service_healthy`, port 3000.
+- **Dev workflow: DB in compose, backend on the host.** Compose runs only Postgres (`docker compose up -d postgres`); the backend runs with `tsx watch` and `backend/.env` (a `localhost` URL). The full stack (`docker compose up -d --build`) is the production check.
+- **Two origins.** nginx serves the SPA only (`try_files $uri /index.html`) and doesn't proxy the API. The backend publishes its own port (3000, on the host in dev and in compose) and gets its own subdomain later (prod). Routes are bare: `/health`, `/lineups`, `/matches/:id`, `/stream`.
 - **The frontend finds the backend through `VITE_API_URL`**, set in `.env.development` / `.env.production`. Vite inlines it at build time, so the frontend image is built per environment (a build arg in the Dockerfile), the same as the course's `.env.docker` / `.env.production`. Every API call goes through one module that reads it.
 - **If a reverse proxy sits in front of the backend in prod, `/stream` needs `proxy_buffering off` and a long `proxy_read_timeout` there.** nginx-style proxies buffer responses by default, which turns SSE into "nothing until the connection closes". Compose has nothing in front of the backend, so this applies only once a proxy is added. This is the one place the realtime choice touches ops.
-- Env comes from compose `environment:` (Stack › Config). `sequelize.sync()` on boot for now.
+- Env comes from compose `environment:` (Stack › Config). Schema changes ship as drizzle-kit SQL migrations (Stack).
 
 ## Rejected
-- **SQLite.** Correct at this scale (one process, few writes) and the fastest option below one node, but no CV value and the course uses Postgres. Named here so the reason is on record, not "SQLite doesn't scale".
+- **SQLite.** Correct at this scale (one process, few writes) and the fastest option below one node, but no CV value. Named here so the reason is on record, not "SQLite doesn't scale".
 - **Rust/axum backend.** The benchmark gains are real and irrelevant: the server's load is idle SSE connections plus one 5 ms match per interval, not request throughput. The real cost is a second sim implementation that must stay bit-identical with the TS one for replay to agree with settlement. Rust belongs in the sim as a WASM module shared by browser and server (see Roadmap).
 - **socket.io.** Bidirectional transport for a broadcast. Emit-only socket.io would work; SSE is the right tool and "why not WebSockets" is the better interview question.
 - **In-play betting.** Impossible under a deterministic sim with a public seed. See Fairness.
 - **Duplicate entrant names in betting lineups.** See Freeze.
-- **One origin via a reverse proxy** (nginx in deployment and the Vite dev proxy forwarding `/api/*` to the backend). It saves CORS and the per-environment API URL, at the cost of proxy config. Declined in favor of the course-style two-origin setup.
+- **One origin via a reverse proxy** (nginx in deployment and the Vite dev proxy forwarding API routes to the backend). It saves CORS and the per-environment API URL, at the cost of proxy config. Declined in favor of the course-style two-origin setup.
 
 ## Roadmap
 1. ~~**Hull.**~~ Body + bow pentagon inside the tile, replacing the nose. Builder-only, tested like `buildShips`. *Done when* facing reads from the shape alone.
@@ -136,8 +147,11 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
    - ~~**Step 1.**~~ `seedFromSecret` in core.
    - ~~**Step 2.**~~ Entrant registry (`entrants.ts`, exported from `./bots`); lineups built from names.
    - ~~**Step 3.**~~ Backend skeleton: zod-validated env, health route, error chain, tests (supertest in-process).
-   - **Step 3e. Sim build.** `sim/dist` and `backend/dist` via tsc; exports map → dist with a source condition for dev/tests. *Done when* `npm run build` produces both, `node backend/dist/server.js` serves `/health`, and frontend dev and all tests run without a manual sim build.
-   - Then: 4 compose + Postgres, 5 random lineups + odds cache, 6 scheduler + snapshot builder, 7 SSE + `/lineups`, `/matches/:id`, 8 frontend on the stream through the `VITE_API_URL` module. `cors` + `CORS_ORIGIN` land at 4 or when the frontend first calls the API, whichever comes first.
+   - ~~**Step 3d.**~~ JSON error chain with `HttpError` (System design › Errors).
+   - ~~**Step 3e. Sim build.**~~ `sim/dist` and `backend/dist` via tsc; exports map → dist with a source condition for dev/tests. *Done when* `npm run build` produces both, `node backend/dist/server.js` serves `/health`, and frontend dev and all tests run without a manual sim build. Shipped: NodeNext + `.ts` imports in sim and backend, checker/builder tsconfig pairs, clean-then-tsc build scripts, root chain sim → backend → frontend (Stack).
+   - **Step 4. Compose + Postgres.** ~~Infra~~: `backend/Dockerfile`, compose with `postgres` + `backend`, `DATABASE_URL`, Drizzle connection, Node 24 pin (Stack, Deployment). Next: `lineups` (odds cache) + `matches` schema, drizzle-kit config, first migration.
+   - **Step 5. Random lineups + odds cache.** When the backend first imports the sim: `--conditions=@arena/source` for tsx in the backend dev script; verify the backend vitest `ssr` block; hover-check that types from `sim/dist/*.d.ts` aren't `any` (`skipLibCheck` would hide broken `.d.ts` imports).
+   - Then: 6 scheduler + snapshot builder, 7 SSE + `/lineups`, `/matches/:id`, 8 frontend on the stream through the `VITE_API_URL` module. `cors` + `CORS_ORIGIN` land at 4 or when the frontend first calls the API, whichever comes first.
 6. **Auth.** register/login/JWT, `authEnforce` per router, `/me`. *Done when* a token gates `/bets` and nothing else.
 7. **Predictions.** `POST /bets`, pool totals over SSE, settlement on reveal. *Done when* a bet placed before close pays out after the replay, and one placed after is refused.
    **→ Demo line.** Everything below is a second product.
@@ -148,6 +162,12 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 ## Open
 - Fixed odds vs parimutuel, once there's bettor data.
 - **Draws at 12%** with the brain-heavy 11-seat showcase (DECISIONS › Tournament findings): about 1 match in 8 refunds. The fix is a rules change (storm finish / tie-break), later and sim-side; until then refunds are the cost.
-- Migrations instead of `sync()`. After first deployment.
 - Scaling past one process: Postgres is already shared; needs Redis pub/sub for SSE fan-out and a single elected scheduler. All three arrive together; none are needed for one box.
 - Replay history page (`/matches` list with winners) as the first thing after the demo line, since it's read-only and the data is already there.
+- **Small debts:**
+  - sim `types: ["node"]` applies to the whole sim, including the core that ships to the browser.
+  - Training code (evaluate/evolve/fitness/`PolicyBrain`/policy) ships in `sim/dist`.
+  - `logError` prints full stacks for ordinary 404s, and prints during tests. Fix: log `HttpError`s briefly, full trace only for unexpected errors.
+  - Compose credentials are written twice (`POSTGRES_*` and the backend's `DATABASE_URL`). Later: root `.env` interpolation.
+  - The backend has no ESLint.
+  - body-parser errors become 500s.

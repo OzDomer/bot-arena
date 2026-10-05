@@ -4,16 +4,17 @@ A project where you can pit bots against each other in a last-man-standing match
 
 ## Run it
 
-```bash
-npm install
-```
-
-```bash
-npm run dev
-```
+1. Node 24 (pinned in `.nvmrc`).
+2. `docker compose up -d postgres`
+3. Copy `backend/.env.example` to `backend/.env`.
+4. `npm install`
+5. `npm run dev` (frontend)
+6. In a second terminal, `npm run dev -w @arena/backend`
 
 Open http://localhost:5173/ (the default) to watch a single match replayed on the grid.
 Controls: play / pause / step. **Toggle view** switches isometric ↔ top-down on the same match. **Intent** shows the learned brains' move preferences each turn.
+
+Build is `npm run build`; the production check is `docker compose up -d --build`.
 
 ```bash
 npm run tournament -- <matches> <preset> <seed>
@@ -31,16 +32,17 @@ Evolves a linear-net brain against a fixed pool of hand-written bots and writes 
 npm run train -- <updates> <batch> <lr> <seed> <fitness|dense>
 ```
 
-Trains the same linear brain with policy gradient (REINFORCE) instead of evolution, against the same pool, and runs the 10k held-out check at the end. `dense` is the current objective; 5000 updates take ~25 minutes. Weights land in `sim/runs/`; the ones worth keeping are in `sim/brains/`.
+Trains the same linear brain with policy gradient (REINFORCE) instead of evolution, against the same pool, and runs the 10k held-out check at the end. `dense` is the current objective; 5000 updates take ~25 minutes. Weights land in `sim/runs/`; the ones worth keeping are copied into `sim/src/brains/` and registered in `sim/src/bots/entrants.ts`.
 
    ## Repo layout
 
 ```
    sim/        @arena/sim — rules, bots, learned brains, CLIs. Pure TS, no DOM.
    frontend/   the Vite app — canvas renderer; reaches the sim only through @arena/sim
+   backend/    @arena/backend — Express API, Postgres via Drizzle
 ```
 
-   npm workspaces: one `npm install` at the root sets up both, and every command above runs from the root.
+   npm workspaces: one `npm install` at the root sets up all three, and every command above runs from the root.
 
 ## How it works
 

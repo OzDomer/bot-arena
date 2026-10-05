@@ -5,5 +5,8 @@ import { env } from "../config/env.ts";
 export const pool = new Pool({
   connectionString: env.DATABASE_URL,
 })
-export const db = drizzle({ client: pool });
- 
+export const db = drizzle({
+  client: pool,
+  casing: 'snake_case',
+})
+

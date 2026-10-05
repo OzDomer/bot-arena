@@ -7,7 +7,8 @@ const envSchema = z.object({
         .int()
         .min(1024, "Port must be 1024-65535")
         .max(65535, "Port must be 1024-65535")
-        .default(3000)
+        .default(3000),
+    DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/})
 })
 
 export type Env = z.infer<typeof envSchema>

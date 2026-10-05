@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { parseEnv } from './env'
 
-describe('envSchema', () => {
+describe('parseEnv', () => {
     it('missing port gives the default', () => {
         const env = parseEnv({})
         expect(env.PORT).toBe(3000)
@@ -21,7 +21,7 @@ describe('envSchema', () => {
         expect(env.NODE_ENV).toBe("production")
     })
 
-    it('zod coercion works', () => {
+    it('coerces PORT to a number', () => {
         const env = parseEnv({ PORT: "3001" })
         expect(env.PORT).toBe(3001)
     })
@@ -30,7 +30,7 @@ describe('envSchema', () => {
         expect(() => parseEnv({ PORT: "abc" })).toThrow("PORT")
     })
 
-    it('reject a port that is init but empty', () => {
+    it('rejects an empty PORT', () => {
         expect(() => parseEnv({ PORT: "" })).toThrow("PORT")
     })
     it('port lower bound inclusive', () => {
@@ -50,7 +50,7 @@ describe('envSchema', () => {
     it('port upper outer bound edges throw', () => {
         expect(() => parseEnv({ PORT: "65536" })).toThrow("PORT")
     })
-    it('port does not except decimals', () => {
+    it('port does not accept decimals', () => {
         expect(() => parseEnv({ PORT: "3000.5" })).toThrow("PORT")
     })
 })

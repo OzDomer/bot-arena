@@ -19,6 +19,7 @@ describe('GET / not a declared end point', () => {
         const response = await request(app).get('/bad')
 
         expect(response.statusCode).toBe(404)
+        expect(response.body).toEqual({ message: 'not found' })
     })
 })
 
@@ -36,7 +37,7 @@ describe('unexpected errors', () => {
 
         expect(response.status).toBe(500)
         expect(response.text).not.toContain(`omg its dying`)
-        expect(response.body).toEqual({message: `something unexpected happened please contact our support team`})
+        expect(response.body).toEqual({ message: `something unexpected happened please contact our support team` })
     })
 
 })

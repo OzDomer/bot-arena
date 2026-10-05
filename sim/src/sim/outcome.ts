@@ -1,4 +1,4 @@
-import type { Ship, World } from "../types";
+import type { Ship, World } from "../types.ts";
 
 export type Outcome =
     | { kind: 'win'; winner: Ship['id'] }

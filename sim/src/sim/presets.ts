@@ -1,4 +1,4 @@
-import { DEFAULT_RULES, type Rules } from "../types"
+import { DEFAULT_RULES, type Rules } from "../types.ts"
 
 
 export const PRESETS = {

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest"
-import { argMax, forward, mutate, randomWeights } from "./net"
-import { makeRng } from "../util/random"
-import { inputsFor, ENCODING_VERSION } from "./encode"
+import { argMax, forward, mutate, randomWeights } from "./net.ts"
+import { makeRng } from "../util/random.ts"
+import { inputsFor, ENCODING_VERSION } from "./encode.ts"
 
 const N = inputsFor(ENCODING_VERSION)
 

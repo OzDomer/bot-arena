@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { deriveSeed, makeRng, seedFromSecret, shuffle } from "./random"
+import { deriveSeed, makeRng, seedFromSecret, shuffle } from "./random.ts"
 
 describe('shuffle', () => {
     it('deterministic shuffle works', () => {

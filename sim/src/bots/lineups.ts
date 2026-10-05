@@ -1,4 +1,4 @@
-import { entrant } from "./entrants"
+import { entrant } from "./entrants.ts"
 
 
 

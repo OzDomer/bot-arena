@@ -1,8 +1,8 @@
-import type { Weights } from "../types";
-import { deriveSeed, makeRng } from "../util/random";
-import { inputsFor, ENCODING_VERSION } from "./encode";
-import { evaluate } from "./evaluate";
-import { mutate, randomWeights } from "./net";
+import type { Weights } from "../types.ts";
+import { deriveSeed, makeRng } from "../util/random.ts";
+import { inputsFor, ENCODING_VERSION } from "./encode.ts";
+import { evaluate } from "./evaluate.ts";
+import { mutate, randomWeights } from "./net.ts";
 
 type Candidate = {
     weights: Weights,

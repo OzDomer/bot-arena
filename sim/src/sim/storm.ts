@@ -1,4 +1,4 @@
-import type { Rules } from '../types';
+import type { Rules } from '../types.ts';
 
 export function stormAt(turn: number, rules: Rules) {
     const { startTurn, shrinkEvery, baseDamage } = rules.storm;

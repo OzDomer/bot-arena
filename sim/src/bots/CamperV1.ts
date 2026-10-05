@@ -1,5 +1,5 @@
-import { chebyshev, directionToward, key } from "../sim/geometry";
-import type { Observation, Action, Brain } from "../types";
+import { chebyshev, directionToward, key } from "../sim/geometry.ts";
+import type { Observation, Action, Brain } from "../types.ts";
 
 
 export class CamperV1 implements Brain {

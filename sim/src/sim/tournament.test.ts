@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
-import type { Entrant } from "../types"
-import { ChaserV1 } from "../bots/ChaserV1"
-import { runTournament } from "./tournament"
+import type { Entrant } from "../types.ts"
+import { ChaserV1 } from "../bots/ChaserV1.ts"
+import { runTournament } from "./tournament.ts"
 
 describe('runTournament', () => {
     it('damage dealt equals damage taken', () => {

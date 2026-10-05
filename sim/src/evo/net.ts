@@ -1,5 +1,5 @@
-import type { Weights } from "../types"
-import type { Rng } from "../util/random"
+import type { Weights } from "../types.ts"
+import type { Rng } from "../util/random.ts"
 
 export const OUTPUTS = 9
 

@@ -1,9 +1,9 @@
 import { writeFileSync } from "fs"
-import { evolve } from "./evo/evolve"
-import { runTournament } from "./sim/tournament"
-import { showcase } from "./bots/lineups"
-import { NetBrain } from "./evo/NetBrain"
-import { PRESETS } from "./sim/presets"
+import { evolve } from "./evo/evolve.ts"
+import { runTournament } from "./sim/tournament.ts"
+import { showcase } from "./bots/lineups.ts"
+import { NetBrain } from "./evo/NetBrain.ts"
+import { PRESETS } from "./sim/presets.ts"
 
 const step = Number(process.argv[4] ?? 0.1)
 const generation = process.argv[2] ?? 50

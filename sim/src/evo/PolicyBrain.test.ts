@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest"
-import { PolicyBrain, type Decision } from "./PolicyBrain"
-import { makeRng } from "../util/random"
-import { observe } from "../sim/observe"
+import { PolicyBrain, type Decision } from "./PolicyBrain.ts"
+import { makeRng } from "../util/random.ts"
+import { observe } from "../sim/observe.ts"
 import { world, ship } from "@arena/sim/testing"
-import { randomWeights } from "./net"
-import { DIRECTIONS } from "../types"
-import { inputsFor, ENCODING_VERSION } from "./encode"
+import { randomWeights } from "./net.ts"
+import { DIRECTIONS } from "../types.ts"
+import { inputsFor, ENCODING_VERSION } from "./encode.ts"
 
 const N = inputsFor(ENCODING_VERSION)
 

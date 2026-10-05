@@ -1,7 +1,7 @@
-import type { Action, Brain, Hit, Ship, World } from "../types";
-import { resolveAttacks } from "./combat";
-import { observe } from "./observe";
-import { step } from "./step";
+import type { Action, Brain, Hit, Ship, World } from "../types.ts";
+import { resolveAttacks } from "./combat.ts";
+import { observe } from "./observe.ts";
+import { step } from "./step.ts";
 
 export function runMatch(world: World, brains: Record<Ship['id'], Brain>, onTurn?: (world: World, hits: Hit[]) => void): World {
     while (world.turn < world.rules.turnCap) {

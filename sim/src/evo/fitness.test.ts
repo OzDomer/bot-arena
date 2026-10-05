@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
-import { fitness } from "./fitness"
-import { emptyStats } from "../sim/stats"
+import { fitness } from "./fitness.ts"
+import { emptyStats } from "../sim/stats.ts"
 
 
 describe('fitness', () => {

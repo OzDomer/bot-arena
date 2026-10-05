@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { step } from './step'
+import { step } from './step.ts'
 import { ship, world } from '@arena/sim/testing'
 
 

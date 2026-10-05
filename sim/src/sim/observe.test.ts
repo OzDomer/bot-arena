@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ship, world } from "@arena/sim/testing";
-import { observe } from "./observe";
+import { observe } from "./observe.ts";
 
 describe('observe', () => {
     it('sees a ship within vision range', () => {

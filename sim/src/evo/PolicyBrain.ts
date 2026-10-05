@@ -1,9 +1,9 @@
-import { chebyshev } from "../sim/geometry";
-import { type Brain, type Observation, type Action, DIRECTIONS, type Weights } from "../types";
-import type { Rng } from "../util/random";
-import { encode, versionFor } from "./encode";
-import { OUTPUTS, forward } from "./net";
-import { sample, softmax } from "./policy";
+import { chebyshev } from "../sim/geometry.ts";
+import { type Brain, type Observation, type Action, DIRECTIONS, type Weights } from "../types.ts";
+import type { Rng } from "../util/random.ts";
+import { encode, versionFor } from "./encode.ts";
+import { OUTPUTS, forward } from "./net.ts";
+import { sample, softmax } from "./policy.ts";
 
 export type Decision = { x: number[]; a: number; probs: number[] }
 

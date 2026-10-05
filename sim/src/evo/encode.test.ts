@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest"
 import { ship, world } from "@arena/sim/testing"
-import { encode, inputsFor } from "./encode"
-import { observe } from "../sim/observe"
-import { } from "./net"
+import { encode, inputsFor } from "./encode.ts"
+import { observe } from "../sim/observe.ts"
+import { } from "./net.ts"
 
 // for magic index numbers check encode.ts for the explanation
 

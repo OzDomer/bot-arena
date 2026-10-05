@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { makeMatch } from './setup';
-import { DEFAULT_RULES } from '../types';
+import { makeMatch } from './setup.ts';
+import { DEFAULT_RULES } from '../types.ts';
 
 describe('makeMatch', () => {
   it('uses the rules it was given', () => {

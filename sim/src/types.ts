@@ -1,4 +1,4 @@
-import type { Rng } from "./util/random"
+import type { Rng } from "./util/random.ts"
 
 export type Position = {
     x: number,

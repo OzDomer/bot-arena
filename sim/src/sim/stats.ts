@@ -1,4 +1,4 @@
-import type { Hit, Ship, World } from "../types"
+import type { Hit, Ship, World } from "../types.ts"
 
 export type SeatStats = {
     matches: number

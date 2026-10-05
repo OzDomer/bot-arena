@@ -1,8 +1,8 @@
-import { DEFAULT_RULES, type Entrant, type Rules } from "../types"
-import { deriveSeed } from "../util/random"
-import { outcome } from "./outcome"
-import { playMatch } from "./playMatch"
-import { addStats, emptyStats, type SeatStats } from "./stats"
+import { DEFAULT_RULES, type Entrant, type Rules } from "../types.ts"
+import { deriveSeed } from "../util/random.ts"
+import { outcome } from "./outcome.ts"
+import { playMatch } from "./playMatch.ts"
+import { addStats, emptyStats, type SeatStats } from "./stats.ts"
 
 
 

@@ -1,5 +1,5 @@
-import type { Action, Hit, Ship, World } from "../types";
-import { attackArc, chebyshev } from "./geometry";
+import type { Action, Hit, Ship, World } from "../types.ts";
+import { attackArc, chebyshev } from "./geometry.ts";
 
 export function resolveAttacks(world: World, actions: Record<Ship['id'], Action>): Hit[] {
     const hits: Hit[] = []

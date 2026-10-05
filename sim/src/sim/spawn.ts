@@ -1,5 +1,5 @@
-import { FACING, type Position, type Rules, type Ship } from "../types";
-import { pickRandom, type Rng } from "../util/random";
+import { FACING, type Position, type Rules, type Ship } from "../types.ts";
+import { pickRandom, type Rng } from "../util/random.ts";
 
 export function randomPositions(count: number, width: Rules['width'], height: Rules['height'], rng: Rng): Position[] {
     const positions: Position[] = []

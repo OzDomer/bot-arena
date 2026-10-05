@@ -1,7 +1,7 @@
-import { DIRECTIONS, type Action, type Direction, type Observation, type Ship } from "../types";
-import { closestTo, directionAway, directionToward, chebyshev } from "../sim/geometry";
-import { pickRandom } from "../util/random";
-import { RandomizedBot } from "./RandomizedBot";
+import { DIRECTIONS, type Action, type Direction, type Observation, type Ship } from "../types.ts";
+import { closestTo, directionAway, directionToward, chebyshev } from "../sim/geometry.ts";
+import { pickRandom } from "../util/random.ts";
+import { RandomizedBot } from "./RandomizedBot.ts";
 
 
 

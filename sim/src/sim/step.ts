@@ -1,7 +1,7 @@
-import { DELTAS, type Action, type Position, type Ship, type World } from "../types";
-import { resolveAttacks } from "./combat";
-import { clamp, inCircle, key } from "./geometry";
-import { stormAt } from "./storm";
+import { DELTAS, type Action, type Position, type Ship, type World } from "../types.ts";
+import { resolveAttacks } from "./combat.ts";
+import { clamp, inCircle, key } from "./geometry.ts";
+import { stormAt } from "./storm.ts";
 
 export function step(world: World, actions: Record<Ship['id'], Action>): World {
     // --- phase 1: attacks (resolved on current positions, simultaneous) ---

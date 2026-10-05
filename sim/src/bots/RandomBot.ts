@@ -1,7 +1,7 @@
-import { chebyshev } from "../sim/geometry";
-import { type Action, type Observation, DIRECTIONS } from "../types";
-import { pickRandom } from "../util/random";
-import { RandomizedBot } from "./RandomizedBot";
+import { chebyshev } from "../sim/geometry.ts";
+import { type Action, type Observation, DIRECTIONS } from "../types.ts";
+import { pickRandom } from "../util/random.ts";
+import { RandomizedBot } from "./RandomizedBot.ts";
 
 export class RandomBot extends RandomizedBot {
 

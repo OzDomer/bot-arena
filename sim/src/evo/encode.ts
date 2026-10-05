@@ -1,5 +1,5 @@
-import { chebyshev } from "../sim/geometry";
-import { type Facing, type Observation } from "../types";
+import { chebyshev } from "../sim/geometry.ts";
+import { type Facing, type Observation } from "../types.ts";
 
 export const ENCODE_DELTAS: Record<Facing, { dx: number; dy: number }> = {
     N: { dx: 0, dy: -1 },

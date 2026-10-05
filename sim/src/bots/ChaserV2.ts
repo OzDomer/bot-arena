@@ -1,7 +1,7 @@
-import { DIRECTIONS, type Action, type Observation, type Ship } from "../types";
-import { directionToward, chebyshev, inCircle } from "../sim/geometry";
-import { pickRandom } from "../util/random";
-import { RandomizedBot } from "./RandomizedBot";
+import { DIRECTIONS, type Action, type Observation, type Ship } from "../types.ts";
+import { directionToward, chebyshev, inCircle } from "../sim/geometry.ts";
+import { pickRandom } from "../util/random.ts";
+import { RandomizedBot } from "./RandomizedBot.ts";
 
 
 type State = 'wander' | 'chase';

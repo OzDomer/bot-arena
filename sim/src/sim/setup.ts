@@ -1,7 +1,7 @@
-import { DEFAULT_RULES, type Brain, type Entrant, type Rules, type Ship, type World } from "../types"
-import { deriveSeed, makeRng } from "../util/random";
-import { mapCenter } from "./geometry";
-import { makeShips, randomPositions } from "./spawn"
+import { DEFAULT_RULES, type Brain, type Entrant, type Rules, type Ship, type World } from "../types.ts"
+import { deriveSeed, makeRng } from "../util/random.ts";
+import { mapCenter } from "./geometry.ts";
+import { makeShips, randomPositions } from "./spawn.ts"
 
 export function makeMatch(entrants: Entrant[], seed: number, rules: Rules = DEFAULT_RULES): { world: World; brains: Record<Ship['id'], Brain> } {
     const worldRng = makeRng(deriveSeed(seed, 'world'))

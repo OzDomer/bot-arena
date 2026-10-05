@@ -1,6 +1,6 @@
-import { showcase } from './bots/lineups'
-import { PRESETS, isPresetName } from './sim/presets'
-import { runTournament } from './sim/tournament'
+import { showcase } from './bots/lineups.ts'
+import { PRESETS, isPresetName } from './sim/presets.ts'
+import { runTournament } from './sim/tournament.ts'
 
 const matches = Number(process.argv[2] ?? 1000)   // default match count
 const preset = process.argv[3] ?? 'default'

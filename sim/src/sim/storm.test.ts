@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { stormAt } from './storm';
-import { DEFAULT_RULES } from '../types';
-import { inCircle } from './geometry';
+import { stormAt } from './storm.ts';
+import { DEFAULT_RULES } from '../types.ts';
+import { inCircle } from './geometry.ts';
 
 describe('stormAt', () => {
     it('has not started before startTurn', () => {

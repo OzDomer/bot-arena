@@ -1,7 +1,7 @@
-import { chebyshev } from "../sim/geometry";
-import { DIRECTIONS, type Action, type Brain, type Observation, type Weights } from "../types";
-import { encode, versionFor } from "./encode";
-import { forward, argMax, OUTPUTS } from "./net";
+import { chebyshev } from "../sim/geometry.ts";
+import { DIRECTIONS, type Action, type Brain, type Observation, type Weights } from "../types.ts";
+import { encode, versionFor } from "./encode.ts";
+import { forward, argMax, OUTPUTS } from "./net.ts";
 
 export class NetBrain implements Brain {
     public readonly weights: Weights

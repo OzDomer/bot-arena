@@ -1,5 +1,5 @@
-import { mapCenter } from "../sim/geometry";
-import { DEFAULT_RULES, type Rules, type Ship, type World } from "../types";
+import { mapCenter } from "../sim/geometry.ts";
+import { DEFAULT_RULES, type Rules, type Ship, type World } from "../types.ts";
 
 export function ship(over: Partial<Ship> & { id: number }): Ship {
     return {

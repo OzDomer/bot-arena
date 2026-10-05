@@ -1,9 +1,9 @@
-import { PRESETS } from "../sim/presets";
-import { runTournament } from "../sim/tournament";
-import type { Entrant, Weights } from "../types";
-import { fitness } from "./fitness";
-import { NetBrain } from "./NetBrain";
-import { trainingPool } from "../bots/lineups";
+import { PRESETS } from "../sim/presets.ts";
+import { runTournament } from "../sim/tournament.ts";
+import type { Entrant, Weights } from "../types.ts";
+import { fitness } from "./fitness.ts";
+import { NetBrain } from "./NetBrain.ts";
+import { trainingPool } from "../bots/lineups.ts";
 
 
 

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest"
-import { gradLogPi, sample, softmax, updateWeights, type Sample } from "./policy"
-import { makeRng } from "../util/random"
-import { OUTPUTS, randomWeights } from "./net"
-import { ENCODING_VERSION, inputsFor } from "./encode"
+import { gradLogPi, sample, softmax, updateWeights, type Sample } from "./policy.ts"
+import { makeRng } from "../util/random.ts"
+import { OUTPUTS, randomWeights } from "./net.ts"
+import { ENCODING_VERSION, inputsFor } from "./encode.ts"
 
 const N = inputsFor(ENCODING_VERSION)
 

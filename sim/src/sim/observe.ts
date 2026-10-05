@@ -1,6 +1,6 @@
-import type { Observation, Ship, World } from "../types";
-import { chebyshev } from "./geometry";
-import { stormAt } from "./storm";
+import type { Observation, Ship, World } from "../types.ts";
+import { chebyshev } from "./geometry.ts";
+import { stormAt } from "./storm.ts";
 
 export function observe(world: World, ship: Ship): Observation {
     const map = { width: world.rules.width, height: world.rules.height, turn: world.turn }

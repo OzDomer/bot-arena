@@ -1,5 +1,5 @@
-import type { Action, Brain, Observation } from "../types";
-import type { Rng } from "../util/random";
+import type { Action, Brain, Observation } from "../types.ts";
+import type { Rng } from "../util/random.ts";
 
 export abstract class RandomizedBot implements Brain {
     protected rng: Rng;

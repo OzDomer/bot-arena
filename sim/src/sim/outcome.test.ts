@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { world, ship } from "../test/fixtures"
-import { outcome } from "./outcome"
+import { world, ship } from "../test/fixtures.ts"
+import { outcome } from "./outcome.ts"
 
 describe('outcome', () => {
     it('a lone survivor wins', () => {

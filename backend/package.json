@@ -4,12 +4,9 @@
   "private": true,
   "dependencies": {
     "@arena/sim": "*",
-    "@types/supertest": "^7.2.1",
     "drizzle-orm": "^0.45.3",
     "express": "^5.2.1",
     "pg": "^8.23.1",
-    "supertest": "^7.3.1",
-    "tsx": "^4.23.15",
     "zod": "^4.6.5"
   },
   "scripts": {
@@ -22,6 +19,9 @@
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.4",
     "@types/pg": "^8.23.1",
-    "drizzle-kit": "^0.31.11"
+    "@types/supertest": "^7.2.1",
+    "drizzle-kit": "^0.31.11",
+    "supertest": "^7.3.1",
+    "tsx": "^4.23.15"
   }
 }

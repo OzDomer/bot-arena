@@ -32,3 +32,5 @@ export function isEntrantName(name: string): name is EntrantName {
 export function entrant(name: EntrantName): Entrant {
     return { name, make: ENTRANTS[name] }
 }
+
+export const ENTRANT_NAMES = Object.keys(ENTRANTS) as readonly EntrantName[]

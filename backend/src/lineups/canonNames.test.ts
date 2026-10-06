@@ -5,7 +5,7 @@ describe('canonicalNames', () => {
     it('two ordering identical output', () => {
         const lineup1 = ['thor', 'kratos', 'hades']
         const lineup2 = ['kratos', 'thor', 'hades']
-        expect(canonicalNames(lineup1)).toEqual([ 'hades', 'kratos', 'thor' ])
+        expect(canonicalNames(lineup1)).toEqual(['hades', 'kratos', 'thor'])
         expect(canonicalNames(lineup1)).toEqual(canonicalNames(lineup2))
     })
     it('does not mutate its input', () => {

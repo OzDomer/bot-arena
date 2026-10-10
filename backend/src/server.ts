@@ -1,13 +1,14 @@
 import { env } from './config/env.ts'
 import app from './app.ts'
 import { db } from './db/client.ts'
-import { migrate } from 'drizzle-orm/node-postgres/migrator'
-import path from 'node:path'
+import { runMigrations } from './db/migrate.ts'
+
 
 
 try {
     await db.execute('select 1')
-    console.log(`connection to db succesful`)
+    await runMigrations()
+    console.log(`db connected and ready`)
 } catch (error) {
     console.error(error)
     console.log('cant start, stopping process')
@@ -17,9 +18,7 @@ try {
 
 try {
     console.log('setting up db')
-    await migrate(db, {
-        migrationsFolder: path.join(import.meta.dirname, '..', 'drizzle')
-    })
+    
     console.log('set up complete')
 } catch (error) {
     console.error(error)

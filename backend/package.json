@@ -14,7 +14,8 @@
     "start": "node --enable-source-maps dist/server.js",
     "clean": "node -e \"fs.rmSync('dist', { recursive: true, force: true })\"",
     "build": "npm run clean && tsc -p tsconfig.build.json",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "test:db": "vitest run --config vitest.db.config.ts"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",

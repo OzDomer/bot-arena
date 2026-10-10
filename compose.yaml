@@ -10,6 +10,8 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql
+      # init scripts: see postgres-init/
+      - ./backend/postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "user", "-d", "bots_arena"]
       interval: 5s

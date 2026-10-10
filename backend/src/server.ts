@@ -16,15 +16,5 @@ try {
 }
 
 
-try {
-    console.log('setting up db')
-    
-    console.log('set up complete')
-} catch (error) {
-    console.error(error)
-    console.log('db setup failed')
-    process.exit(1)
-}
-
 
 app.listen(env.PORT, () => console.log(`listening on port: ${env.PORT}`))

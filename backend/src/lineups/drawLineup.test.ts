@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { drawLineup } from "./drawlineup.ts"
+import { drawLineup } from "./drawLineup.ts"
 import { ENTRANT_NAMES, isEntrantName } from "@arena/sim/bots"
 
 describe('drawLineup', () => {

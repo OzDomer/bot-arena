@@ -3,15 +3,25 @@ import { BETTING_WINDOW_MS, createScheduledMatch } from "./createScheduledMatch.
 import { db } from "../db/client.ts"
 import { lineups, matches } from "../db/schema.ts"
 import { createHash } from "node:crypto"
+import { outcome, playMatch, PRESETS, seedFromSecret } from "@arena/sim"
+import { entrant, isEntrantName } from "@arena/sim/bots"
 
 describe('createScheduledMatch', () => {
-    it('inserts one scheduled match with a valid commitment', async() => {
+    it('inserts one scheduled match with a valid commitment', async () => {
         const testDate = new Date('2026-01-01T12:00:00Z')
         const firstMatch = await createScheduledMatch(testDate, 10)
         const matchesRows = await db.select().from(matches)
         const lineupRows = await db.select().from(lineups)
         const expectedHash = createHash('sha256').update(firstMatch.secret).digest('hex')
-        
+        const entrants = lineupRows[0].names.map((name) => {
+            if (!isEntrantName(name)) throw new Error(`unknown entrant: ${name}`)
+            return entrant(name)
+        })
+        const { final, seating } = playMatch(entrants, seedFromSecret(firstMatch.secret), PRESETS.bigmap)
+        const result = outcome(final)
+        const winner = result.kind === "win" ? entrants[seating[result.winner - 1]].name : result.kind
+
+
         expect(matchesRows).toHaveLength(1)
         expect(firstMatch).toEqual(matchesRows[0])
         expect(matchesRows[0].phase).toBe('scheduled')
@@ -20,5 +30,9 @@ describe('createScheduledMatch', () => {
         expect(firstMatch.commitHash).toBe(expectedHash)
         expect(matchesRows[0].opensAt).toEqual(testDate)
         expect(matchesRows[0].closesAt).toEqual(new Date(testDate.getTime() + BETTING_WINDOW_MS))
+        expect(matchesRows[0].winner).toBeTypeOf('string')
+        expect(matchesRows[0].turns).toBeGreaterThan(0)
+        expect(matchesRows[0].winner).toBe(winner)
+
     })
 })

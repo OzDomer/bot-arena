@@ -9,7 +9,7 @@ import { entrant, isEntrantName } from "@arena/sim/bots"
 
 export const BETTING_WINDOW_MS = 5 * 60 * 1000
 
-export async function createScheduledMatch(now: Date = new Date(), oddsSampleSize: number = 2000) {
+export async function createScheduledMatch(opensAt: Date = new Date(), oddsSampleSize = 2000) {
     const lineup = drawLineup(8)
     const lineupRow = await getOrComputeOdds(lineup, "bigmap", oddsSampleSize)
     const secret = randomBytes(32)
@@ -28,8 +28,8 @@ export async function createScheduledMatch(now: Date = new Date(), oddsSampleSiz
         phase: 'scheduled',
         secret,
         commitHash,
-        opensAt: now,
-        closesAt: new Date(now.getTime() + BETTING_WINDOW_MS),
+        opensAt,
+        closesAt: new Date(opensAt.getTime() + BETTING_WINDOW_MS),
         turns: final.turn,
         winner
     }).returning()

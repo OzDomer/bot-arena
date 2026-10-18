@@ -12,6 +12,12 @@ export type PhaseUpdate = {
     settledAt?: Date
 }
 
+export function endsAt(match: MatchRow): number {
+    const revealsAt = match.closesAt.getTime() + REVEAL_LEAD_MS
+    const startsAt = match.startsAt?.getTime() ?? revealsAt
+    return startsAt + (match.turns ?? 0) * MS_PER_TURN
+}
+
 export function nextPhase(match: MatchRow, now: Date): PhaseUpdate {
     const t = now.getTime()
     const opensAt = match.opensAt.getTime()

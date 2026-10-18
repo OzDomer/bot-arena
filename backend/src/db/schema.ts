@@ -38,6 +38,7 @@ export const matches = pgTable('matches', {
     opensAt: timestamp({ withTimezone: true }).notNull(),
     closesAt: timestamp({ withTimezone: true }).notNull(),
     startsAt: timestamp({ withTimezone: true }),
+    turns: integer(),
     winner: text(),
     settledAt: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull()

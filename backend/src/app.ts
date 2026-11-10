@@ -7,6 +7,8 @@ import notFound from './middlewares/notFound.ts'
 import liveRouter from './routers/live.ts'
 import matchesRouter from './routers/matches.ts'
 import streamRouter from './routers/stream.ts'
+import authRouter from './routers/auth.ts'
+import meRouter from './routers/me.ts'
 import jsonError from './middlewares/error/jsonError.ts'
 
 const app = express()
@@ -24,6 +26,8 @@ app.get('/health', (_req, res) => {
 app.use('/live', liveRouter)
 app.use('/matches', matchesRouter)
 app.use('/stream', streamRouter)
+app.use('/auth', authRouter)
+app.use('/me', meRouter)
 
 app.use('/', notFound)
 

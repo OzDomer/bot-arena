@@ -33,6 +33,15 @@ export type LiveSnapshot = {
     next: MatchSnapshot | null
 }
 
+export type User = {
+    id: number
+    name: string
+    credits: number
+    createdAt: string
+}
+
+export type AuthResult = { token: string; user: User }
+
 export class ApiError extends Error {
     readonly status: number
 
@@ -47,21 +56,69 @@ function apiUrl(path: string): string {
     return `${import.meta.env.VITE_API_URL.replace(/\/+$/, '')}${path}`
 }
 
-async function get<T>(path: string): Promise<T> {
-    const response = await fetch(apiUrl(path))
-    if (!response.ok) {
-        const error: { message: string } = await response.json()
-        throw new ApiError(response.status, error.message)
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+    const response = options ? await fetch(apiUrl(path), options) : await fetch(apiUrl(path))
+    if (response.status === 204) return undefined as T
+
+    let data: unknown
+    try {
+        data = await response.json()
+    } catch {
+        throw new ApiError(response.status, 'Could not read the server response')
     }
-    return response.json() as Promise<T>
+
+    if (!response.ok) {
+        const message = typeof data === 'object' && data !== null && 'message' in data && typeof data.message === 'string'
+            ? data.message : 'Request failed'
+        throw new ApiError(response.status, message)
+    }
+    return data as T
 }
 
 export function getLive(): Promise<LiveSnapshot> {
-    return get('/live')
+    return request('/live')
 }
 
 export function getMatch(id: number): Promise<MatchSnapshot> {
-    return get(`/matches/${id}`)
+    return request(`/matches/${id}`)
+}
+
+export function register(name: string, password: string): Promise<AuthResult> {
+    return request('/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, password })
+    })
+}
+
+export function login(name: string, password: string): Promise<AuthResult> {
+    return request('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, password })
+    })
+}
+
+export function getMe(token: string): Promise<User> {
+    return request('/me', {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}` }
+    })
+}
+
+export function renameMe(token: string, name: string): Promise<User> {
+    return request('/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name })
+    })
+}
+
+export function deleteMe(token: string): Promise<void> {
+    return request('/me', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+    })
 }
 
 export function streamUrl(): string {

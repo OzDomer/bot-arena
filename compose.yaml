@@ -26,6 +26,10 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: postgres://user:1234@postgres:5432/bots_arena
+      CORS_ORIGIN: http://localhost:8081
+      # local compose only; a deployment sets its own
+      JWT_SECRET: compose-only-secret-0123456789abcdef0123
+      BETTING_WINDOW_MS: "45000"
     build:
       context: ./
       dockerfile: ./backend/Dockerfile

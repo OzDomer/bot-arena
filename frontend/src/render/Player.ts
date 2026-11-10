@@ -3,6 +3,7 @@ import type { Frame, Ship, Weights } from '@arena/sim'
 import type { Camera } from './camera'
 import { drawWorld } from './render'
 import type { Theme } from './theme'
+import { frameForTime, type LivePlayback } from '../shared/liveTime'
 
 export const FRAME_MS = 150
 
@@ -51,6 +52,17 @@ export class Player {
     pause() { clearInterval(this.timer); this.timer = undefined }
     stepForward() { this.show(this.i + 1); }
     stepBack() { this.show(this.i - 1); }
+
+    playLive(live: LivePlayback) {
+        this.pause()
+        const sync = () => {
+            const lastFrame = this.history.length - 1
+            const frame = live.settled ? lastFrame : frameForTime(live.startsAt, live.msPerTurn, lastFrame, live.now())
+            if (frame !== this.i) this.show(frame)
+        }
+        sync()
+        if (!live.settled) this.timer = setInterval(sync, Math.min(16, live.msPerTurn))
+    }
 
     setCamera(cam: Camera) {
         this.cam = cam

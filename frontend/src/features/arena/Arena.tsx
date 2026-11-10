@@ -3,10 +3,11 @@ import { FRAME_MS, Player } from '../../render/Player'
 import { DARK, LIGHT } from '../../render/theme'
 import { type ViewMode, fitView, makeCamera, panBy, zoomAt } from '../../render/camera'
 import useTheme from '../../shared/hooks/useTheme'
-import type { Match } from './useMatch'
+import type { Match } from './buildMatch'
+import type { LivePlayback } from '../../shared/liveTime'
 import type { Outcome, Ship } from '@arena/sim'
 
-type ArenaProps = { match: Match }
+type ArenaProps = { match: Match; live?: LivePlayback }
 
 function resultText(result: Outcome, names: Record<Ship['id'], string>): string {
     switch (result.kind) {
@@ -16,7 +17,7 @@ function resultText(result: Outcome, names: Record<Ship['id'], string>): string 
     }
 }
 
-function Arena({ match }: ArenaProps) {
+function Arena({ match, live }: ArenaProps) {
 
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const playerRef = useRef<Player>(null)
@@ -129,18 +130,27 @@ function Arena({ match }: ArenaProps) {
         playerRef.current?.setFrameMs(FRAME_MS / speed)   // 2× → 75 ms, 0.5× → 300 ms
     }, [speed, match])
 
+    useEffect(() => {
+        if (!live) return
+        const player = playerRef.current
+        player?.playLive(live)
+        return () => player?.pause()
+    }, [live, match])
+
     return (
         <>
             <div id="controls">
-                {finished && <span>{resultText(match.result, match.names)}</span>}
-                <button onClick={() => playerRef.current?.play()}>Play</button>
-                <button onClick={() => playerRef.current?.pause()}>Pause</button>
-                <button onClick={() => playerRef.current?.stepBack()}>Back</button>
-                <button onClick={() => playerRef.current?.stepForward()}>Forward</button>
-                <button onClick={() => setSpeed(1)}>1x</button>
-                <button onClick={() => setSpeed(0.5)}>0.5x</button>
-                <button onClick={() => setSpeed(2)}>2x</button>
-                <button onClick={() => setSpeed(4)}>4x</button>
+                {!live && <>
+                    {finished && <span>{resultText(match.result, match.names)}</span>}
+                    <button onClick={() => playerRef.current?.play()}>Play</button>
+                    <button onClick={() => playerRef.current?.pause()}>Pause</button>
+                    <button onClick={() => playerRef.current?.stepBack()}>Back</button>
+                    <button onClick={() => playerRef.current?.stepForward()}>Forward</button>
+                    <button onClick={() => setSpeed(1)}>1x</button>
+                    <button onClick={() => setSpeed(0.5)}>0.5x</button>
+                    <button onClick={() => setSpeed(2)}>2x</button>
+                    <button onClick={() => setSpeed(4)}>4x</button>
+                </>}
                 <button onClick={() => setViewMode(viewMode === 'iso' ? 'top' : 'iso')}>View</button>
                 <button onClick={() => playerRef.current?.toggleIntent()} >Intent</button>
                 <button onClick={toggleTheme}>dark/light</button>

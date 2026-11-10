@@ -4,10 +4,11 @@ import { DARK, LIGHT } from '../../render/theme'
 import { type ViewMode, fitView, makeCamera, panBy, zoomAt } from '../../render/camera'
 import useTheme from '../../shared/hooks/useTheme'
 import type { Match } from './buildMatch'
+import { frameReport, type FrameReport } from './frameReport'
 import type { LivePlayback } from '../../shared/liveTime'
 import type { Outcome, Ship } from '@arena/sim'
 
-type ArenaProps = { match: Match; live?: LivePlayback }
+type ArenaProps = { match: Match; live?: LivePlayback; onFrame?: (report: FrameReport) => void }
 
 function resultText(result: Outcome, names: Record<Ship['id'], string>): string {
     switch (result.kind) {
@@ -17,10 +18,11 @@ function resultText(result: Outcome, names: Record<Ship['id'], string>): string 
     }
 }
 
-function Arena({ match, live }: ArenaProps) {
+function Arena({ match, live, onFrame }: ArenaProps) {
 
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const playerRef = useRef<Player>(null)
+    const onFrameRef = useRef(onFrame)
     const [turn, setTurn] = useState(0)
     const [viewMode, setViewMode] = useState<ViewMode>('iso')
     const [speed, setSpeed] = useState(1)
@@ -37,7 +39,12 @@ function Arena({ match, live }: ArenaProps) {
 
 
         const cam = makeCamera('iso', fitView('iso', match.rules, canvas.clientWidth, canvas.clientHeight))
-        const player = new Player(ctx, cam, match.history, setTurn, match.names, match.intent, LIGHT)
+        // every frame the player shows is also reported outward, seat by seat
+        const showTurn = (shown: number) => {
+            setTurn(shown)
+            onFrameRef.current?.(frameReport(match, shown))
+        }
+        const player = new Player(ctx, cam, match.history, showTurn, match.names, match.intent, LIGHT)
         playerRef.current = player
 
         return () => {
@@ -47,6 +54,10 @@ function Arena({ match, live }: ArenaProps) {
 
     },
         [match])
+
+    useEffect(() => {
+        onFrameRef.current = onFrame
+    }, [onFrame])
 
     useEffect(() => {
         const canvas = canvasRef.current
@@ -154,7 +165,7 @@ function Arena({ match, live }: ArenaProps) {
                 <button onClick={() => setViewMode(viewMode === 'iso' ? 'top' : 'iso')}>View</button>
                 <button onClick={() => playerRef.current?.toggleIntent()} >Intent</button>
                 {!live && <button onClick={toggleTheme}>dark/light</button>}
-                <span>Turn: <span>{turn}</span></span>
+                {!live && <span>Turn: <span>{turn}</span></span>}
             </div>
             <canvas id="gameCanvas" ref={canvasRef}></canvas>
         </>

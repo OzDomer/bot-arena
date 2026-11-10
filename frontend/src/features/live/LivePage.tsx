@@ -1,39 +1,22 @@
-import { useCallback, useEffect, useState } from 'react'
-import type { MatchSnapshot } from '../../shared/api'
-import { formatCountdown } from '../../shared/countdown'
-import { remainingMs } from '../../shared/liveTime'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import Board from './Board'
 import LiveHeader from './LiveHeader'
-import MatchReplay from './MatchReplay'
-import { formatProbability, sortedOdds } from './odds'
+import type { LiveFrame } from './MatchReplay'
+import type { Result } from './ResultBand'
+import { replayMismatch, resultSummary } from './resultSummary'
+import Stage from './Stage'
+import Ticker from './Ticker'
+import { useLeaving } from './useLeaving'
 import { useLive } from './useLive'
 import './live.css'
 
-function Lineup({ match }: { match: Exclude<MatchSnapshot, { phase: 'scheduled' }> }) {
-    return (
-        <>
-            <ul className="board-rows">
-                {sortedOdds(match.lineup, match.odds).map(({ name, label }) => (
-                    <li key={name} className="board-row"><span>{name}</span><strong>{label}</strong></li>
-                ))}
-            </ul>
-            <p className="board-foot">Draw {formatProbability(match.odds.draw)} · Timeout {formatProbability(match.odds.timeout)}</p>
-        </>
-    )
-}
-
-function phaseText(match: MatchSnapshot): string {
-    switch (match.phase) {
-        case 'scheduled': return 'scheduled'
-        case 'open': return 'bets open'
-        case 'closed': return 'bets closed'
-        case 'revealed': return 'playing'
-        case 'settled': return 'result'
-    }
-}
+// long enough for the band's slide-out, see .result-band[data-leaving]
+const RESULT_LEAVE_MS = 380
 
 export default function LivePage() {
     const { snapshot, offset, connection, error } = useLive()
     const [clientNow, setClientNow] = useState(Date.now)
+    const [reported, setReported] = useState<{ matchId: number; frame: LiveFrame } | null>(null)
     const now = useCallback(() => Date.now() + offset, [offset])
 
     useEffect(() => {
@@ -41,33 +24,50 @@ export default function LivePage() {
         return () => clearInterval(timer)
     }, [])
 
-    const countdown = (date: string) => formatCountdown(remainingMs(Date.parse(date), clientNow, offset))
     const current = snapshot?.current ?? null
-    const playing = current && (current.phase === 'revealed' || current.phase === 'settled') ? current : null
+    const next = snapshot?.next ?? null
+    const currentId = current?.matchId ?? null
+
+    // The arena reports the frame it shows; the board and the ticker follow
+    // it. A report is kept with the match it came from and dropped when the
+    // next match takes over.
+    const onFrame = useCallback((frame: LiveFrame) => {
+        if (currentId === null) return
+        setReported(last => last && last.matchId === currentId && last.frame.turn === frame.turn ? last : { matchId: currentId, frame })
+    }, [currentId])
+    const frame = reported && reported.matchId === currentId ? reported.frame : null
+
+    const settled = current?.phase === 'settled' ? current : null
+    const winnerColor = settled && frame ? frame.seats.find(seat => seat.name === settled.winner)?.color ?? null : null
+    const mismatch = settled ? replayMismatch(settled.winner, frame?.localWinner ?? null) : null
+    const result = useMemo<Result | null>(
+        () => settled ? { ...resultSummary(settled.winner, settled.odds), matchId: settled.matchId, color: winnerColor, mismatch } : null,
+        [settled, winnerColor, mismatch],
+    )
+    const leavingResult = useLeaving(result, RESULT_LEAVE_MS)
+
+    const serverNow = clientNow + offset
+    const playing = current?.phase === 'revealed' || current?.phase === 'settled'
 
     return (
         <div className="live">
             <LiveHeader connection={connection} />
-            <div className="ticker" aria-live="polite">
-                {current
-                    ? <><strong>Match #{current.matchId}</strong><span>{phaseText(current)}</span></>
-                    : <span>{snapshot ? 'no match yet' : 'connecting'}</span>}
-                {current?.phase === 'open' && <span>closes in {countdown(current.closesAt)}</span>}
-                {snapshot?.next && <span className="ticker-next">next opens in {countdown(snapshot.next.opensAt)}</span>}
-            </div>
+            <Ticker current={current} next={next} frame={frame} serverNow={serverNow} ready={snapshot !== null} />
             <main className="live-main">
-                <section className="stage" aria-label="Arena">
-                    {error && <p className="stage-notice prose" role="alert">{error}</p>}
-                    {playing && snapshot
-                        ? <MatchReplay key={playing.matchId} snapshot={playing} msPerTurn={snapshot.msPerTurn} now={now} />
-                        : <p className="stage-message">{!snapshot ? 'Connecting to the arena' : current ? phaseText(current) : 'Waiting for the next match'}</p>}
-                </section>
-                <aside className="board" aria-label="Lineup and odds">
-                    <h2 className="board-title">Board</h2>
-                    {current && current.phase !== 'scheduled'
-                        ? <Lineup match={current} />
-                        : <p className="board-foot">The lineup appears when the match opens.</p>}
-                </aside>
+                <Stage
+                    current={current}
+                    next={next}
+                    ready={snapshot !== null}
+                    connection={connection}
+                    error={error}
+                    serverNow={serverNow}
+                    msPerTurn={snapshot?.msPerTurn ?? 0}
+                    now={now}
+                    onFrame={onFrame}
+                    result={result}
+                    leavingResult={leavingResult}
+                />
+                <Board match={current} seats={playing && frame ? frame.seats : null} loading={snapshot === null} />
             </main>
         </div>
     )

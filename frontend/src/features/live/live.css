@@ -116,6 +116,7 @@
 }
 
 .ticker {
+    position: relative;
     display: flex;
     flex: none;
     align-items: center;
@@ -132,9 +133,36 @@
     overflow: hidden;
 }
 
+.ticker-phase {
+    color: var(--muted);
+}
+
+.ticker-detail {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ticker-detail[data-urgent] {
+    color: var(--accent);
+    font-weight: 700;
+}
+
 .ticker-next {
     margin-left: auto;
     color: var(--muted);
+}
+
+/* how far through the match the frame on screen is */
+.ticker-progress {
+    position: absolute;
+    right: 0;
+    bottom: -1px;
+    left: 0;
+    height: 2px;
+    background: var(--fg);
+    transform: scaleX(var(--progress, 0));
+    transform-origin: left;
+    transition: transform 150ms linear;
 }
 
 .live-main {
@@ -143,6 +171,8 @@
     grid-template-columns: minmax(0, 1fr) 21rem;
     min-height: 0;
 }
+
+/* ---- stage ---- */
 
 .stage {
     position: relative;
@@ -153,21 +183,204 @@
     overflow: hidden;
 }
 
+.stage-fill {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.1rem;
+    min-height: 0;
+    padding: 1.5rem 1rem;
+    text-align: center;
+}
+
+.stage-fill p {
+    margin: 0;
+}
+
+/* a faint plotting grid that fades toward the edges */
+.stage-grid {
+    position: relative;
+    isolation: isolate;
+}
+
+.stage-grid::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image:
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-position: center;
+    background-size: 3rem 3rem;
+    content: '';
+    mask-image: radial-gradient(ellipse 70% 70% at center, #000 20%, transparent 78%);
+}
+
 .stage-message {
-    margin: auto;
-    padding: 1rem;
     color: var(--muted);
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
+}
+
+.stage-problem {
+    max-width: 30rem;
+    padding: 0.9rem 1.1rem;
+    border: 1px solid var(--danger);
+    border-left-width: 4px;
+    background: var(--bg);
+    text-align: left;
 }
 
 .stage-notice {
     flex: none;
     margin: 0;
-    padding: 0.5rem 1rem;
+    padding: 0.45rem 1rem;
     border-bottom: 1px solid var(--line);
-    border-left: 3px solid var(--danger);
+    border-left: 3px solid var(--accent);
+    background: var(--bg);
+    font-size: 0.82rem;
+}
+
+.stage-notice[data-tone="error"] {
+    border-left-color: var(--danger);
+}
+
+.hero-label {
+    color: var(--muted);
+    font-size: 0.8rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+/* the one number a stranger has to read in two seconds */
+/* its glyph box is taller than its line: it must not catch clicks meant
+   for what sits under it */
+.hero-digits {
+    pointer-events: none;
+    font-size: clamp(4.5rem, 17vw, 12.5rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+}
+
+.hero-digits span {
+    display: inline-block;
+    animation: hero-tick 160ms ease-out;
+}
+
+.hero-digits[data-urgent] {
+    color: var(--accent);
+}
+
+@keyframes hero-tick {
+    from {
+        opacity: 0.8;
+        transform: translateY(0.02em);
+    }
+}
+
+.hero-word {
+    font-size: clamp(2.2rem, 7vw, 5rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.hero-sweep {
+    position: relative;
+    width: min(18rem, 60%);
+    height: 2px;
+    overflow: hidden;
+    background: var(--line);
+}
+
+.hero-sweep::after {
+    position: absolute;
+    inset: 0;
+    width: 35%;
+    background: var(--fg);
+    content: '';
+    animation: hero-sweep 1.1s ease-in-out infinite alternate;
+}
+
+@keyframes hero-sweep {
+    to {
+        transform: translateX(186%);
+    }
+}
+
+.hero-note {
+    max-width: 34rem;
+    color: var(--muted);
     font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.hash-chip {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    max-width: 100%;
+    padding: 0.4rem 0.45rem 0.4rem 0.75rem;
+    border: 1px dashed var(--line-strong);
+    border-radius: 2px;
+    background: var(--bg);
+    cursor: pointer;
+}
+
+.hash-chip-label {
+    color: var(--muted);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.hash-chip code {
+    font-family: inherit;
+    font-weight: 600;
+}
+
+.hash-chip-action {
+    min-width: 3.4rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 2px;
+    background: var(--fg);
+    color: var(--bg);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.hash-chip:hover {
+    border-style: solid;
+}
+
+/* the clipboard was refused: the whole hash, selectable in one click */
+.hash-chip[data-status="manual"] {
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: min(34rem, 100%);
+}
+
+.hash-chip[data-status="manual"] code {
+    overflow-wrap: anywhere;
+    font-size: 0.8rem;
+    user-select: all;
+}
+
+/* the canvas with its two corner chips; a notice above pushes all three down */
+.stage-arena {
+    position: relative;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
 }
 
 /* in the live view the arena's own buttons sit in a corner of the stage */
@@ -190,6 +403,191 @@
     background: var(--fg);
 }
 
+.stage-verified {
+    position: absolute;
+    top: 0.6rem;
+    left: 0.6rem;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0.3rem 0.6rem;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    background: var(--bg);
+    color: var(--muted);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+/* a tick drawn from two borders */
+.check {
+    width: 0.3rem;
+    height: 0.58rem;
+    margin: -0.15rem 0.1rem 0;
+    border: solid var(--ok);
+    border-width: 0 2px 2px 0;
+    transform: rotate(40deg);
+}
+
+/* between the reveal and the first frame */
+.stage-cue {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+}
+
+.stage-cue-word,
+.stage-cue-digit {
+    padding: 0.1em 0.35em;
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    box-shadow: 0 0 0 1px var(--line-strong);
+}
+
+.stage-cue-word {
+    font-size: 0.9rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.stage-cue-digit {
+    min-width: 1ch;
+    font-size: clamp(3.5rem, 9vw, 6.5rem);
+    font-weight: 700;
+    line-height: 1.05;
+    text-align: center;
+    animation: cue-in 220ms ease-out;
+}
+
+/* legible from its first frame: it only settles, it never fades in from nothing */
+@keyframes cue-in {
+    from {
+        opacity: 0.85;
+        transform: scale(1.12);
+    }
+}
+
+/* ---- result band ---- */
+
+.result-band {
+    position: absolute;
+    right: 0;
+    bottom: 11%;
+    left: 0;
+    z-index: 8;
+    display: flex;
+    align-items: stretch;
+    gap: 1.1rem;
+    padding: 1rem 1.25rem;
+    border-block: 1px solid var(--line-strong);
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
+    backdrop-filter: blur(3px);
+    animation: band-in 320ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.result-band[data-leaving] {
+    animation: band-out 360ms ease-in forwards;
+}
+
+@keyframes band-in {
+    from {
+        opacity: 0;
+        transform: translateY(1.5rem);
+    }
+}
+
+@keyframes band-out {
+    to {
+        opacity: 0;
+        transform: translateY(2.5rem);
+    }
+}
+
+.result-chip {
+    flex: none;
+    width: 0.6rem;
+    background: var(--seat);
+}
+
+.result-band[data-kind="draw"] .result-chip,
+.result-band[data-kind="timeout"] .result-chip {
+    background: repeating-linear-gradient(135deg, var(--muted) 0 4px, transparent 4px 8px);
+}
+
+.result-main {
+    min-width: 0;
+}
+
+.result-band p {
+    margin: 0;
+}
+
+.result-label {
+    color: var(--accent);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.result-headline {
+    overflow: hidden;
+    font-size: clamp(1.8rem, 5.2vw, 3.6rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+    text-overflow: ellipsis;
+}
+
+.result-detail {
+    color: var(--muted);
+}
+
+.result-next {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-left: auto !important;
+    color: var(--muted);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-align: right;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.result-next strong {
+    color: var(--fg);
+    font-size: 1.6rem;
+    letter-spacing: -0.02em;
+}
+
+.result-band[data-kind="mismatch"] {
+    border-color: var(--danger);
+}
+
+.result-band[data-kind="mismatch"] .result-label,
+.result-mismatch {
+    color: var(--danger);
+}
+
+.result-band[data-kind="mismatch"] .result-chip {
+    background: var(--danger);
+}
+
+.result-mismatch {
+    margin-top: 0.35rem !important;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* ---- board ---- */
+
 .board {
     display: flex;
     flex-direction: column;
@@ -199,15 +597,47 @@
     background: var(--panel);
 }
 
-.board-title {
-    margin: 0;
-    padding: 0.7rem 1rem;
+.board-head {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    height: 2.6rem;
+    padding: 0 1rem;
     border-bottom: 1px solid var(--line);
+}
+
+.board-head h2 {
+    margin: 0;
     color: var(--muted);
     font-size: 0.72rem;
     font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.board-stamp {
+    padding: 0.1rem 0.45rem;
+    border: 1px solid var(--line-strong);
+    border-radius: 2px;
+    font-size: 0.68rem;
+    font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
+    animation: stamp-in 200ms ease-out;
+}
+
+.board[data-phase="closed"] .board-stamp {
+    border-width: 2px;
+    transform: rotate(-3deg);
+}
+
+@keyframes stamp-in {
+    from {
+        opacity: 0.4;
+        transform: scale(1.25);
+    }
 }
 
 .board-rows {
@@ -217,20 +647,167 @@
 }
 
 .board-row {
+    position: relative;
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0.55rem 1rem;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 2.75rem;
+    box-sizing: border-box;
+    padding: 0.5rem 1rem 0.6rem;
     border-bottom: 1px solid var(--line);
+    animation: row-in 240ms ease-out backwards;
+    animation-delay: calc(var(--i) * 30ms);
+    transition: opacity 300ms;
+}
+
+@keyframes row-in {
+    from {
+        opacity: 0;
+        transform: translateX(0.6rem);
+    }
+}
+
+/* the ship's colour: nothing until the seating is known, then it arrives */
+.board-chip {
+    flex: none;
+    width: 0;
+    height: 0.8rem;
+    border-radius: 1px;
+    background: var(--seat);
+    transition: width 240ms ease-out;
+}
+
+.board-row:not([data-state="idle"]) .board-chip {
+    width: 0.8rem;
+}
+
+/* no chip yet: the name lines up with the board's edge, not with a gap */
+.board-row[data-state="idle"] .board-chip {
+    margin-right: -0.6rem;
+}
+
+.board-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.board-odds {
+    flex: none;
+    min-width: 3.2rem;
+    font-weight: 700;
+    text-align: right;
+}
+
+.board-bar {
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: calc(var(--share) * 100%);
+    height: 2px;
+    background: var(--fg);
+}
+
+.board-hp {
+    flex: none;
+    width: 2.6rem;
+    height: 0.3rem;
+    background: var(--line);
+}
+
+.board-hp span {
+    display: block;
+    height: 100%;
+    background: var(--fg);
+    transition: width 150ms linear;
+}
+
+.board-tag {
+    flex: none;
+    color: var(--muted);
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.board-row[data-state="sunk"] {
+    opacity: 0.42;
+}
+
+.board-row[data-state="sunk"] .board-name {
+    text-decoration: line-through;
+}
+
+.board-row[data-state="sunk"] .board-chip {
+    opacity: 0.5;
+}
+
+.board-row[data-state="winner"] {
+    background: var(--bg);
+    box-shadow: inset 4px 0 0 var(--accent);
+}
+
+.board-row[data-state="winner"] .board-tag,
+.board-row[data-state="winner"] .board-odds {
+    color: var(--accent);
+}
+
+.board-row[data-state="winner"] .board-name {
+    font-weight: 800;
+}
+
+.board-row[data-state="winner"] .board-bar {
+    background: var(--accent);
+}
+
+/* bets are closed: the odds are history now */
+.board[data-phase="closed"] .board-row {
+    opacity: 0.55;
 }
 
 .board-foot {
+    display: flex;
+    flex: none;
+    justify-content: space-between;
+    gap: 1rem;
     margin: 0;
     padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.78rem;
+}
+
+.board-note {
+    margin: 0;
+    padding: 0.8rem 1rem;
     color: var(--muted);
     font-size: 0.8rem;
+    line-height: 1.5;
 }
+
+.board-skeleton .board-row {
+    justify-content: space-between;
+}
+
+.board-skeleton span {
+    height: 0.7rem;
+    background: var(--line);
+    animation: stream-pulse 1.2s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 80ms);
+}
+
+.board-skeleton span:first-child {
+    width: calc(38% + var(--i) * 4%);
+}
+
+.board-skeleton span:last-child {
+    width: 2.6rem;
+}
+
+/* ---- narrow: the board stacks under the stage and the page scrolls ---- */
 
 @media (max-width: 54rem) {
     .live {
@@ -248,13 +825,30 @@
     }
 
     .stage {
-        height: min(68vh, 34rem);
+        height: min(66vh, 34rem);
+    }
+
+    /* nothing to watch yet: leave room for the board */
+    .stage[data-phase="none"],
+    .stage[data-phase="open"],
+    .stage[data-phase="closed"] {
+        height: min(48vh, 24rem);
     }
 
     .board {
         overflow: visible;
         border-top: 1px solid var(--line);
         border-left: 0;
+    }
+
+    .result-band {
+        bottom: 6%;
+        gap: 0.8rem;
+        padding: 0.8rem 0.9rem;
+    }
+
+    .hero-note {
+        display: none;
     }
 }
 
@@ -264,6 +858,25 @@
     }
 
     .stream-word {
+        display: none;
+    }
+
+    .ticker {
+        gap: 0.7rem;
+        padding: 0 0.75rem;
+        letter-spacing: 0.05em;
+    }
+
+    /* the stage and the board both say it already */
+    .ticker-next {
+        display: none;
+    }
+
+    .hash-chip-label {
+        display: none;
+    }
+
+    .result-next span {
         display: none;
     }
 }

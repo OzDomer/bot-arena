@@ -2,8 +2,8 @@ import express from 'express'
 import logError from './middlewares/error/logError.ts'
 import errorResponder from './middlewares/error/errorResponder.ts'
 import notFound from './middlewares/notFound.ts'
-
-
+import liveRouter from './routers/live.ts'
+import matchesRouter from './routers/matches.ts'
 
 const app = express()
 
@@ -13,11 +13,12 @@ app.get('/health', (_req, res) => {
     res.status(200).json({ healthy: "bery" })
 })
 
+app.use('/live', liveRouter)
+app.use('/matches', matchesRouter)
+
 app.use('/', notFound)
 
 app.use('/', logError)
 app.use('/', errorResponder)
 
 export default app
-
-

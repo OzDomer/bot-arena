@@ -23,6 +23,30 @@ describe('GET / not a declared end point', () => {
     })
 })
 
+describe('GET /live', () => {
+    it('answers with an empty snapshot before any match exists', async () => {
+        const response = await request(app).get('/live')
+
+        expect(response.statusCode).toBe(200)
+        expect(response.body).toEqual({
+            now: expect.any(String),
+            msPerTurn: 150,
+            current: null,
+            next: null,
+        })
+        expect(Number.isNaN(Date.parse(response.body.now))).toBe(false)
+    })
+})
+
+describe('GET /matches/:id with a malformed id', () => {
+    it.each(['abc', '0', '-1', '1.5', '1e3', '2147483648'])('rejects %s', async (id) => {
+        const response = await request(app).get(`/matches/${id}`)
+
+        expect(response.statusCode).toBe(400)
+        expect(response.body).toEqual({ message: 'invalid match id' })
+    })
+})
+
 describe('unexpected errors', () => {
     it('should return a generic 500 and not leak the stack', async () => {
         const testApp = express()

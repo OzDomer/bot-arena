@@ -1,4 +1,5 @@
-import { integer, jsonb, pgTable, text, pgEnum, timestamp, customType, unique } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { integer, jsonb, pgTable, text, pgEnum, timestamp, customType, unique, uniqueIndex } from "drizzle-orm/pg-core";
 
 const bytea = customType<{
     data: Buffer;
@@ -44,3 +45,17 @@ export const matches = pgTable('matches', {
     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull()
 
 })
+
+export const STARTING_CREDITS = 1000
+
+// The name is stored as typed and is unique regardless of case: "Oz" and
+// "oz" are the same account. Lookups by name compare lower(name) too.
+export const users = pgTable('users', {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    name: text().notNull(),
+    passwordHash: text().notNull(),
+    credits: integer().notNull().default(STARTING_CREDITS),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull()
+}, (t) => [
+    uniqueIndex('users_name_lower_unique').on(sql`lower(${t.name})`)
+])

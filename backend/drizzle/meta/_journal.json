@@ -15,6 +15,13 @@
       "when": 1792321454586,
       "tag": "0001_unique_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794304077973,
+      "tag": "0002_bizarre_eternals",
+      "breakpoints": true
     }
   ]
 }

@@ -6,7 +6,7 @@ beforeAll(async () => await runMigrations())
 
 beforeEach(async () => {
     await db.execute(
-        "TRUNCATE lineups, matches RESTART IDENTITY CASCADE"
+        "TRUNCATE lineups, matches, users RESTART IDENTITY CASCADE"
     )
 })
 

@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto'
+import { eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
 import jwt from 'jsonwebtoken'
 import request from 'supertest'
@@ -57,9 +58,45 @@ describe('GET /me', () => {
             expect(response.body).toEqual({ message: 'authentication required' })
         })
 
+    it.each(['Basic', 'Token', 'JWT'])('returns 401 authentication required for a valid token with the %s scheme', async (scheme) => {
+        const registered = await register()
+
+        const response = await checked(request(app).get('/me').set('Authorization', `${scheme} ${registered.body.token}`))
+
+        expect(response.status).toBe(401)
+        expect(response.body).toEqual({ message: 'authentication required' })
+    })
+
+    it('returns 401 authentication required for a valid token without a scheme', async () => {
+        const registered = await register()
+
+        const response = await checked(request(app).get('/me').set('Authorization', registered.body.token))
+
+        expect(response.status).toBe(401)
+        expect(response.body).toEqual({ message: 'authentication required' })
+    })
+
+    it.each(['bearer', 'Bearer'])('returns 200 for a valid token with the %s scheme', async (scheme) => {
+        const registered = await register()
+
+        const response = await checked(request(app).get('/me').set('Authorization', `${scheme} ${registered.body.token}`))
+
+        expect(response.status).toBe(200)
+    })
+
     it('returns 401 authentication required for a token signed with another secret', async () => {
         const registered = await register()
         const token = jwt.sign({ sub: String(registered.body.user.id) }, randomBytes(32), { algorithm: 'HS256' })
+
+        const response = await checked(request(app).get('/me').set('Authorization', `Bearer ${token}`))
+
+        expect(response.status).toBe(401)
+        expect(response.body).toEqual({ message: 'authentication required' })
+    })
+
+    it('returns 401 authentication required for an unexpired HS512 token signed with the configured secret for an existing user', async () => {
+        const registered = await register()
+        const token = jwt.sign({ sub: String(registered.body.user.id) }, env.JWT_SECRET, { algorithm: 'HS512', expiresIn: '1h' })
 
         const response = await checked(request(app).get('/me').set('Authorization', `Bearer ${token}`))
 
@@ -235,6 +272,21 @@ describe('DELETE /me', () => {
         const stillDeleted = await checked(request(app).get('/me').set('Authorization', authorization))
         expect(stillDeleted.status).toBe(401)
         expect(stillDeleted.body).toEqual({ message: 'authentication required' })
+    })
+
+    it('returns 204, deletes only the authenticated user and preserves the other user row and token', async () => {
+        const first = await register('First_User')
+        const second = await register('Second_User')
+        const [before] = await db.select().from(users).where(eq(users.id, second.body.user.id))
+
+        const response = await checked(request(app).delete('/me').set('Authorization', `Bearer ${first.body.token}`))
+
+        expect(response.status).toBe(204)
+        expect(await db.select().from(users)).toEqual([before])
+
+        const me = await checked(request(app).get('/me').set('Authorization', `Bearer ${second.body.token}`))
+        expect(me.status).toBe(200)
+        expect(me.body).toEqual(second.body.user)
     })
 
     it('returns 401 authentication required without a token and keeps the user row', async () => {

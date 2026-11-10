@@ -47,8 +47,8 @@ describe('tokens', () => {
         expect(() => verifyToken(token)).toThrow()
     })
 
-    it('rejects a token signed with HS384 even with the configured secret', () => {
-        const token = jwt.sign({ sub: '42' }, env.JWT_SECRET, { algorithm: 'HS384' })
+    it.each(['HS512', 'HS384'] as const)('rejects an unexpired %s token with a valid subject and the configured secret', (algorithm) => {
+        const token = jwt.sign({ sub: '42' }, env.JWT_SECRET, { algorithm, expiresIn: '1h' })
 
         expect(() => verifyToken(token)).toThrow()
     })

@@ -4,6 +4,9 @@ export type MatchRow = typeof matches.$inferSelect
 type Phase = MatchRow['phase']
 
 export const REVEAL_LEAD_MS = 3_000
+// how long after the reveal frame 0 plays, so clients have the seed and
+// the match built before playback starts
+export const PLAYBACK_DELAY_MS = 4_000
 // how long a settled match stays on screen before the next one opens
 export const RESULT_HOLD_MS = 8_000
 export const MS_PER_TURN = 150
@@ -16,7 +19,7 @@ export type PhaseUpdate = {
 
 export function endsAt(match: MatchRow): number {
     const revealsAt = match.closesAt.getTime() + REVEAL_LEAD_MS
-    const startsAt = match.startsAt?.getTime() ?? revealsAt
+    const startsAt = match.startsAt?.getTime() ?? revealsAt + PLAYBACK_DELAY_MS
     return startsAt + (match.turns ?? 0) * MS_PER_TURN
 }
 
@@ -34,7 +37,7 @@ export function nextPhase(match: MatchRow, now: Date): PhaseUpdate {
     if (t < closesAt) return { phase: 'open' }
     if (t < revealsAt) return { phase: 'closed' }
 
-    const startsAt = match.startsAt ?? new Date(revealsAt)
+    const startsAt = match.startsAt ?? new Date(revealsAt + PLAYBACK_DELAY_MS)
     const turns = match.turns ?? 0
     const endsAt = startsAt.getTime() + turns * MS_PER_TURN
 

@@ -4,7 +4,7 @@ import { db } from '../db/client.ts'
 import { matches } from '../db/schema.ts'
 import { env } from '../config/env.ts'
 import { getLive, loadLive, tick } from './live.ts'
-import { MS_PER_TURN, RESULT_HOLD_MS, REVEAL_LEAD_MS } from './nextPhase.ts'
+import { MS_PER_TURN, PLAYBACK_DELAY_MS, RESULT_HOLD_MS, REVEAL_LEAD_MS } from './nextPhase.ts'
 import { liveSnapshotOf } from './snapshot.ts'
 
 const T = new Date('2026-01-01T12:00:00Z')
@@ -47,10 +47,17 @@ describe('tick', () => {
         const revealsAt = BETTING_WINDOW_MS + REVEAL_LEAD_MS
         await tick(after(revealsAt))
         expect(first.phase).toBe('revealed')
-        expect(first.startsAt).toEqual(after(revealsAt))
-        expect((await rowInDb(first.id)).startsAt).toEqual(after(revealsAt))
+        // frame 0 is PLAYBACK_DELAY_MS after the reveal, and the match is
+        // still revealed, not settled, while that delay runs
+        const startsAt = revealsAt + PLAYBACK_DELAY_MS
+        expect(first.startsAt).toEqual(after(startsAt))
+        expect((await rowInDb(first.id)).startsAt).toEqual(after(startsAt))
+        expect(await tick(after(startsAt - 1))).toBe(false)
+        expect(first.phase).toBe('revealed')
 
-        const endsAt = revealsAt + first.turns! * MS_PER_TURN
+        const endsAt = startsAt + first.turns! * MS_PER_TURN
+        expect(await tick(after(endsAt - 1))).toBe(false)
+        expect(first.phase).toBe('revealed')
         expect(await tick(after(endsAt))).toBe(true)
         const settled = await rowInDb(first.id)
         expect(settled.phase).toBe('settled')
@@ -119,10 +126,10 @@ describe('loadLive', () => {
         // both stale rows are settled with the timestamps they should have
         // had, not the time of the restart
         const first = await rowInDb(firstId)
-        const firstRevealsAt = BETTING_WINDOW_MS + REVEAL_LEAD_MS
+        const firstStartsAt = BETTING_WINDOW_MS + REVEAL_LEAD_MS + PLAYBACK_DELAY_MS
         expect(first.phase).toBe('settled')
-        expect(first.startsAt).toEqual(after(firstRevealsAt))
-        expect(first.settledAt).toEqual(after(firstRevealsAt + first.turns! * MS_PER_TURN))
+        expect(first.startsAt).toEqual(after(firstStartsAt))
+        expect(first.settledAt).toEqual(after(firstStartsAt + first.turns! * MS_PER_TURN))
 
         const second = await rowInDb(secondId)
         expect(second.phase).toBe('settled')

@@ -7,6 +7,7 @@ import notFound from './middlewares/notFound.ts'
 import liveRouter from './routers/live.ts'
 import matchesRouter from './routers/matches.ts'
 import streamRouter from './routers/stream.ts'
+import jsonError from './middlewares/error/jsonError.ts'
 
 const app = express()
 
@@ -26,6 +27,7 @@ app.use('/stream', streamRouter)
 
 app.use('/', notFound)
 
+app.use('/', jsonError)
 app.use('/', logError)
 app.use('/', errorResponder)
 

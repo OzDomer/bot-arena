@@ -6,6 +6,8 @@ export default defineConfig({
     include: ['src/**/*.db.test.ts'],
     env: {
       DATABASE_URL: 'postgres://user:1234@localhost:5432/bots_arena_test',
+      CORS_ORIGIN: 'http://localhost:5173',
+      JWT_SECRET: 'test-secret-test-secret-test-secret-0123',
     },
     fileParallelism: false,
     setupFiles: "src/db/testSetup.ts"

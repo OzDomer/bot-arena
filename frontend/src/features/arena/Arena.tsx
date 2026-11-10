@@ -153,7 +153,7 @@ function Arena({ match, live }: ArenaProps) {
                 </>}
                 <button onClick={() => setViewMode(viewMode === 'iso' ? 'top' : 'iso')}>View</button>
                 <button onClick={() => playerRef.current?.toggleIntent()} >Intent</button>
-                <button onClick={toggleTheme}>dark/light</button>
+                {!live && <button onClick={toggleTheme}>dark/light</button>}
                 <span>Turn: <span>{turn}</span></span>
             </div>
             <canvas id="gameCanvas" ref={canvasRef}></canvas>

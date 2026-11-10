@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { getLive, streamUrl, type LiveSnapshot } from '../../shared/api'
 import { newerSnapshot } from './liveSnapshot'
 
-type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected'
+export type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected'
 
 export function useLive() {
     const [live, setLive] = useState<{ snapshot: LiveSnapshot | null; offset: number }>({ snapshot: null, offset: 0 })

@@ -1,0 +1,269 @@
+/* Header, a one-line ticker, then the stage with the board beside it.
+   On a narrow screen the board stacks under the stage and the page scrolls. */
+.live {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.site-header {
+    position: relative;
+    z-index: 20;
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    box-sizing: border-box;
+    height: 3.25rem;
+    padding: 0 1rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+}
+
+.wordmark {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+}
+
+.wordmark span {
+    margin: 0 0.12em;
+    color: var(--muted);
+    font-weight: 300;
+}
+
+.site-tools {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.stream-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-right: 0.35rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.stream-dot {
+    box-sizing: border-box;
+    width: 0.55rem;
+    height: 0.55rem;
+    border: 1.5px solid currentColor;
+    border-radius: 50%;
+}
+
+.stream-status[data-tone="live"] {
+    color: var(--fg);
+}
+
+.stream-status[data-tone="live"] .stream-dot {
+    border-color: var(--accent);
+    background: var(--accent);
+}
+
+.stream-status[data-tone="pending"] .stream-dot {
+    animation: stream-pulse 1.1s ease-in-out infinite;
+}
+
+.stream-status[data-tone="warn"] {
+    color: var(--accent);
+}
+
+.stream-status[data-tone="warn"] .stream-dot {
+    animation: stream-pulse 0.7s ease-in-out infinite;
+}
+
+.stream-status[data-tone="down"] {
+    color: var(--danger);
+}
+
+@keyframes stream-pulse {
+    50% {
+        opacity: 0.25;
+    }
+}
+
+.theme-toggle {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+}
+
+/* a half-filled disc: the lit side flips with the theme */
+.theme-icon {
+    width: 0.9rem;
+    height: 0.9rem;
+    border: 1.5px solid currentColor;
+    border-radius: 50%;
+    background: linear-gradient(90deg, currentColor 50%, transparent 50%);
+}
+
+:root[data-theme="dark"] .theme-icon {
+    transform: rotate(180deg);
+}
+
+.ticker {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 1rem;
+    box-sizing: border-box;
+    height: 2.25rem;
+    padding: 0 1rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.ticker-next {
+    margin-left: auto;
+    color: var(--muted);
+}
+
+.live-main {
+    display: grid;
+    flex: 1;
+    grid-template-columns: minmax(0, 1fr) 21rem;
+    min-height: 0;
+}
+
+.stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.stage-message {
+    margin: auto;
+    padding: 1rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.stage-notice {
+    flex: none;
+    margin: 0;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--line);
+    border-left: 3px solid var(--danger);
+    font-size: 0.85rem;
+}
+
+/* in the live view the arena's own buttons sit in a corner of the stage */
+.stage #controls {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    z-index: 5;
+    padding: 0;
+    border: 0;
+    background: none;
+}
+
+.stage #controls button {
+    background: var(--bg);
+    font-size: 0.75rem;
+}
+
+.stage #controls button:hover {
+    background: var(--fg);
+}
+
+.board {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: auto;
+    border-left: 1px solid var(--line);
+    background: var(--panel);
+}
+
+.board-title {
+    margin: 0;
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.board-rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.board-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.55rem 1rem;
+    border-bottom: 1px solid var(--line);
+}
+
+.board-foot {
+    margin: 0;
+    padding: 0.6rem 1rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+}
+
+@media (max-width: 54rem) {
+    .live {
+        overflow: auto;
+    }
+
+    .site-header {
+        position: sticky;
+        top: 0;
+    }
+
+    .live-main {
+        display: block;
+        flex: none;
+    }
+
+    .stage {
+        height: min(68vh, 34rem);
+    }
+
+    .board {
+        overflow: visible;
+        border-top: 1px solid var(--line);
+        border-left: 0;
+    }
+}
+
+@media (max-width: 30rem) {
+    .site-header {
+        padding: 0 0.75rem;
+    }
+
+    .stream-word {
+        display: none;
+    }
+}

@@ -16,7 +16,9 @@ function ReplayPage() {
 
     return (
         <>
-            <button onClick={() => { navigator.clipboard.writeText(location.href) }}>copy match link</button>
+            <div className="replay-bar">
+                <button className="btn" onClick={() => { navigator.clipboard.writeText(location.href) }}>copy match link</button>
+            </div>
             <Arena match={match} />
         </>
     )

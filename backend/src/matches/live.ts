@@ -25,6 +25,13 @@ export async function loadLive() {
     live.splice(0, live.length, ...rows)
 }
 
+// Boot: load what the last process left and bring it up to date before
+// anything is served, so the first snapshot is never a stale phase.
+export async function startLive(now: Date) {
+    await loadLive()
+    await tick(now)
+}
+
 let running = false
 
 // Returns true when what the public can see has changed.

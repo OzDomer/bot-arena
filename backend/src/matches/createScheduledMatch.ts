@@ -5,11 +5,12 @@ import { db } from "../db/client.ts"
 import { matches } from "../db/schema.ts"
 import { outcome, playMatch, PRESETS, seedFromSecret } from "@arena/sim"
 import { entrant, isEntrantName } from "@arena/sim/bots"
+import type { LiveEntry } from "./snapshot.ts"
 
 
 export const BETTING_WINDOW_MS = 5 * 60 * 1000
 
-export async function createScheduledMatch(opensAt: Date = new Date(), oddsSampleSize = 2000) {
+export async function createScheduledMatch(opensAt: Date = new Date(), oddsSampleSize = 2000): Promise<LiveEntry> {
     const lineup = drawLineup(8)
     const lineupRow = await getOrComputeOdds(lineup, "bigmap", oddsSampleSize)
     const secret = randomBytes(32)
@@ -33,5 +34,5 @@ export async function createScheduledMatch(opensAt: Date = new Date(), oddsSampl
         turns: final.turn,
         winner
     }).returning()
-    return row
+    return { match: row, lineup: lineupRow }
 }

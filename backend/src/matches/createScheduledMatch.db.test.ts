@@ -9,7 +9,7 @@ import { entrant, isEntrantName } from "@arena/sim/bots"
 describe('createScheduledMatch', () => {
     it('inserts one scheduled match with a valid commitment', async () => {
         const testDate = new Date('2026-01-01T12:00:00Z')
-        const firstMatch = await createScheduledMatch(testDate, 10)
+        const { match: firstMatch, lineup } = await createScheduledMatch(testDate, 10)
         const matchesRows = await db.select().from(matches)
         const lineupRows = await db.select().from(lineups)
         const expectedHash = createHash('sha256').update(firstMatch.secret).digest('hex')
@@ -26,6 +26,7 @@ describe('createScheduledMatch', () => {
         expect(firstMatch).toEqual(matchesRows[0])
         expect(matchesRows[0].phase).toBe('scheduled')
         expect(matchesRows[0].lineupId).toEqual(lineupRows[0].id)
+        expect(lineup).toEqual(lineupRows[0])
         expect(firstMatch.secret).toHaveLength(32)
         expect(firstMatch.commitHash).toBe(expectedHash)
         expect(matchesRows[0].opensAt).toEqual(testDate)

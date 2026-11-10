@@ -1,42 +1,61 @@
-import { ne, eq } from 'drizzle-orm'
+import { asc, eq, ne } from 'drizzle-orm'
 import { db } from '../db/client.ts'
-import { matches } from '../db/schema.ts'
-import { nextPhase, type MatchRow, endsAt } from './nextPhase.ts'
+import { lineups, matches } from '../db/schema.ts'
+import { holdEndsAt, nextPhase } from './nextPhase.ts'
 import { createScheduledMatch } from './createScheduledMatch.ts'
+import type { LiveEntry } from './snapshot.ts'
 
-const live: MatchRow[] = []
+const live: LiveEntry[] = []
 
-export function getLive(): readonly MatchRow[] {
+export function getLive(): readonly LiveEntry[] {
     return live
 }
 
+// Rows left unsettled by a previous process come back here with their
+// lineups. Nothing is fixed up at load: the next tick runs them through
+// nextPhase, which works from the stored timestamps, so a match that was
+// due while the server was down lands in the phase it should be in by now.
 export async function loadLive() {
-    const rows = await db.select().from(matches).where(ne(matches.phase, 'settled'))
+    const rows = await db
+        .select({ match: matches, lineup: lineups })
+        .from(matches)
+        .innerJoin(lineups, eq(matches.lineupId, lineups.id))
+        .where(ne(matches.phase, 'settled'))
+        .orderBy(asc(matches.opensAt), asc(matches.id))
     live.splice(0, live.length, ...rows)
 }
 
 let running = false
 
-export async function tick(now: Date) {
-    if (running) return
+// Returns true when what the public can see has changed.
+export async function tick(now: Date): Promise<boolean> {
+    if (running) return false
     running = true
+    let changed = false
     try {
-        for (const match of live) {
+        for (const { match } of live) {
             const update = nextPhase(match, now)
             if (update.phase === match.phase) continue
             const [updated] = await db.update(matches).set(update).where(eq(matches.id, match.id)).returning()
             Object.assign(match, updated)
+            changed = true
         }
 
         for (let i = live.length - 1; i >= 0; i--) {
-            if (live[i].phase === 'settled') live.splice(i, 1)
+            const { match } = live[i]
+            if (match.phase === 'settled' && now.getTime() >= holdEndsAt(match)) {
+                live.splice(i, 1)
+                changed = true
+            }
         }
 
-        if (!live.some((m) => m.phase === 'scheduled')) {
-            const lastEnd = Math.max(now.getTime(), ...live.map(endsAt))
-            live.push(await createScheduledMatch(new Date(lastEnd)))
+        if (!live.some(({ match }) => match.phase === 'scheduled')) {
+            const opensAt = Math.max(now.getTime(), ...live.map(({ match }) => holdEndsAt(match)))
+            live.push(await createScheduledMatch(new Date(opensAt)))
+            changed = true
         }
     } finally {
         running = false
     }
+    return changed
 }

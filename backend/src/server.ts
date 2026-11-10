@@ -2,13 +2,14 @@ import { env } from './config/env.ts'
 import app from './app.ts'
 import { db } from './db/client.ts'
 import { runMigrations } from './db/migrate.ts'
-import { tick } from './matches/live.ts'
+import { loadLive, tick } from './matches/live.ts'
 
 
 
 try {
     await db.execute('select 1')
     await runMigrations()
+    await loadLive()
     console.log(`db connected and ready`)
     setInterval(() => {
         tick(new Date()).catch((error) => console.error('tick failed', error))

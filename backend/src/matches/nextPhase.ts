@@ -4,6 +4,8 @@ export type MatchRow = typeof matches.$inferSelect
 type Phase = MatchRow['phase']
 
 export const REVEAL_LEAD_MS = 3_000
+// how long a settled match stays on screen before the next one opens
+export const RESULT_HOLD_MS = 8_000
 export const MS_PER_TURN = 150
 
 export type PhaseUpdate = {
@@ -16,6 +18,10 @@ export function endsAt(match: MatchRow): number {
     const revealsAt = match.closesAt.getTime() + REVEAL_LEAD_MS
     const startsAt = match.startsAt?.getTime() ?? revealsAt
     return startsAt + (match.turns ?? 0) * MS_PER_TURN
+}
+
+export function holdEndsAt(match: MatchRow): number {
+    return endsAt(match) + RESULT_HOLD_MS
 }
 
 export function nextPhase(match: MatchRow, now: Date): PhaseUpdate {

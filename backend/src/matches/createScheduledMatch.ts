@@ -2,13 +2,12 @@ import { createHash, randomBytes } from "node:crypto"
 import { drawLineup } from "../lineups/drawLineup.ts"
 import { getOrComputeOdds } from "../lineups/getOrComputeOdds.ts"
 import { db } from "../db/client.ts"
+import { env } from "../config/env.ts"
 import { matches } from "../db/schema.ts"
 import { outcome, playMatch, PRESETS, seedFromSecret } from "@arena/sim"
 import { entrant, isEntrantName } from "@arena/sim/bots"
 import type { LiveEntry } from "./snapshot.ts"
 
-
-export const BETTING_WINDOW_MS = 5 * 60 * 1000
 
 export async function createScheduledMatch(opensAt: Date = new Date(), oddsSampleSize = 2000): Promise<LiveEntry> {
     const lineup = drawLineup(8)
@@ -30,7 +29,7 @@ export async function createScheduledMatch(opensAt: Date = new Date(), oddsSampl
         secret,
         commitHash,
         opensAt,
-        closesAt: new Date(opensAt.getTime() + BETTING_WINDOW_MS),
+        closesAt: new Date(opensAt.getTime() + env.BETTING_WINDOW_MS),
         turns: final.turn,
         winner
     }).returning()

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { BETTING_WINDOW_MS, createScheduledMatch } from "./createScheduledMatch.ts"
+import { createScheduledMatch } from "./createScheduledMatch.ts"
+import { env } from "../config/env.ts"
 import { db } from "../db/client.ts"
 import { lineups, matches } from "../db/schema.ts"
 import { createHash } from "node:crypto"
@@ -30,7 +31,7 @@ describe('createScheduledMatch', () => {
         expect(firstMatch.secret).toHaveLength(32)
         expect(firstMatch.commitHash).toBe(expectedHash)
         expect(matchesRows[0].opensAt).toEqual(testDate)
-        expect(matchesRows[0].closesAt).toEqual(new Date(testDate.getTime() + BETTING_WINDOW_MS))
+        expect(matchesRows[0].closesAt).toEqual(new Date(testDate.getTime() + env.BETTING_WINDOW_MS))
         expect(matchesRows[0].winner).toBeTypeOf('string')
         expect(matchesRows[0].turns).toBeGreaterThan(0)
         expect(matchesRows[0].winner).toBe(winner)

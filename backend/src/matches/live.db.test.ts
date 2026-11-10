@@ -2,14 +2,15 @@ import { describe, expect, it } from 'vitest'
 import { eq, ne } from 'drizzle-orm'
 import { db } from '../db/client.ts'
 import { matches } from '../db/schema.ts'
+import { env } from '../config/env.ts'
 import { getLive, loadLive, tick } from './live.ts'
-import { BETTING_WINDOW_MS } from './createScheduledMatch.ts'
 import { MS_PER_TURN, RESULT_HOLD_MS, REVEAL_LEAD_MS } from './nextPhase.ts'
 import { liveSnapshotOf } from './snapshot.ts'
 
 const T = new Date('2026-01-01T12:00:00Z')
 const after = (ms: number) => new Date(T.getTime() + ms)
 const HOUR_MS = 60 * 60 * 1000
+const { BETTING_WINDOW_MS } = env
 
 async function rowInDb(id: number) {
     const [row] = await db.select().from(matches).where(eq(matches.id, id))

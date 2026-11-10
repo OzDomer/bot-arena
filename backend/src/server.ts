@@ -15,9 +15,10 @@ try {
     console.log(`db connected and ready`)
     startHeartbeat()
     setInterval(() => {
-        const now = new Date()
-        tick(now).then((changed) => {
-            if (changed) broadcast(liveSnapshotOf(getLive(), now))
+        tick(new Date()).then((changed) => {
+            // stamped when it is sent, not when the tick began: a tick that
+            // computes odds takes seconds, and clients set their clock from it
+            if (changed) broadcast(liveSnapshotOf(getLive(), new Date()))
         }).catch((error) => console.error('tick failed', error))
     }, 1000)
 } catch (error) {

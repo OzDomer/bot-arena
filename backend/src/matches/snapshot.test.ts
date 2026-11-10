@@ -174,6 +174,12 @@ describe('liveSnapshotOf', () => {
         expect(live.next).toMatchObject({ matchId: 3 })
     })
 
+    it('has no next while no match is scheduled', () => {
+        const live = liveSnapshotOf([entry('open', 1)], now)
+        expect(live.current).toMatchObject({ matchId: 1 })
+        expect(live.next).toBeNull()
+    })
+
     it('never lets the next match carry more than a scheduled snapshot', () => {
         const live = liveSnapshotOf([entry('revealed', 1), entry('scheduled', 2)], now)
         expect(Object.keys(live.next!).toSorted()).toEqual(SCHEDULED.toSorted())

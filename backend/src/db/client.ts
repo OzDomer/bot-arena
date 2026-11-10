@@ -1,6 +1,7 @@
 import { drizzle } from "drizzle-orm/node-postgres"
 import { Pool } from "pg"
 import { env } from "../config/env.ts";
+import { queryLogger } from "./queryLogger.ts"
 
 export const pool = new Pool({
   connectionString: env.DATABASE_URL,
@@ -8,6 +9,5 @@ export const pool = new Pool({
 export const db = drizzle({
   client: pool,
   casing: 'snake_case',
-  logger: true
+  logger: env.NODE_ENV === 'development' ? queryLogger : false
 })
-

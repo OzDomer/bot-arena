@@ -4,6 +4,7 @@ import errorResponder from './middlewares/error/errorResponder.ts'
 import notFound from './middlewares/notFound.ts'
 import liveRouter from './routers/live.ts'
 import matchesRouter from './routers/matches.ts'
+import streamRouter from './routers/stream.ts'
 
 const app = express()
 
@@ -15,6 +16,7 @@ app.get('/health', (_req, res) => {
 
 app.use('/live', liveRouter)
 app.use('/matches', matchesRouter)
+app.use('/stream', streamRouter)
 
 app.use('/', notFound)
 

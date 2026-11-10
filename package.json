@@ -8,6 +8,7 @@
     "build": "npm run build -w @arena/sim && npm run build -w @arena/backend && npm run build -w @arena/frontend",
     "preview": "npm run preview -w @arena/frontend",
     "test": "vitest",
+    "test:db": "npm run test:db -w @arena/backend",
     "tournament": "npm run tournament -w @arena/sim --",
     "evolve": "npm run evolve -w @arena/sim --",
     "train": "npm run train -w @arena/sim --",

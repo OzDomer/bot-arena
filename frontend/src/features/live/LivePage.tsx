@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { MatchSnapshot } from '../../shared/api'
 import { formatCountdown } from '../../shared/countdown'
 import { remainingMs } from '../../shared/liveTime'
+import AccountControls from '../auth/AccountControls'
 import MatchReplay from './MatchReplay'
 import { formatProbability, sortedOdds } from './odds'
 import { useLive } from './useLive'
@@ -43,7 +44,10 @@ export default function LivePage() {
         <main className="live-page">
             <header className="live-header">
                 <h1>Bot Arena · Live</h1>
-                <span className="live-connection" role="status">Stream: {connection}</span>
+                <div className="live-header-tools">
+                    <span className="live-connection" role="status">Stream: {connection}</span>
+                    <AccountControls />
+                </div>
             </header>
             {error && <p className="live-error" role="alert">{error}</p>}
             {!snapshot && <p>Loading live matches…</p>}

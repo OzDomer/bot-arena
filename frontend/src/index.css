@@ -105,3 +105,93 @@ body {
 .live-page #gameCanvas {
     min-height: 16rem;
 }
+
+.live-header-tools,
+.auth-actions,
+.auth-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.live-header-tools {
+    margin-left: auto;
+    gap: 0.75rem 1rem;
+    max-width: 100%;
+}
+
+.auth-account {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    max-width: 100%;
+    font-size: 0.85rem;
+}
+
+.auth-form {
+    align-items: flex-end;
+    max-width: 32rem;
+}
+
+.auth-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    max-width: 100%;
+}
+
+.auth-account input,
+.auth-account button {
+    box-sizing: border-box;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--fg);
+    border-radius: 0.25rem;
+    background: var(--bg);
+    color: var(--fg);
+    font: inherit;
+}
+
+.auth-account input {
+    width: 13rem;
+    max-width: 100%;
+}
+
+.auth-account button {
+    cursor: pointer;
+}
+
+.auth-account button:disabled,
+.auth-account input:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
+.auth-account input:focus-visible,
+.auth-account button:focus-visible {
+    outline: 2px solid var(--fg);
+    outline-offset: 3px;
+}
+
+.auth-confirmation {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid var(--fg);
+    border-radius: 0.25rem;
+}
+
+.live-page .auth-error,
+.live-page .auth-confirmation p {
+    margin: 0;
+}
+
+.auth-error {
+    flex-basis: 100%;
+    padding: 0.4rem 0.6rem;
+    border-left: 3px solid var(--fg);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}

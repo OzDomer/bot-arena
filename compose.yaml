@@ -37,5 +37,18 @@ services:
       postgres:
         condition: service_healthy
 
+  frontend:
+    container_name: bots-arena-frontend
+    ports:
+      - "8081:80"
+    build:
+      context: ./
+      dockerfile: ./frontend/Dockerfile
+      args:
+        # the browser calls the backend on its published port
+        VITE_API_URL: http://localhost:3000
+    depends_on:
+      - backend
+
 volumes:
   pgdata:

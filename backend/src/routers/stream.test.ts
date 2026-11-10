@@ -3,6 +3,7 @@ import type { Server } from 'node:http'
 import type { ReadableStreamDefaultReader } from 'node:stream/web'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import app from '../app.ts'
+import { env } from '../config/env.ts'
 import type { LiveSnapshot } from '../matches/snapshot.ts'
 import { broadcast, clientCount } from '../realtime/broadcaster.ts'
 
@@ -50,6 +51,7 @@ describe('GET /stream', () => {
         expect(response.headers.get('cache-control')).toBe('no-cache')
         expect(response.headers.get('connection')).toBe('keep-alive')
         expect(response.headers.get('x-accel-buffering')).toBe('no')
+        expect(response.headers.get('access-control-allow-origin')).toBe(env.CORS_ORIGIN)
         expect(clientCount()).toBe(1)
         if (!response.body) throw new Error('expected a streaming response body')
         const reader = response.body.getReader()

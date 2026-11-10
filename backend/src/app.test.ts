@@ -4,6 +4,7 @@ import request from 'supertest'
 import errorResponder from './middlewares/error/errorResponder.ts'
 import express from 'express'
 import logError from './middlewares/error/logError.ts'
+import { env } from './config/env.ts'
 
 describe('GET /health', () => {
     it('should return 200 OK and a status object', async () => {
@@ -11,6 +12,38 @@ describe('GET /health', () => {
 
         expect(response.statusCode).toBe(200)
         expect(response.body).toEqual({ healthy: 'bery' })
+    })
+})
+
+describe('cors', () => {
+    it('allows the configured frontend origin', async () => {
+        const response = await request(app).get('/health').set('Origin', env.CORS_ORIGIN)
+
+        expect(response.headers['access-control-allow-origin']).toBe(env.CORS_ORIGIN)
+    })
+
+    it('never answers with a wildcard or echoes another origin', async () => {
+        const response = await request(app).get('/health').set('Origin', 'https://evil.example')
+
+        expect(response.headers['access-control-allow-origin']).toBe(env.CORS_ORIGIN)
+    })
+
+    it('answers a preflight for a JSON request', async () => {
+        const response = await request(app)
+            .options('/live')
+            .set('Origin', env.CORS_ORIGIN)
+            .set('Access-Control-Request-Method', 'GET')
+            .set('Access-Control-Request-Headers', 'authorization,content-type')
+
+        expect(response.statusCode).toBe(204)
+        expect(response.headers['access-control-allow-origin']).toBe(env.CORS_ORIGIN)
+        expect(response.headers['access-control-allow-headers']).toBe('authorization,content-type')
+    })
+
+    it('does not advertise the framework', async () => {
+        const response = await request(app).get('/health')
+
+        expect(response.headers).not.toHaveProperty('x-powered-by')
     })
 })
 

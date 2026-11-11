@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import app from './app.ts'
 import request from 'supertest'
 import errorResponder from './middlewares/error/errorResponder.ts'
@@ -77,6 +77,34 @@ describe('GET /matches/:id with a malformed id', () => {
 
         expect(response.statusCode).toBe(400)
         expect(response.body).toEqual({ message: 'invalid match id' })
+    })
+})
+
+describe('trust proxy', () => {
+    it('is the hop count from env, not the Express default', () => {
+        expect(app.get('trust proxy')).toBe(env.TRUST_PROXY_HOPS)
+        expect(env.TRUST_PROXY_HOPS).toBe(0)
+    })
+})
+
+describe('auth rate limit', () => {
+    it('answers the 21st /auth request with a 429 the browser can read and leaves other routes alone', async () => {
+        const logged = vi.spyOn(console, 'error').mockImplementation(() => {})
+        for (let i = 0; i < 20; i++) {
+            const response = await request(app).post('/auth/login').send({})
+            expect(response.statusCode).toBe(400)
+        }
+        logged.mockRestore()
+
+        const limited = await request(app).post('/auth/register').set('Origin', env.CORS_ORIGIN).send({})
+        expect(limited.statusCode).toBe(429)
+        expect(limited.body).toEqual({ message: 'too many attempts, try again later' })
+        expect(limited.headers['access-control-allow-origin']).toBe(env.CORS_ORIGIN)
+
+        for (const path of ['/health', '/live']) {
+            const response = await request(app).get(path)
+            expect(response.statusCode).toBe(200)
+        }
     })
 })
 

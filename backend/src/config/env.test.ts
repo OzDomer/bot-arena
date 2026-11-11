@@ -167,4 +167,41 @@ describe('parseEnv', () => {
     it('rejects an empty string', () => {
         expect(() => parseEnv({ ...base, BETTING_WINDOW_MS: '' })).toThrow("BETTING_WINDOW_MS")
     })
+
+    // TRUST_PROXY_HOPS tests
+    it('defaults to 0 hops when missing', () => {
+        const env = parseEnv(base)
+        expect(env.TRUST_PROXY_HOPS).toBe(0)
+    })
+
+    it('coerces "1" to the number 1', () => {
+        const env = parseEnv({ ...base, TRUST_PROXY_HOPS: '1' })
+        expect(env.TRUST_PROXY_HOPS).toBe(1)
+    })
+
+    it('accepts an explicit "0"', () => {
+        const env = parseEnv({ ...base, TRUST_PROXY_HOPS: '0' })
+        expect(env.TRUST_PROXY_HOPS).toBe(0)
+    })
+
+    it('accepts "5" upper bound', () => {
+        const env = parseEnv({ ...base, TRUST_PROXY_HOPS: '5' })
+        expect(env.TRUST_PROXY_HOPS).toBe(5)
+    })
+
+    it('rejects "6"', () => {
+        expect(() => parseEnv({ ...base, TRUST_PROXY_HOPS: '6' })).toThrow("TRUST_PROXY_HOPS")
+    })
+
+    it('rejects a negative count', () => {
+        expect(() => parseEnv({ ...base, TRUST_PROXY_HOPS: '-1' })).toThrow("TRUST_PROXY_HOPS")
+    })
+
+    it('rejects a decimal count', () => {
+        expect(() => parseEnv({ ...base, TRUST_PROXY_HOPS: '1.5' })).toThrow("TRUST_PROXY_HOPS")
+    })
+
+    it('rejects "true", which Express would read as trust everything', () => {
+        expect(() => parseEnv({ ...base, TRUST_PROXY_HOPS: 'true' })).toThrow("TRUST_PROXY_HOPS")
+    })
 })

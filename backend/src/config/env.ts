@@ -16,7 +16,13 @@ const envSchema = z.object({
         .number()
         .int()
         .min(1000, "BETTING_WINDOW_MS must be at least 1000")
-        .default(5 * 60 * 1000)
+        .default(5 * 60 * 1000),
+    TRUST_PROXY_HOPS: z.coerce
+        .number()
+        .int()
+        .min(0, "TRUST_PROXY_HOPS must be 0-5")
+        .max(5, "TRUST_PROXY_HOPS must be 0-5")
+        .default(0)
 })
 
 export type Env = z.infer<typeof envSchema>

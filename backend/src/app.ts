@@ -10,13 +10,18 @@ import streamRouter from './routers/stream.ts'
 import authRouter from './routers/auth.ts'
 import meRouter from './routers/me.ts'
 import jsonError from './middlewares/error/jsonError.ts'
+import authLimiter from './middlewares/authLimiter.ts'
 
 const app = express()
 
 app.disable('x-powered-by')
+// a hop count, never true: only what our own proxies appended is believed
+app.set('trust proxy', env.TRUST_PROXY_HOPS)
 
 // one allowed origin, from env; the stream is covered too
 app.use(cors({ origin: env.CORS_ORIGIN }))
+// after cors so the browser can read a 429
+app.use('/auth', authLimiter)
 app.use(express.json())
 
 app.get('/health', (_req, res) => {

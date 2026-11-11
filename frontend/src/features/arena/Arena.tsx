@@ -150,7 +150,7 @@ function Arena({ match, live, onFrame }: ArenaProps) {
 
     return (
         <>
-            <div id="controls">
+            <div id="controls" data-view={viewMode}>
                 {!live && <>
                     {finished && <span>{resultText(match.result, match.names)}</span>}
                     <button onClick={() => playerRef.current?.play()}>Play</button>

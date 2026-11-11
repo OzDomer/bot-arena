@@ -1,0 +1,66 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: "1234"
+          POSTGRES_DB: bots_arena_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U user -d bots_arena_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: install deps
+        run: npm ci
+
+      - name: type check sim
+        run: npx tsc -p sim
+
+      - name: type check backend
+        run: npx tsc -p backend
+
+      - name: type check frontend
+        run: npx tsc -p frontend
+
+      - name: lint
+        run: npm run lint
+
+      - name: test
+        run: npx vitest run
+
+      - name: test db
+        run: npm run test:db
+
+      - name: build
+        run: npm run build

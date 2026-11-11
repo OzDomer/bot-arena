@@ -121,11 +121,13 @@ function Account({ auth, user }: { auth: Auth; user: User }) {
                 <div className="auth-confirmation" role="group" aria-label="Confirm account deletion">
                     <p className="prose">Really delete your account? This permanently removes it and its credits.</p>
                     <ErrorMessage message={auth.error} />
+                    {/* Cancel comes first: it lands where "Delete account" was pressed,
+                        so a double click backs out instead of confirming */}
                     <div className="auth-row">
+                        <button className="btn" type="button" disabled={busy} onClick={() => setPanel(null)}>Cancel</button>
                         <button className="btn auth-danger" type="button" disabled={busy} onClick={() => { void auth.deleteAccount() }}>
                             {busy ? 'Deleting…' : 'Yes, delete my account'}
                         </button>
-                        <button className="btn btn-quiet" type="button" disabled={busy} onClick={() => setPanel(null)}>Cancel</button>
                     </div>
                 </div>
             )}

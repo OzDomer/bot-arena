@@ -4,17 +4,20 @@ A project where you can pit bots against each other in a last-man-standing match
 
 ## Run it
 
-1. Node 24 (pinned in `.nvmrc`).
-2. `docker compose up -d postgres`
-3. Copy `backend/.env.example` to `backend/.env`.
-4. `npm install`
-5. `npm run dev` (frontend)
-6. In a second terminal, `npm run dev -w @arena/backend`
+1. Node 24 (pinned in `.nvmrc`) and Docker.
+2. `npm install`
+3. `docker compose up -d postgres`
+4. Copy `backend/.env.example` to `backend/.env`.
+5. `npm run dev -w @arena/backend` (the API on http://localhost:3000; it applies the migrations and starts scheduling matches)
+6. In a second terminal, `npm run dev` (the frontend)
 
-Open http://localhost:5173/ (the default) to watch a single match replayed on the grid.
-Controls: play / pause / step. **Toggle view** switches isometric ↔ top-down on the same match. **Intent** shows the learned brains' move preferences each turn.
+Open http://localhost:5173/ to watch the live loop: the lineup and odds while bets are open, a countdown, the revealed secret checked against its commitment, the match played in the arena on the same frame for every viewer, the result, then the next match. With the example env a full cycle takes about a minute. Register or log in from the header; an account starts with 1000 credits.
 
-Build is `npm run build`; the production check is `docker compose up -d --build`.
+http://localhost:5173/?seed=42&preset=bigmap replays a single match on its own, with play / pause / step and speed controls. In both views **View** switches isometric ↔ top-down and **Intent** shows the learned brains' move preferences each turn.
+
+Tests: `npm test` runs the unit tests (no Docker), `npm run test:db` the database tests against the compose Postgres. Build is `npm run build`.
+
+The whole stack in containers, as the production check: `docker compose up -d --build`, then http://localhost:8081/ (the API stays on port 3000).
 
 ```bash
 npm run tournament -- <matches> <preset> <seed>

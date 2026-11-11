@@ -17,7 +17,7 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 - **One backend process is the whole backend:** HTTP, SSE fan-out, and the match scheduler. Scaling past one process is under Open.
 
 ## Stack
-- Express 5, Drizzle (`drizzle-orm` over a node-postgres `pg` Pool) on Postgres 18, drizzle-kit for SQL migration files, zod for request validation, `jsonwebtoken`, docker compose. Layout `routers/middlewares/models/db/config/errors/`, error chain `notFound → logError → errorResponder` (System design › Errors).
+- Express 5, Drizzle (`drizzle-orm` over a node-postgres `pg` Pool) on Postgres 18, drizzle-kit for SQL migration files, zod for request validation, `jsonwebtoken`, `bcryptjs`, `cors`, docker compose. Layout `routers/middlewares/models/db/config/errors/`, error chain `notFound → logError → errorResponder` (System design › Errors).
 - **Config: Node env files validated by zod at boot.** `--env-file-if-exists` in dev; compose/platform inject in deployment; `parseEnv` validates once and the app reads the parsed `env`. Values come from whoever starts the process: in dev, the shell and then `backend/.env` (the file never overwrites a variable that's already set); in deployment, compose `environment:` or the platform (the image runs without the flag, so no file). zod defaults fill whatever is still unset. `NODE_ENV` only means development/production/test behavior; it never selects a file. Replaces the course's `config` package, and zod replaces Joi, so there is one validation library.
 - **`DATABASE_URL` is one connection URL**, not separate parts, because that's what hosting platforms provide. Required, no default, validated by zod as a `postgres:`/`postgresql:` URL. Passwords in it must be URL-encoded. `backend/vitest.config.ts` gives the test runner a dummy one via `test.env`.
 - **`cors` with an explicit allowed origin from env** (`CORS_ORIGIN`, validated by zod), never `*`. The browser talks to two origins, the frontend and the backend (Deployment).
@@ -25,7 +25,8 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 - **Modules: NodeNext for sim and backend.** Relative imports carry `.ts`; tsc rewrites them to `.js` on emit (`rewriteRelativeImportExtensions`). JSON imports use `with { type: 'json' }`. The frontend stays on bundler resolution; `moduleResolution: bundler` is explicit in `tsconfig.base.json` and sim/backend override it. Option (c), chosen over NodeNext with `.js` imports: same strictness, but one import style repo-wide and ready for Node type-stripping. Rejected: bundler resolution for Node-run code, too lenient (a missing extension or JSON import attribute only fails at runtime). Cheap to revisit.
 - **Builds: a checker/builder tsconfig pair** in sim and backend. `tsconfig.json` type-checks everything including tests (`noEmit` from the base); `tsconfig.build.json` extends it and only adds emit settings and excludes. sim builds to `sim/dist` (`.js`, `.d.ts`, `.d.ts.map`), excluding tests, `src/test` and the CLIs (`src/*cli.ts`). backend builds to `backend/dist` (`.js` + source maps, no declarations). Every `build` script is `clean` (`node -e "fs.rmSync('dist', …)"`, because npm scripts run in cmd.exe on Windows, where `rm -rf` fails; `tsc --build --clean` was rejected because it doesn't remove stale outputs) then `tsc -p tsconfig.build.json`. Root `npm run build` is an explicit chain, sim → backend → frontend, instead of relying on the `workspaces` array order.
 - **Node 24 LTS, pinned:** LTS for production; local had been on 25. `.nvmrc` = 24, root `engines.node` = 24, `node:24-alpine` in Docker.
-- **The DB module does no I/O at import.** `src/db/client.ts` only creates the Pool and the drizzle instance. `server.ts` runs `select 1` before `listen`; on failure it logs the error and exits with code 1. `app.ts` never imports the db module, so unit tests don't need Docker.
+- **The DB module does no I/O at import.** `src/db/client.ts` only creates the Pool and the drizzle instance; nothing connects until the first query. So routers may import it and `app.ts` mounts them: unit tests (`*.test.ts`) still run without Docker because the routes they hit never query, and every route that does is tested in a `*.db.test.ts`. `server.ts` runs `select 1`, the migrations and `startLive` before `listen`; on failure it logs the error and exits with code 1. Queries are logged in development only, statement text without params (an insert into `matches` carries the secret).
+- **bcryptjs, not native bcrypt.** Pure JS, so the alpine image needs no python/make/g++ and can't differ from the dev machine. The native speed is irrelevant at this scale.
 - Chosen to match the course stack (jb-45800-5 betterx backend) so the platform reads as standard full-stack work. Deviations are called out where they happen (config and validation above, database and ORM below; Auth, Realtime, Deployment); nothing else is clever on purpose.
 - **Postgres over MySQL** (the course used MySQL): stricter, JSONB and arrays fit the odds cache, and it's the industry default. Postgres 18, `postgres:18-alpine`, major pinned.
 - **Drizzle over Sequelize and Prisma:** SQL-close queries; schema in plain TS (no codegen, no decorators); readable SQL migrations via drizzle-kit; fits the tsc/NodeNext pipeline. Prisma was considered (a codegen step, more abstraction). Sequelize was dropped (TS bolted on, decorators).
@@ -44,7 +45,7 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
    - **`./testing` is source-only** (only `@arena/source`): resolvable in dev and tests, deliberately unresolvable in production, which makes it the production guard.
    - **Who holds the condition:** `customConditions` in `tsconfig.base.json`; `frontend/vite.config.ts` (`resolve.conditions` and `ssr.resolve.conditions`, with Vite's defaults spread in); `sim/vitest.config.ts` and `backend/vitest.config.ts` (`ssr.resolve.conditions`). Root Vitest config settings don't propagate into projects, so each project sets its own.
    - Added (free): `seedFromSecret` in core; `entrant`, `isEntrantName`, `EntrantName` in `./bots`.
-2. **Backend ↔ frontend**: HTTP for request/response, SSE for server → client pushes (schedule, seed reveal, result). No WebSockets. Shapes TBD at roadmap 5.
+2. **Backend ↔ frontend**: HTTP for request/response, SSE for server → client pushes (schedule, seed reveal, result). No WebSockets. The shapes are the types in `backend/src/matches/snapshot.ts` (Realtime › Snapshot); `frontend/src/shared/api.ts` declares the same shapes by hand, because an app never imports the other app.
 
 ### Ownership
 - Backend: seeds (secret until bets close), results, bets, balances, schedule, bot registry.
@@ -71,14 +72,17 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 
   | phase | on entry | published |
   |---|---|---|
-  | `scheduled` | row created during the previous match's playback: lineup drawn, odds looked up, `secret` generated, `commitHash` stored, `simVersion` recorded | nothing |
+  | `scheduled` | row created when the previous match opens: lineup drawn, odds looked up, `secret` generated, `commitHash` stored, `simVersion` recorded, the match played once for `winner` and `turns` | `matchId`, `opensAt` |
   | `open` | at `opensAt` | lineup, preset, simVersion, odds, `commitHash`, `closesAt`; bets accepted |
   | `closed` | at `closesAt` | bets refused; pool frozen |
-  | `revealed` | immediately after close | `secret`, derived `seed`, `startAt = now + lead`; clients replay |
-  | `settled` | server runs `playMatch`, pays out in one transaction | `winner`, payouts |
+  | `revealed` | `REVEAL_LEAD_MS` (3 s) after close | `secret`, `turns`, `startsAt = reveal + PLAYBACK_DELAY_MS` (4 s); clients derive the seed and replay |
+  | `settled` | at `startsAt + turns × MS_PER_TURN`, when the last frame has played | `winner`, `settledAt`; payouts with item 7 |
 
-- `closed → revealed` is immediate; the gap exists only so "bets are closed" and "here is the seed" are two events, never one.
-- `startAt` is a few seconds after reveal so clients can fetch and prepare before frame 0.
+- `closed → revealed` takes `REVEAL_LEAD_MS`; the gap exists so "bets are closed" and "here is the seed" are two events, never one.
+- `startsAt` is `PLAYBACK_DELAY_MS` after the reveal so clients can verify the commitment and build the match before frame 0.
+- **The phase is a function of the clock**: the pure `nextPhase(match, now)` decides it from the stored timestamps, and the one-second `tick` applies it to the in-memory live list and writes the row only on a change. A restart loads the unsettled rows and runs one tick before `listen`, so a match that was due while the server was down lands where it should be by now.
+- **The result is held.** A settled match stays current for `RESULT_HOLD_MS` (8 s); the next match's `opensAt` is the previous `endsAt` plus the hold.
+- The betting window is `BETTING_WINDOW_MS` from env: 5 minutes by default, 45 s in `.env.example` and compose so a full cycle takes about a minute.
 - Lineups are **random distinct names from the entrant registry**, not a curated table. `showcase` and `heldout` stay hardcoded in the sim for tournaments; the platform doesn't use them.
 - Odds are cached per sorted name set + preset and computed on a miss (`runTournament`, 1–2k matches, ~1–2 s at ~1000 matches/s for 11 seats). 1–2k is enough because under parimutuel the odds are display information, not the price (Settlement).
 - `winner` is an entrant name, or `draw` / `timeout` (both refund), classified by `outcome(final)` from the core entry, the same function the tournament and the viewer use.
@@ -94,23 +98,27 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 
 ## Realtime
 - **SSE, not WebSockets.** Traffic is one-directional: the server announces, clients listen. A bet is a normal `POST`. WebSockets add a dependency and an upgrade handshake for a client channel that doesn't exist.
-- **One event type, `state`, carrying the full snapshot**, sent on connect and on every phase transition. A reconnecting or late client gets everything in one message; there is no delta replay and no "did I miss `closed`?" logic. Plus a lighter `pool` event on each accepted bet.
-- Snapshot: `{ matchId, phase, lineup, preset, simVersion, odds, commitHash, opensAt, closesAt, pool: { total, byEntrant }, secret?, seed?, startAt?, winner? }`. Optional fields appear from `revealed` / `settled`. One function builds it; routes never assemble match state themselves.
-- Implementation: `Content-Type: text/event-stream`, a `Set<Response>` of open streams, `res.write` per message, a comment line every ~20 s as heartbeat, proxy buffering off for `/stream` if a reverse proxy sits in front (Deployment). The broadcaster is one function; if socket.io is ever wanted it's a one-file swap.
+- **One event type, `state`, carrying the full snapshot**, sent on connect and on every phase transition. A reconnecting or late client gets everything in one message; there is no delta replay and no "did I miss `closed`?" logic. A lighter `pool` event on each accepted bet comes with item 7.
+- **Snapshot.** The envelope is `{ now, msPerTurn, current, next }`; `GET /live` returns the same thing for first paint. `now` is the server clock when the message is sent (clients take their offset from it), `current` is the match the public is looking at or null, `next` is the first match that has not opened. A match is `{ matchId, phase, opensAt }` while `scheduled`; `open` and `closed` add `closesAt, lineup, preset, simVersion, odds, commitHash`; `revealed` adds `secret` (hex), `startsAt`, `turns`; `settled` adds `winner`, `settledAt`. A field that is not public yet is absent, not null. `snapshotOf` builds it by copying fields by name per phase, so a new column stays private until it is listed; routes never assemble match state themselves. `pool` joins with item 7.
+- Implementation: `Content-Type: text/event-stream`, a `Set<Response>` of open streams, `res.write` per message, a comment line every 25 s as heartbeat, proxy buffering off for `/stream` if a reverse proxy sits in front (Deployment). The broadcaster is one function; if socket.io is ever wanted it's a one-file swap.
 - **`/stream` is cross-origin.** `EventSource` is subject to CORS like `fetch`, so `/stream` responses need the CORS header too; the global `cors()` middleware covers it. `EventSource` can't send custom headers, which is fine because the stream is public. If it ever needs auth: cookies + `withCredentials` + a specific allowed origin, never `*`.
 
 ## Auth
-- `POST /auth/register`, `POST /auth/login` → JWT. bcrypt for passwords.
-- **`authEnforce` is mounted per router, not globally** (deviation from the course, which guards everything after `/auth`). `/stream`, `/matches`, `/matches/:id`, `/lineups` are public: a viewer without an account is still a viewer, and replays are the audit tool. `/bets` and `/me` require a token.
-- A user is `name`, `password_hash`, `credits`. New accounts start with a fixed credit grant. That's the entire user model until item 8.
+- `POST /auth/register`, `POST /auth/login` → `{ token, user }`. bcrypt (cost 10) for passwords; the token is an HS256 JWT that carries only the user id and lasts 7 days, so it survives a rename.
+- `GET /me`, `PATCH /me` (name), `DELETE /me`. A user leaves the server only through `publicUser`: `{ id, name, credits, createdAt }`, never the hash.
+- **Names are unique regardless of case.** Stored as typed, `^[A-Za-z0-9_]{3,20}$`, unique index on `lower(name)`, and every lookup compares `lower(name)`. "Oz" and "oz" as two accounts is a footgun. A duplicate is caught as the unique violation, not by a check before the insert.
+- Login answers the same 401 for an unknown name and a wrong password, and runs a bcrypt comparison in both cases.
+- **`authEnforce` is mounted per router, not globally** (deviation from the course, which guards everything after `/auth`). `/live`, `/stream`, `/matches/:id` are public: a viewer without an account is still a viewer, and replays are the audit tool. `/me` requires a token, and so will `/bets`.
+- A user is `name`, `password_hash`, `credits`. New accounts start with a fixed credit grant (1000, the column default). That's the entire user model until item 8.
+- The frontend keeps the token in `localStorage` and sends it as `Authorization: Bearer`; a 401 from `/me` drops it, a network error does not.
 
 ## Schema
-- **users** `id, name UNIQUE, password_hash, credits INT, created_at`
-- **lineups** `id, name, preset, entrants JSON, odds JSON, computed_at`
-- **matches** `id, lineup_id, phase, commit_hash, secret, seed, opens_at, closes_at, start_at, winner, settled_at, sim_version`
+- **users** `id, name, password_hash, credits INT DEFAULT 1000, created_at`, `UNIQUE(lower(name))`
+- **lineups** `id, names TEXT[], preset, sim_version, odds JSONB, sample_size, created_at`, `UNIQUE(names, preset, sim_version)`
+- **matches** `id, lineup_id, phase, secret BYTEA, commit_hash UNIQUE, opens_at, closes_at, starts_at, turns, winner, settled_at, created_at`
 - **bets** `id, match_id, user_id, entrant, amount INT, payout INT NULL, created_at`, `UNIQUE(match_id, user_id)`, index on `match_id`
 - Credits, amounts and payouts are integers. Never float money.
-- `secret` and `seed` are stored from creation and **never leave the snapshot builder before `revealed`**. That rule lives in one place.
+- `secret`, `winner` and `turns` are stored from creation and **never leave the snapshot builder before their phase**. That rule lives in one place. The seed is not stored; it is derived from the secret.
 - Pool totals are `SUM(amount) GROUP BY entrant`; cheap at this scale, no denormalised counters.
 
 ## Settlement
@@ -120,12 +128,12 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 - Fixed odds from the 10k stats is the alternative if parimutuel feels thin with few bettors. Under Open.
 
 ## Deployment
-- `docker compose up` (root `compose.yaml`): `postgres` and `backend` now, `frontend` to come. Frontend is the course's multi-stage build: `node:24-alpine` builds `dist/`, `nginx:alpine` serves it. One deviation from the course: both images build with the **repo root as context** (`context: .`, `dockerfile: <app>/Dockerfile`), because each needs `sim/`. The frontend image carries no sim at runtime (Vite bundles it into the JS).
+- `docker compose up` (root `compose.yaml`): `postgres`, `backend` and `frontend`. Frontend is the course's multi-stage build: `node:24-alpine` builds `dist/`, `nginx:alpine` serves it. One deviation from the course: both images build with the **repo root as context** (`context: .`, `dockerfile: <app>/Dockerfile`), because each needs `sim/`. The frontend image carries no sim at runtime (Vite bundles it into the JS).
 - **`backend/Dockerfile`, multi-stage**: about 200 MB smaller, no compiler or devDependencies in the production image. Built from the repo root: `docker build -f backend/Dockerfile -t arena-backend .`. Build stage: full `npm ci`, then builds sim then backend with `-w`. Runtime stage: `NODE_ENV=production`, `npm ci --omit=dev -w @arena/sim -w @arena/backend`, `COPY --from=build` both dist folders, `USER node`, and `CMD` runs `node` directly so PID 1 receives SIGTERM.
 - **Root `.dockerignore`:** `**/node_modules`, `**/dist`, `**/.env`, `**/runs`, `.git`.
-- **Compose services.** `postgres`: named volume `pgdata` at `/var/lib/postgresql` (the Postgres 18 path), `pg_isready` healthcheck, port 5432 published. `backend`: built from the root context, `DATABASE_URL` with host `postgres`, `depends_on` with `condition: service_healthy`, port 3000.
+- **Compose services.** `postgres`: named volume `pgdata` at `/var/lib/postgresql` (the Postgres 18 path), `pg_isready` healthcheck, port 5432 published. `backend`: built from the root context, `DATABASE_URL` with host `postgres`, `CORS_ORIGIN`, `JWT_SECRET` and `BETTING_WINDOW_MS`, `depends_on` with `condition: service_healthy`, port 3000. `frontend`: `frontend/Dockerfile` with `VITE_API_URL` as a required build arg, nginx on port 8081.
 - **Dev workflow: DB in compose, backend on the host.** Compose runs only Postgres (`docker compose up -d postgres`); the backend runs with `tsx watch` and `backend/.env` (a `localhost` URL). The full stack (`docker compose up -d --build`) is the production check.
-- **Two origins.** nginx serves the SPA only (`try_files $uri /index.html`) and doesn't proxy the API. The backend publishes its own port (3000, on the host in dev and in compose) and gets its own subdomain later (prod). Routes are bare: `/health`, `/lineups`, `/matches/:id`, `/stream`.
+- **Two origins.** nginx serves the SPA only (`try_files $uri /index.html`) and doesn't proxy the API. The backend publishes its own port (3000, on the host in dev and in compose) and gets its own subdomain later (prod). Routes are bare: `/health`, `/live`, `/stream`, `/matches/:id`, `/auth/*`, `/me`.
 - **The frontend finds the backend through `VITE_API_URL`**, set in `.env.development` / `.env.production`. Vite inlines it at build time, so the frontend image is built per environment (a build arg in the Dockerfile), the same as the course's `.env.docker` / `.env.production`. Every API call goes through one module that reads it.
 - **If a reverse proxy sits in front of the backend in prod, `/stream` needs `proxy_buffering off` and a long `proxy_read_timeout` there.** nginx-style proxies buffer responses by default, which turns SSE into "nothing until the connection closes". Compose has nothing in front of the backend, so this applies only once a proxy is added. This is the one place the realtime choice touches ops.
 - Env comes from compose `environment:` (Stack › Config). Schema changes ship as drizzle-kit SQL migrations (Stack).
@@ -143,16 +151,18 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
 2. ~~**Dark mode.**~~ CSS variables for the page; a `Theme` object for the canvas (`FLOOR`, ring, storm text, label fill) passed through `drawWorld` opts. Default from `prefers-color-scheme`. *Done when* it's usable at night.
 3. ~~**Workspace split.**~~ `sim/` and `frontend/` as npm workspaces; `@arena/sim` with entries `.`, `./bots`, `./testing`; shared `tsconfig.base.json`, sim without `DOM`; Vitest projects at the root. `backend/` joins at 5.
 4. ~~**React shell.**~~ `main.ts` → `App` + `<Arena>` owning the canvas via a ref and constructing `Player`; `Player.turnEl` → `onFrame(turn)`. `render/` and `sim/` unchanged. Ships controls, winner toast, theme toggle, playback speed, **seed/preset in the URL with a copy link**. *Done when* a pasted link replays the same match. Shipped: `App` reads `?seed=&preset=` (or picks a crypto seed and writes it back), `useMatch` → `<Arena match>`; controls, theme toggle (useTheme), speed, copy link. The winner toast became a result derived during render (no toast library). The `?seed=` link is a stand-in until `/matches/:id`.
-5. **Backend: lobby.** Express + Postgres + compose. `GET /lineups`, `GET /matches/:id`, `GET /stream`; the scheduler running the lifecycle; odds cached per name set + preset. No accounts. *Done when* the client shows "next match in m:ss", then the match, from the stream alone. Adds what the backend needs to the core entry: `runTournament` (odds), `seedFromSecret`, and whatever the scheduler calls.
+5. ~~**Backend: lobby.**~~ Express + Postgres + compose. `GET /lineups`, `GET /matches/:id`, `GET /stream`; the scheduler running the lifecycle; odds cached per name set + preset. No accounts. *Done when* the client shows "next match in m:ss", then the match, from the stream alone. Adds what the backend needs to the core entry: `runTournament` (odds), `seedFromSecret`, and whatever the scheduler calls.
    - ~~**Step 1.**~~ `seedFromSecret` in core.
    - ~~**Step 2.**~~ Entrant registry (`entrants.ts`, exported from `./bots`); lineups built from names.
    - ~~**Step 3.**~~ Backend skeleton: zod-validated env, health route, error chain, tests (supertest in-process).
    - ~~**Step 3d.**~~ JSON error chain with `HttpError` (System design › Errors).
    - ~~**Step 3e. Sim build.**~~ `sim/dist` and `backend/dist` via tsc; exports map → dist with a source condition for dev/tests. *Done when* `npm run build` produces both, `node backend/dist/server.js` serves `/health`, and frontend dev and all tests run without a manual sim build. Shipped: NodeNext + `.ts` imports in sim and backend, checker/builder tsconfig pairs, clean-then-tsc build scripts, root chain sim → backend → frontend (Stack).
-   - **Step 4. Compose + Postgres.** ~~Infra~~: `backend/Dockerfile`, compose with `postgres` + `backend`, `DATABASE_URL`, Drizzle connection, Node 24 pin (Stack, Deployment). Next: `lineups` (odds cache) + `matches` schema, drizzle-kit config, first migration.
-   - **Step 5. Random lineups + odds cache.** When the backend first imports the sim: `--conditions=@arena/source` for tsx in the backend dev script; verify the backend vitest `ssr` block; hover-check that types from `sim/dist/*.d.ts` aren't `any` (`skipLibCheck` would hide broken `.d.ts` imports).
-   - Then: 6 scheduler + snapshot builder, 7 SSE + `/lineups`, `/matches/:id`, 8 frontend on the stream through the `VITE_API_URL` module. `cors` + `CORS_ORIGIN` land at 4 or when the frontend first calls the API, whichever comes first.
-6. **Auth.** register/login/JWT, `authEnforce` per router, `/me`. *Done when* a token gates `/bets` and nothing else.
+   - ~~**Step 4. Compose + Postgres.**~~ ~~Infra~~: `backend/Dockerfile`, compose with `postgres` + `backend`, `DATABASE_URL`, Drizzle connection, Node 24 pin (Stack, Deployment). Then `lineups` (odds cache) + `matches` schema, drizzle-kit config, migrations applied at boot.
+   - ~~**Step 5. Random lineups + odds cache.**~~ When the backend first imports the sim: `--conditions=@arena/source` for tsx in the backend dev script; verify the backend vitest `ssr` block; hover-check that types from `sim/dist/*.d.ts` aren't `any` (`skipLibCheck` would hide broken `.d.ts` imports).
+   - ~~**Step 6.**~~ Scheduler (`nextPhase` + the one-second `tick`) and the snapshot builder (`snapshotOf`).
+   - ~~**Step 7.**~~ `GET /live`, `GET /stream` (SSE), `GET /matches/:id` for settled matches. `/live` took the place of `/lineups`: the client needs the current and the next match, not a list of lineups.
+   - ~~**Step 8.**~~ Frontend on the stream through the `VITE_API_URL` module; `cors` + `CORS_ORIGIN`. `/` is the live loop; `?seed=&preset=` still opens the standalone replay. The live page is a fixed header, a one-line ticker, the stage (countdown, then the arena, then the result band) and the board of entrants beside it, stacked under it on a narrow screen. The arena reports the frame it shows (`frameReport`), which is how the board follows hp and sinkings without a store. Not yet: the DVR controls (Architecture › Live is a DVR; live playback has no pause or rewind) and a `/matches/:id` replay page.
+6. ~~**Auth.**~~ register/login/JWT, `authEnforce` per router, `/me`. *Done when* a token gates `/bets` and nothing else. Shipped with read, rename and delete on `/me` and one account button in the live header that opens the forms in a popover; the token gates `/me` only until `/bets` exists.
 7. **Predictions.** `POST /bets`, pool totals over SSE, settlement on reveal. *Done when* a bet placed before close pays out after the replay, and one placed after is refused.
    **→ Demo line.** Everything below is a second product.
 8. **User bots.** A bot DSL compiled to `Brain`; never user code on the server. Bots are rows owned by users; a lineup can include them.
@@ -170,4 +180,13 @@ The full-stack wrapper around the sim: a prediction market on bot matches. Same 
   - `logError` prints full stacks for ordinary 404s, and prints during tests. Fix: log `HttpError`s briefly, full trace only for unexpected errors.
   - Compose credentials are written twice (`POSTGRES_*` and the backend's `DATABASE_URL`). Later: root `.env` interpolation.
   - The backend has no ESLint.
-  - body-parser errors become 500s.
+  - `logError` now also prints a stack for every 401.
+  - The wire types exist twice by hand (`backend/src/matches/snapshot.ts`, `frontend/src/shared/api.ts`). A shared types entry would remove the copy; nothing checks they agree except the browser.
+  - Creating a match computes odds for a new lineup synchronously (1–2 s), which blocks the event loop and the stream for that long. It happens when a match opens, never during playback. Fix: a worker, or precompute.
+  - `tick` returns nothing useful if it throws halfway: a phase change already written is not broadcast until the next change.
+  - The compose `JWT_SECRET` is a literal in `compose.yaml`. Same fix as the credentials: root `.env` interpolation.
+  - `server.ts` is not under test (it has side effects at import); the boot sequence is covered through `startLive`.
+  - The JWT has no revocation: a deleted user's token is refused only because the row is gone; a logout is client-side.
+  - The board's odds bars are 2 px and read as borders on a wide screen. Fix: a pixel or two thicker, or a faint track behind them.
+  - Ship labels overlap when ships cluster, worst on a narrow screen. That is the renderer (`drawLabels` places every name without looking at the others), older than the live page.
+  - On a phone held sideways the result band covers most of the arena.

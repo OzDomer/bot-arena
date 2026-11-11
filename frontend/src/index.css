@@ -105,6 +105,41 @@ input {
     outline-offset: 2px;
 }
 
+/* the strip every page starts with; its height never changes */
+.site-header {
+    position: relative;
+    z-index: 20;
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    box-sizing: border-box;
+    height: 3.25rem;
+    padding: 0 1rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+}
+
+.wordmark {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+}
+
+a.wordmark {
+    color: inherit;
+    text-decoration: none;
+}
+
+.wordmark span {
+    margin: 0 0.12em;
+    color: var(--muted);
+    font-weight: 300;
+}
+
 /* the standalone ?seed= replay: a control bar over the canvas */
 #controls {
     flex-shrink: 0;
@@ -124,10 +159,32 @@ input {
     touch-action: none;
 }
 
-.replay-bar {
-    flex-shrink: 0;
-    padding: 0.4rem 0.6rem;
-    border-bottom: 1px solid var(--line);
+.replay-label {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.replay-word {
+    margin-right: 0.6rem;
+    color: var(--muted);
+}
+
+@media (max-width: 30rem) {
+    .site-header {
+        padding: 0 0.75rem;
+    }
+
+    /* room for the seed */
+    .replay-word {
+        display: none;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

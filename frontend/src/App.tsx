@@ -16,9 +16,11 @@ function ReplayPage() {
 
     return (
         <>
-            <div className="replay-bar">
-                <button className="btn" onClick={() => { navigator.clipboard.writeText(location.href) }}>copy match link</button>
-            </div>
+            <header className="site-header">
+                <a className="wordmark" href={location.pathname} title="To the live arena">bot<span aria-hidden="true">/</span>arena</a>
+                <p className="replay-label"><span className="replay-word">replay</span>seed {params.seed} · {params.preset}</p>
+                <button className="btn" title="Copy the link to this match" onClick={() => { navigator.clipboard.writeText(location.href) }}>copy link</button>
+            </header>
             <Arena match={match} />
         </>
     )

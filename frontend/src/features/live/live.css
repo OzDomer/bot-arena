@@ -7,35 +7,6 @@
     min-height: 0;
 }
 
-.site-header {
-    position: relative;
-    z-index: 20;
-    display: flex;
-    flex: none;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    box-sizing: border-box;
-    height: 3.25rem;
-    padding: 0 1rem;
-    border-bottom: 1px solid var(--line);
-    background: var(--bg);
-}
-
-.wordmark {
-    margin: 0;
-    font-size: 1.05rem;
-    font-weight: 800;
-    letter-spacing: -0.01em;
-    white-space: nowrap;
-}
-
-.wordmark span {
-    margin: 0 0.12em;
-    color: var(--muted);
-    font-weight: 300;
-}
-
 .site-tools {
     display: flex;
     align-items: center;
@@ -867,10 +838,6 @@
 }
 
 @media (max-width: 30rem) {
-    .site-header {
-        padding: 0 0.75rem;
-    }
-
     .stream-word {
         display: none;
     }

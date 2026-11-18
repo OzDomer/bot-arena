@@ -2,6 +2,11 @@
 
 A project where you can pit bots against each other in a last-man-standing match on a fog-of-war grid. The rules evolve over versions (storm, resources), and so do the bots — hand-written FSMs first, then learned brains.
 
+**Live at https://arena.domer.dev**
+
+<img src="docs/demo.gif" alt="One match on a phone: the seed is revealed and verified, a countdown, the match plays, the winner is shown" width="320">
+
+
 ## Run it
 
 1. Node 24 (pinned in `.nvmrc`) and Docker.
